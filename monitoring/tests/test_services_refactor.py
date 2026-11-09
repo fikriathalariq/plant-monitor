@@ -75,3 +75,10 @@ class ServicesRefactorParityTest(SimpleTestCase):
         self.assertIn("6.2 bar", alerts[0]["message"])
         self.assertEqual(alerts[1]["machine_code"], "Speed_R_Bakar")
         self.assertIn("260.5 °C", alerts[1]["message"])
+
+    def test_get_machine_process_history_signature(self):
+        """Verify that get_machine_process_history handles start_date/end_date without NameError."""
+        import inspect
+        sig = inspect.signature(api_report.get_machine_process_history)
+        params = list(sig.parameters.keys())
+        self.assertEqual(params, ["request", "machine_id", "start_date", "end_date"])

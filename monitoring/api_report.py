@@ -1199,8 +1199,11 @@ def get_report_machine_daily_chart(request, machine_id: int, date: str):
         })
 
     # Fetch summary for this machine
-    daily_summary = _compute_daily_summary_data(date)
-    machine_stats = next((m for m in daily_summary.get('efficiency_summary', {}).get('machines', []) if m['machine_id'] == machine_id), None)
+    try:
+        daily_summary = _compute_daily_summary_data(date)
+        machine_stats = next((m for m in daily_summary.get('efficiency_summary', {}).get('machines', []) if m['machine_id'] == machine_id), None)
+    except Exception:
+        machine_stats = None
 
     cp = CompanyProfile.objects.first()
     company_info = {
@@ -1635,8 +1638,11 @@ def get_report_machine_daily_chart_deep(request, machine_id: int, date: str):
         })
 
     # Fetch summary for this machine
-    daily_summary = _compute_daily_summary_data(date)
-    machine_stats = next((m for m in daily_summary.get('efficiency_summary', {}).get('machines', []) if m['machine_id'] == machine_id), None)
+    try:
+        daily_summary = _compute_daily_summary_data(date)
+        machine_stats = next((m for m in daily_summary.get('efficiency_summary', {}).get('machines', []) if m['machine_id'] == machine_id), None)
+    except Exception:
+        machine_stats = None
 
     return {
         "summary": machine_stats,
@@ -2924,8 +2930,11 @@ def get_machine_process_history(request, machine_id: int, start_date: str, end_d
     min_val = min(counts) if counts else 0
     
     # Fetch summary for this machine
-    daily_summary = _compute_daily_summary_data(date)
-    machine_stats = next((m for m in daily_summary.get('efficiency_summary', {}).get('machines', []) if m['machine_id'] == machine_id), None)
+    try:
+        daily_summary = _compute_daily_summary_data(end_date or start_date)
+        machine_stats = next((m for m in daily_summary.get('efficiency_summary', {}).get('machines', []) if m['machine_id'] == machine_id), None)
+    except Exception:
+        machine_stats = None
 
     return {
         "summary": machine_stats,
