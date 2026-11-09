@@ -31,6 +31,7 @@ Write-Host "[1/3] Running Backend Django Unit Tests with Coverage..." -Foregroun
     monitoring.tests.test_steam_and_shift_calc `
     monitoring.tests.test_production_reports `
     monitoring.tests.test_security_and_rbac `
+    monitoring.tests.test_services_refactor `
     monitoring.tests.test_ninja_api
 
 if ($LASTEXITCODE -ne 0) {

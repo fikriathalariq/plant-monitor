@@ -34,7 +34,7 @@ jobs:
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
           CI: 'true'
-        run: python -m coverage run --rcfile=.coveragerc manage.py test monitoring.tests.test_pinn_engine monitoring.tests.test_electricity_metrics monitoring.tests.test_admin_and_routes monitoring.tests.test_root_entrypoints monitoring.tests.test_batch_analyzer monitoring.tests.test_modbus_and_telemetry monitoring.tests.test_steam_and_shift_calc monitoring.tests.test_production_reports monitoring.tests.test_security_and_rbac monitoring.tests.test_ninja_api
+        run: python -m coverage run --rcfile=.coveragerc manage.py test monitoring.tests.test_pinn_engine monitoring.tests.test_electricity_metrics monitoring.tests.test_admin_and_routes monitoring.tests.test_root_entrypoints monitoring.tests.test_batch_analyzer monitoring.tests.test_modbus_and_telemetry monitoring.tests.test_steam_and_shift_calc monitoring.tests.test_production_reports monitoring.tests.test_security_and_rbac monitoring.tests.test_services_refactor monitoring.tests.test_ninja_api
 
       - name: Generate Coverage Report
         run: |
