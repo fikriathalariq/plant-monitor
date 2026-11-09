@@ -1,0 +1,706 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Snapshot History | Suritex Factory{% endblock %}
+
+{% block header_title %}Snapshot History{% endblock %}
+{% block header_subtitle %}Historical Machine Status Snapshots{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Filter Panel Styles */
+    .filter-panel {
+        background: var(--suritex-surface-light);
+        border: 1px solid var(--suritex-border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--suritex-text-main);
+    }
+
+    .interval-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .interval-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--suritex-border);
+        background: white;
+        border-radius: 50rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .interval-btn:hover {
+        background: rgba(249, 245, 6, 0.1);
+    }
+
+    .interval-btn.active {
+        background: var(--suritex-primary);
+        border-color: var(--suritex-primary);
+        font-weight: 600;
+    }
+
+    .display-mode-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .display-mode-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: 1px solid var(--suritex-border);
+        background: white;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .display-mode-btn:hover {
+        background: rgba(249, 245, 6, 0.1);
+    }
+
+    .display-mode-btn.active {
+        background: var(--suritex-primary);
+        border-color: var(--suritex-primary);
+        font-weight: 600;
+    }
+
+    /* Multi-select styles */
+    .multi-select-container {
+        position: relative;
+    }
+
+    .multi-select {
+        border: 1px solid var(--suritex-border);
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        background: white;
+        min-height: 42px;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+
+    .multi-select-option {
+        padding: 0.25rem 0;
+    }
+
+    .multi-select-option label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-weight: 400 !important;
+    }
+
+    .select-all-btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        background: rgba(249, 245, 6, 0.1);
+        border: 1px solid var(--suritex-border);
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .select-all-btn:hover {
+        background: var(--suritex-primary);
+    }
+
+    /* Table Styles */
+    .snapshot-table-container {
+        background: var(--suritex-surface-light);
+        border: 1px solid var(--suritex-border);
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+
+    .snapshot-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .snapshot-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.875rem;
+    }
+
+    .snapshot-table thead {
+        background: #f8f9fa;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .snapshot-table th {
+        padding: 0.75rem 0.5rem;
+        font-weight: 600;
+        text-align: center;
+        border-bottom: 2px solid var(--suritex-border);
+        white-space: nowrap;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--suritex-text-muted);
+        background: #f8f9fa;
+    }
+
+    .snapshot-table th.sticky-col {
+        position: sticky;
+        left: 0;
+        background: #f8f9fa;
+        z-index: 101;
+        box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .snapshot-table td {
+        padding: 0.5rem;
+        border-bottom: 1px solid var(--suritex-border);
+        text-align: center;
+        white-space: nowrap;
+        background: white;
+    }
+
+    .snapshot-table td.sticky-col {
+        position: sticky;
+        left: 0;
+        background: white;
+        z-index: 99;
+        box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        font-weight: 500;
+        min-width: 120px;
+    }
+
+    /* Row hover effect - make it more visible */
+    .snapshot-table tbody tr.row-hover td {
+        background: rgba(249, 245, 6, 0.15) !important;
+    }
+
+    .snapshot-table tbody tr.row-hover td.sticky-col {
+        background: rgba(249, 245, 6, 0.25) !important;
+    }
+
+    /* Column hover effect */
+    .snapshot-table td.column-hover,
+    .snapshot-table th.column-hover {
+        background: rgba(249, 245, 6, 0.2) !important;
+    }
+
+    /* Cross hover - both row and column (intersection) */
+    .snapshot-table tbody tr.row-hover td.column-hover {
+        background: rgba(249, 245, 6, 0.4) !important;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-running {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-stop {
+        background: #f8f9fa;
+        color: #6c757d;
+    }
+
+    .status-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-offline {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-heat {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-steady {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-cool {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-off {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    /* Delta styling */
+    .delta-positive {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .delta-negative {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .delta-zero {
+        color: #6c757d;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+
+        .snapshot-table {
+            font-size: 0.75rem;
+        }
+
+        .snapshot-table th,
+        .snapshot-table td {
+            padding: 0.4rem 0.3rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Data Availability Info -->
+{% if first_snapshot_date and last_snapshot_date %}
+<div class="alert alert-info d-flex align-items-center mb-3" style="border-left: 4px solid var(--suritex-primary);">
+    <span class="material-symbols-outlined me-2">info</span>
+    <div>
+        <strong>Data Available:</strong>
+        {{ first_snapshot_date }} to {{ last_snapshot_date }}
+        {% if first_snapshot_date == last_snapshot_date %}
+        (single day)
+        {% else %}
+        ({{ last_snapshot_date|timesince:first_snapshot_date }})
+        {% endif %}
+    </div>
+</div>
+{% elif not first_snapshot_date %}
+<div class="alert alert-warning d-flex align-items-center mb-3">
+    <span class="material-symbols-outlined me-2">warning</span>
+    <div>
+        <strong>No snapshot data found!</strong>
+        Make sure the <code>log_minute_history</code> command is running, or run
+        <code>python manage.py backfill_snapshots</code> to populate historical data.
+    </div>
+</div>
+{% endif %}
+
+<form method="get" id="filterForm">
+    <div class="filter-panel">
+        <h5 class="fw-bold mb-3">
+            <span class="material-symbols-outlined" style="vertical-align: middle;">tune</span>
+            Filters
+        </h5>
+
+        <!-- Time Filters -->
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Time Interval</label>
+                <div class="interval-buttons">
+                    {% for opt in interval_options %}
+                    <button type="button" class="interval-btn {% if interval == opt %}active{% endif %}"
+                        onclick="setIntervalValue({{ opt }})">
+                        {{ opt }} min
+                    </button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="interval" id="intervalInput" value="{{ interval }}">
+            </div>
+
+            <div class="filter-group">
+                <label for="date_from">From Date</label>
+                <input type="date" class="form-control" name="date_from" id="date_from" value="{{ date_from }}"
+                    required>
+            </div>
+
+            <div class="filter-group">
+                <label for="date_to">To Date</label>
+                <input type="date" class="form-control" name="date_to" id="date_to" value="{{ date_to }}" required>
+            </div>
+        </div>
+
+        <!-- Machine Group Filter -->
+        <div class="filter-row">
+            <div class="filter-group">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label>Machine Groups</label>
+                    <div>
+                        <button type="button" class="select-all-btn" onclick="selectAllGroups()">Select All</button>
+                        <button type="button" class="select-all-btn" onclick="deselectAllGroups()">Deselect All</button>
+                    </div>
+                </div>
+                <div class="multi-select" id="groupsSelect">
+                    {% for group in all_groups %}
+                    <div class="multi-select-option">
+                        <label>
+                            <input type="checkbox" name="groups" value="{{ group.code }}" {% if group.code in selected_groups %}checked{% endif %} onchange="updateMachineList()">
+                            {{ group.code }} - {{ group.name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Machine Filter -->
+            <div class="filter-group">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label>Machines</label>
+                    <div>
+                        <button type="button" class="select-all-btn" onclick="selectAllMachines()">Select All</button>
+                        <button type="button" class="select-all-btn" onclick="deselectAllMachines()">Deselect
+                            All</button>
+                    </div>
+                </div>
+                <div class="multi-select" id="machinesSelect">
+                    {% for machine in all_machines %}
+                    <div class="multi-select-option" data-group="{{ machine.group.code }}">
+                        <label>
+                            <input type="checkbox" name="machines" value="{{ machine.code }}" {% if machine.code in selected_machines %}checked{% endif %}>
+                            {{ machine.code }} - {{ machine.name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Display Mode -->
+            <div class="filter-group">
+                <label>Display Mode</label>
+                <div class="display-mode-buttons">
+                    <button type="button" class="display-mode-btn {% if display_mode == 'status' %}active{% endif %}"
+                        onclick="setDisplayMode('status')">
+                        Status Only
+                    </button>
+                    <button type="button" class="display-mode-btn {% if display_mode == 'detail' %}active{% endif %}" onclick="setDisplayMode('detail')">
+                        Detail Only
+                    </button>
+                    <button type="button" class="display-mode-btn {% if display_mode == 'both' %}active{% endif %}" onclick="setDisplayMode('both')">
+                        Both
+                    </button>
+                </div>
+                <input type="hidden" name="display_mode" id="displayModeInput" value="{{ display_mode }}">
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary-suritex">
+                <span class="material-symbols-outlined" style="font-size: 18px;">filter_alt</span>
+                Apply Filters
+            </button>
+            <button type="button" class="btn btn-outline-secondary rounded-pill" onclick="resetFilters()">
+                <span class="material-symbols-outlined" style="font-size: 18px;">restart_alt</span>
+                Reset
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Table -->
+<div class="snapshot-table-container">
+    <div class="snapshot-table-wrapper">
+        <table class="snapshot-table">
+            <thead>
+                <tr>
+                    <th class="sticky-col">Timestamp</th>
+                    {% for machine in machine_list %}
+                    {% if display_mode == 'both' %}
+                    <th colspan="2">{{ machine.code }}</th>
+                    {% else %}
+                    <th>{{ machine.code }}</th>
+                    {% endif %}
+                    {% endfor %}
+                    <th>Total Steam<br><small>(kg/h)</small></th>
+                    <th>Δ Steam</th>
+                    <th>Total HTO<br><small>(cal)</small></th>
+                    <th>Δ HTO</th>
+                </tr>
+                {% if display_mode == 'both' %}
+                <tr>
+                    <th class="sticky-col"></th>
+                    {% for machine in machine_list %}
+                    <th style="font-size: 0.7rem;">Status</th>
+                    <th style="font-size: 0.7rem;">Detail</th>
+                    {% endfor %}
+                    <th colspan="4"></th>
+                </tr>
+                {% endif %}
+            </thead>
+            <tbody>
+                {% for row in page_obj %}
+                <tr>
+                    <td class="sticky-col">{{ row.timestamp|date:"Y-m-d H:i" }}</td>
+                    {% for machine_info in row.machine_data %}
+                    {% if display_mode == 'status' %}
+                    <td>
+                        <span class="status-badge status-{{ machine_info.status|lower|default:'offline' }}">
+                            {{ machine_info.status|default:"-" }}
+                        </span>
+                    </td>
+                    {% elif display_mode == 'detail' %}
+                    <td>
+                        {% if machine_info.detail %}
+                        <span class="status-badge status-{{ machine_info.detail|lower }}">
+                            {{ machine_info.detail }}
+                        </span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    {% else %} {# both #}
+                    <td>
+                        <span class="status-badge status-{{ machine_info.status|lower|default:'offline' }}">
+                            {{ machine_info.status|default:"-" }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if machine_info.detail %}
+                        <span class="status-badge status-{{ machine_info.detail|lower }}">
+                            {{ machine_info.detail }}
+                        </span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    {% endfor %}
+                    <td><strong>{{ row.total_steam|floatformat:1 }}</strong></td>
+                    <td
+                        class="{% if row.delta_steam > 0 %}delta-positive{% elif row.delta_steam < 0 %}delta-negative{% else %}delta-zero{% endif %}">
+                        {% if row.delta_steam is not None %}
+                        {% if row.delta_steam > 0 %}
+                        +{{ row.delta_steam|floatformat:1 }} ▲
+                        {% elif row.delta_steam < 0 %} {{ row.delta_steam|floatformat:1 }} ▼ {% else %} 0.0 {% endif %}
+                            {% else %} - {% endif %} </td>
+                    <td><strong>{{ row.total_hto|floatformat:1 }}</strong></td>
+                    <td
+                        class="{% if row.delta_hto > 0 %}delta-positive{% elif row.delta_hto < 0 %}delta-negative{% else %}delta-zero{% endif %}">
+                        {% if row.delta_hto is not None %}
+                        {% if row.delta_hto > 0 %}
+                        +{{ row.delta_hto|floatformat:1 }} ▲
+                        {% elif row.delta_hto < 0 %} {{ row.delta_hto|floatformat:1 }} ▼ {% else %} 0.0 {% endif %} {% else %} - {% endif %} </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="100" class="text-center py-5">
+                        <div class="text-muted">
+                            <span class="material-symbols-outlined"
+                                style="font-size: 48px; opacity: 0.3;">search_off</span>
+                            <h5 class="mt-3">No snapshot data found for the selected filters</h5>
+
+                            {% if first_snapshot_date and last_snapshot_date %}
+                            <p class="mb-2">
+                                <strong>Available data range:</strong>
+                                {{ first_snapshot_date }} to {{ last_snapshot_date }}
+                            </p>
+                            {% endif %}
+
+                            <p class="small">Try adjusting your filters:</p>
+                            <ul class="list-unstyled small">
+                                <li>• Change the date range to match available data</li>
+                                <li>• Try a different interval (1, 5, or 15 minutes)</li>
+                                <li>• Select different machine groups or machines</li>
+                                {% if not first_snapshot_date %}
+                                <li class="text-danger">• <strong>No snapshot data in database - run log_minute_history
+                                        command</strong></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted">
+        Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} snapshots
+    </div>
+    <nav>
+        <ul class="pagination mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                    href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item"><a
+                    class="page-link" href="?{{ request.GET.urlencode }}&page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+<script>
+    // Interval selection - renamed to avoid conflict with built-in setInterval
+    function setIntervalValue(value) {
+        document.getElementById('intervalInput').value = value;
+        document.querySelectorAll('.interval-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    // Display mode selection
+    function setDisplayMode(mode) {
+        document.getElementById('displayModeInput').value = mode;
+        document.querySelectorAll('.display-mode-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    // Group selection
+    function selectAllGroups() {
+        document.querySelectorAll('#groupsSelect input[type="checkbox"]').forEach(cb => cb.checked = true);
+        updateMachineList();
+    }
+
+    function deselectAllGroups() {
+        document.querySelectorAll('#groupsSelect input[type="checkbox"]').forEach(cb => cb.checked = false);
+        updateMachineList();
+    }
+
+    // Machine selection
+    function selectAllMachines() {
+        const visibleMachines = document.querySelectorAll('#machinesSelect .multi-select-option:not([style*="display: none"]) input[type="checkbox"]');
+        visibleMachines.forEach(cb => cb.checked = true);
+    }
+
+    function deselectAllMachines() {
+        document.querySelectorAll('#machinesSelect input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+
+    // Update machine list based on selected groups
+    function updateMachineList() {
+        const selectedGroups = Array.from(document.querySelectorAll('#groupsSelect input[type="checkbox"]:checked')).map(cb => cb.value);
+
+        const machineOptions = document.querySelectorAll('#machinesSelect .multi-select-option');
+
+        if (selectedGroups.length === 0) {
+            // Show all machines if no group selected
+            machineOptions.forEach(opt => opt.style.display = '');
+        } else {
+            // Show only machines from selected groups
+            machineOptions.forEach(opt => {
+                const machineGroup = opt.dataset.group;
+                opt.style.display = selectedGroups.includes(machineGroup) ? '' : 'none';
+
+                // Uncheck hidden machines
+                if (!selectedGroups.includes(machineGroup)) {
+                    opt.querySelector('input').checked = false;
+                }
+            });
+        }
+    }
+
+    // Reset filters
+    function resetFilters() {
+        window.location.href = '{% url "snapshot_history" %}';
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function () {
+        updateMachineList();
+
+        // Table hover effects
+        const table = document.querySelector('.snapshot-table');
+        if (table) {
+            // Column hover
+            const cells = table.querySelectorAll('td, th');
+
+            cells.forEach(cell => {
+                cell.addEventListener('mouseenter', function () {
+                    const cellIndex = Array.from(this.parentElement.children).indexOf(this);
+                    highlightColumn(cellIndex);
+                });
+
+                cell.addEventListener('mouseleave', function () {
+                    clearColumnHighlight();
+                });
+            });
+
+            // Row hover for tbody
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.addEventListener('mouseenter', function () {
+                    this.classList.add('row-hover');
+                });
+
+                row.addEventListener('mouseleave', function () {
+                    this.classList.remove('row-hover');
+                });
+            });
+        }
+    });
+
+    function highlightColumn(index) {
+        const table = document.querySelector('.snapshot-table');
+        const rows = table.querySelectorAll('tr');
+
+        rows.forEach(row => {
+            const cell = row.children[index];
+            if (cell) {
+                cell.classList.add('column-hover');
+            }
+        });
+    }
+
+    function clearColumnHighlight() {
+        const highlighted = document.querySelectorAll('.column-hover');
+        highlighted.forEach(cell => cell.classList.remove('column-hover'));
+    }
+</script>
+
+{% endblock %}

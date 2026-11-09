@@ -1,0 +1,1176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Home - Koordinator Lapangan | Suritex Factory{% endblock %}
+
+{% block header_title %}Home - Koordinator Lapangan{% endblock %}
+{% block header_subtitle %}Monitoring shift operasional dan status mesin real-time{% endblock %}
+
+{% block content %}
+<style>
+    /* ==========================================================================
+       HOME KORLAP - INDUSTRIAL IOT CARD LAYOUT (DARK TECH PROFILE STYLE)
+       ========================================================================== */
+    .korlap-container {
+        max-width: 1360px;
+        margin: 0 auto;
+        padding-bottom: 5rem;
+    }
+
+    /* 1. Header Glance Bar (Dark Glassmorphism) */
+    .glance-bar {
+        background: #141824;
+        border: 1px solid #232b3d;
+        border-radius: 1rem;
+        padding: 0.9rem 1.25rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        margin-bottom: 1rem;
+        color: #f8fafc;
+    }
+
+    .kpi-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.8rem;
+        border-radius: 50rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .kpi-chip-steam {
+        background: rgba(30, 58, 138, 0.4);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+    .kpi-chip-hto {
+        background: rgba(124, 45, 18, 0.4);
+        color: #fdba74;
+        border: 1px solid rgba(249, 115, 22, 0.4);
+    }
+
+    /* 2. Sticky Toolbar (Search & Filter Chips) */
+    .filter-toolbar {
+        position: sticky;
+        top: 0.5rem;
+        z-index: 95;
+        background: rgba(13, 17, 26, 0.94);
+        backdrop-filter: blur(12px);
+        padding: 0.6rem 0;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid #202738;
+    }
+
+    .search-input-wrap {
+        position: relative;
+        margin-bottom: 0.5rem;
+    }
+    .search-input-wrap .search-icon {
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        font-size: 18px;
+        pointer-events: none;
+    }
+    .search-input-wrap input {
+        width: 100%;
+        padding-left: 2.4rem;
+        padding-right: 2rem;
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+        border-radius: 50rem;
+        border: 1px solid #283147;
+        font-size: 0.85rem;
+        background: #151924;
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        transition: all 0.15s ease;
+    }
+    .search-input-wrap input:focus {
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+        outline: none;
+        background: #1a2030;
+    }
+    .search-input-wrap .clear-btn {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #64748b;
+        font-size: 16px;
+        cursor: pointer;
+        display: none;
+        padding: 0;
+    }
+
+    .filter-chips-scroll {
+        display: flex;
+        gap: 0.4rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+        scrollbar-width: none;
+    }
+    .filter-chips-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .filter-chip-btn {
+        border: 1px solid #283147;
+        background: #141824;
+        color: #94a3b8;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.3rem 0.75rem;
+        border-radius: 50rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .filter-chip-btn:hover {
+        background: #1e2436;
+        color: #ffffff;
+        border-color: #3b4763;
+    }
+    .filter-chip-btn.active {
+        background: #38bdf8;
+        color: #0b1120;
+        border-color: #38bdf8;
+        font-weight: 700;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+    }
+    .filter-chip-btn .chip-count {
+        font-size: 0.7rem;
+        opacity: 0.9;
+    }
+
+    .jump-link {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.2rem 0.55rem;
+        border-radius: 0.4rem;
+        background: #192032;
+        color: #94a3b8;
+        border: 1px solid #28334d;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.15s;
+    }
+    .jump-link:hover {
+        background: #232c45;
+        color: #ffffff;
+        border-color: #38bdf8;
+    }
+
+    /* 3. Group Section */
+    .group-section {
+        margin-bottom: 1.5rem;
+    }
+    .group-header {
+        padding: 0.5rem 0.25rem 0.75rem 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .group-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #f1f5f9;
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+
+    /* 4. Industrial Machine Card Grid */
+    .machine-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 0.95rem;
+    }
+
+    /* ==========================================================================
+       THE INDUSTRIAL IOT PROFILE CARD (JET-11 REFERENCE LAYOUT)
+       ========================================================================== */
+    .industrial-card {
+        background: #151924;
+        border: 1px solid #232a3d;
+        border-radius: 1rem;
+        padding: 1rem 1.15rem;
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+    .industrial-card:hover {
+        transform: translateY(-2px);
+        border-color: #384260;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Status Left Accent Bar */
+    .card-border-heat { border-left: 5px solid #ef4444; }
+    .card-border-steady { border-left: 5px solid #f59e0b; }
+    .card-border-cool { border-left: 5px solid #38bdf8; }
+    .card-border-running { border-left: 5px solid #10b981; }
+    .card-border-off { border-left: 5px solid #64748b; }
+    .card-border-nosignal { border-left: 5px solid #f97316; }
+
+    /* 1. Header: Machine Name & Status */
+    .card-head-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+    .machine-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .machine-name-text {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+    }
+    .machine-group-pill {
+        font-size: 0.68rem;
+        font-weight: 700;
+        font-family: monospace;
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.35rem;
+        background: #1f2537;
+        color: #94a3b8;
+        border: 1px solid #2d364e;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+    .batch-subtext {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        margin-top: 0.2rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
+    }
+
+    /* Status Pill in Header (ALKALI DOSING style) */
+    .status-pill-head {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 0.25rem 0.65rem;
+        border-radius: 50rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        flex-shrink: 0;
+        line-height: 1.2;
+    }
+    .pill-heat {
+        background: rgba(239, 68, 68, 0.18);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .pill-steady {
+        background: rgba(245, 158, 11, 0.18);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .pill-cool {
+        background: rgba(56, 189, 248, 0.18);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .pill-running {
+        background: rgba(16, 185, 129, 0.18);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .pill-off {
+        background: rgba(100, 116, 139, 0.18);
+        color: #94a3b8;
+        border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+    .pill-nosignal {
+        background: rgba(249, 115, 22, 0.18);
+        color: #fb923c;
+        border: 1px solid rgba(249, 115, 22, 0.4);
+    }
+
+    .pulse-dot-heat {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #ef4444;
+        animation: pulse-heat 1.5s infinite;
+    }
+    @keyframes pulse-heat {
+        0% { transform: scale(0.9); opacity: 1; }
+        50% { transform: scale(1.3); opacity: 0.7; }
+        100% { transform: scale(0.9); opacity: 1; }
+    }
+
+    /* 2. Middle Strip (Kain, Order & Program) */
+    .mid-info-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.74rem;
+        color: #cbd5e1;
+        padding: 0.3rem 0.55rem;
+        background: #10131d;
+        border-radius: 0.45rem;
+        border: 1px solid #1c2233;
+    }
+    .dot-cyan {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #38bdf8;
+        display: inline-block;
+        margin-right: 0.4rem;
+        flex-shrink: 0;
+    }
+
+    /* 3. INSET METRICS & PROFILE BOX (The 3-column block) */
+    .inset-metrics-box {
+        background: #0d1017;
+        border: 1px solid #1c2232;
+        border-radius: 0.75rem;
+        padding: 0.65rem 0.8rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1.25fr;
+        gap: 0.65rem;
+        align-items: center;
+    }
+
+    .metric-col {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .metric-col-chart {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .metric-label {
+        font-size: 0.64rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-family: monospace;
+        margin-bottom: 0.15rem;
+        line-height: 1;
+    }
+
+    .metric-value-temp {
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: #ffffff;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+        display: flex;
+        align-items: baseline;
+        gap: 2px;
+    }
+    .metric-value-temp .unit {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .metric-value-grad {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #38bdf8;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+    }
+    .grad-rising { color: #f87171 !important; }
+    .grad-falling { color: #60a5fa !important; }
+    .grad-flat { color: #94a3b8 !important; }
+
+    .metric-subtext {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin-top: 0.15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .subtext-heat { color: #f87171; }
+    .subtext-steady { color: #38bdf8; }
+    .subtext-cool { color: #60a5fa; }
+    .subtext-running { color: #34d399; }
+    .subtext-off { color: #64748b; }
+
+    .ramp-chart-wrap {
+        width: 100%;
+        max-width: 130px;
+        height: 38px;
+    }
+    .ramp-svg {
+        width: 100%;
+        height: 100%;
+    }
+    .ramp-subtext {
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: #94a3b8;
+        font-family: monospace;
+        margin-top: 0.15rem;
+        text-align: right;
+        white-space: nowrap;
+        letter-spacing: 0.02em;
+    }
+
+    /* 4. Footer Strip & Linear Progress Bar */
+    .card-footer-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.72rem;
+        color: #94a3b8;
+        margin-top: -0.1rem;
+    }
+    .card-bottom-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        transition: width 0.3s ease;
+        border-radius: 0 2px 0 0;
+    }
+
+    /* Empty search state */
+    .empty-search-state {
+        display: none;
+        text-align: center;
+        padding: 3rem 1rem;
+        background: #141824;
+        border: 1px dashed #283147;
+        border-radius: 1rem;
+        color: #94a3b8;
+    }
+
+    /* Responsif Mobile */
+    @media (max-width: 640px) {
+        .machine-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        .industrial-card {
+            padding: 0.85rem 0.95rem;
+        }
+        .inset-metrics-box {
+            grid-template-columns: 1fr 1fr 1.15fr;
+            gap: 0.4rem;
+            padding: 0.55rem 0.65rem;
+        }
+        .metric-value-temp {
+            font-size: 1.25rem;
+        }
+        .metric-value-grad {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<div class="korlap-container">
+    
+    <!-- 1. STICKY HEADER GLANCE (DARK TECH STYLE) -->
+    <div class="glance-bar">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-dark rounded-pill px-2.5 py-1 text-white border border-secondary" style="font-size: 0.75rem;">
+                        <span class="material-symbols-outlined align-middle" style="font-size: 14px;">schedule</span>
+                        {{ now|date:"d M Y · H:i" }}
+                    </span>
+                    <span class="fw-bold fs-6 text-white">{{ shift_name|default:operator_profile.shift.name|default:"Shift Lapangan" }}</span>
+                </div>
+                <div class="d-flex flex-wrap gap-1.5 mt-2">
+                    <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle" style="font-size: 0.75rem;">
+                        RUN {{ status_counts.running }}
+                    </span>
+                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.75rem;">
+                        HEAT {{ status_counts.heat }}
+                    </span>
+                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size: 0.75rem;">
+                        KEEP {{ status_counts.steady }}
+                    </span>
+                    <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.75rem;">
+                        COOL {{ status_counts.cool }}
+                    </span>
+                    <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size: 0.75rem;">
+                        MATI {{ status_counts.off }}
+                    </span>
+                    {% if status_counts.nosignal > 0 %}
+                    <span class="badge rounded-pill bg-orange-subtle text-orange border border-warning" style="font-size: 0.75rem; background: #ffedd5; color: #c2410c;">
+                        NO SIG {{ status_counts.nosignal }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Kondisi Vital Utilitas -->
+            <div class="d-flex align-items-center gap-2">
+                <div class="kpi-chip kpi-chip-steam" title="Tekanan Uap Utama Pabrik">
+                    <span class="material-symbols-outlined fs-6">speed</span>
+                    <span>Uap: <strong>{{ steam_pressure|default:"-" }}</strong> bar</span>
+                </div>
+                <div class="kpi-chip kpi-chip-hto" title="Suhu HTO Boiler">
+                    <span class="material-symbols-outlined fs-6">thermostat</span>
+                    <span>HTO: <strong>{{ oil_temp|default:"-" }}</strong> °C</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle p-1.5 text-white" onclick="location.reload()" title="Refresh Data">
+                    <span class="material-symbols-outlined fs-6 d-block">refresh</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. TOOLBAR: PENCARIAN CEPAT & FILTER CHIP INSTAN -->
+    <div class="filter-toolbar">
+        <!-- Input Pencarian Cepat -->
+        <div class="search-input-wrap">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" id="machineSearchInput" placeholder="Cari mesin, grup, atau nomor batch... (misal: JD_01, PRC, 145)" autocomplete="off">
+            <button type="button" class="clear-btn" id="clearSearchBtn" title="Hapus pencarian">
+                <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+            </button>
+        </div>
+
+        <!-- Filter Chips & Jump Shortcuts -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="filter-chips-scroll" id="filterChips">
+                <button type="button" class="filter-chip-btn active" data-filter="all">
+                    Semua <span class="chip-count">({{ total_machines }})</span>
+                </button>
+                <button type="button" class="filter-chip-btn" data-filter="heat">
+                    🔥 Heat <span class="chip-count">({{ status_counts.heat }})</span>
+                </button>
+                <button type="button" class="filter-chip-btn" data-filter="steady">
+                    🟡 Steady <span class="chip-count">({{ status_counts.steady }})</span>
+                </button>
+                <button type="button" class="filter-chip-btn" data-filter="cool">
+                    ❄️ Cool <span class="chip-count">({{ status_counts.cool }})</span>
+                </button>
+                <button type="button" class="filter-chip-btn" data-filter="running">
+                    🟢 Running <span class="chip-count">({{ status_counts.running }})</span>
+                </button>
+                <button type="button" class="filter-chip-btn" data-filter="off">
+                    ⚪ Mati <span class="chip-count">({{ status_counts.off }})</span>
+                </button>
+                {% if status_counts.nosignal > 0 %}
+                <button type="button" class="filter-chip-btn" data-filter="nosignal">
+                    📶 No Signal <span class="chip-count">({{ status_counts.nosignal }})</span>
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Lompat Cepat Grup -->
+            <div class="d-none d-lg-flex gap-1">
+                <span class="text-muted small align-self-center me-1" style="font-size: 0.72rem;">Lompat:</span>
+                {% for panel in group_panels %}
+                <a href="#group-panel-{{ forloop.counter }}" class="jump-link">{{ panel.code|default:panel.name|truncatechars:10 }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty Search State -->
+    <div id="emptySearchState" class="empty-search-state">
+        <span class="material-symbols-outlined fs-1 text-muted mb-2">search_off</span>
+        <h6 class="fw-bold mb-1 text-white">Tidak Ada Mesin yang Cocok</h6>
+        <p class="small text-muted mb-0">Coba kata kunci lain atau reset filter status di atas.</p>
+    </div>
+
+    <!-- 3. LIST MESIN PER GRUP (INDUSTRIAL IOT PROFILE CARD) -->
+    {% for panel in group_panels %}
+    <div class="group-section" id="group-panel-{{ forloop.counter }}" data-group-code="{{ panel.code }}" data-group-name="{{ panel.name }}">
+        <div class="group-header">
+            <div class="d-flex align-items-center gap-2">
+                <h6 class="group-title">{{ panel.name }}</h6>
+                <span class="machine-group-pill">{{ panel.code }}</span>
+            </div>
+            <span class="badge rounded-pill bg-dark text-muted border border-secondary" style="font-size: 0.75rem;">
+                <strong class="text-success">{{ panel.active_count }}</strong> / {{ panel.total_count }} Mesin Aktif
+            </span>
+        </div>
+
+        <div class="machine-grid">
+            {% for m in panel.machines %}
+            <div class="industrial-card card-border-{{ m.status|lower }}" 
+                 data-machine-id="{{ m.id }}"
+                 data-code="{{ m.code }}" 
+                 data-name="{{ m.name }}"
+                 data-display-title="{{ m.display_title }}"
+                 data-group-code="{{ m.group_code }}"
+                 data-status="{{ m.status|lower }}"
+                 data-active="{% if m.is_active %}true{% else %}false{% endif %}"
+                 data-batch="{% if m.batch_number %}{{ m.batch_number }}{% endif %}"
+                 onclick="openMachineDetail('{{ m.code|escapejs }}', '{{ m.name|escapejs }}', '{{ m.status|escapejs }}')">
+
+                <!-- BARIS 1: NAMA MESIN, GRUP, SUBTITLE BATCH & STATUS BADGE -->
+                <div class="card-head-row">
+                    <div>
+                        <div class="machine-heading">
+                            <span class="machine-name-text">{{ m.name }}</span>
+                            <span class="machine-group-pill">{{ m.group_code }}</span>
+                            {% if m.operation_mode == 'MANUAL' %}
+                            <span class="badge bg-dark text-info border border-info px-1.5 py-0.5" style="font-size: 0.62rem;">MANUAL</span>
+                            {% endif %}
+                        </div>
+                        <div class="batch-subtext" title="{{ m.batch_subtitle }}">
+                            {{ m.batch_subtitle }}
+                        </div>
+                    </div>
+
+                    <!-- Status Pill (ALKALI DOSING style) -->
+                    <span class="status-pill-head pill-{{ m.status|lower }}">
+                        {% if m.status == 'HEAT' %}
+                        <span class="pulse-dot-heat"></span>
+                        {% endif %}
+                        {{ m.status }}
+                    </span>
+                </div>
+
+                <!-- BARIS 2: STRIP INFORMASI KAIN / ORDER (Sage Green LOT 320 KG style) -->
+                <div class="mid-info-strip">
+                    <div class="d-flex align-items-center text-truncate">
+                        <span class="dot-cyan"></span>
+                        <span class="text-truncate">
+                            {% if m.artikel_kain %}
+                            Kain: <strong>{{ m.artikel_kain }}</strong>
+                            {% elif m.program_name %}
+                            Program: <strong>{{ m.program_name }}</strong>
+                            {% else %}
+                            Siap Produksi
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="font-monospace text-muted flex-shrink-0 ms-2" style="font-size: 0.7rem;">
+                        {% if m.nomor_order %}
+                        ORD: {{ m.nomor_order }}
+                        {% else %}
+                        MODE: {{ m.operation_mode }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- BARIS 3: INSET 3-COLUMN METRICS & RAMP PROFILE (GRAFIK DI SAMPING KANAN) -->
+                <div class="inset-metrics-box">
+                    
+                    <!-- Kolom 1: HOLD TEMP / SUHU AKTUAL -->
+                    <div class="metric-col">
+                        <span class="metric-label">HOLD TEMP</span>
+                        <div class="metric-value-temp">
+                            {% if m.temperature != None %}
+                            <span>{{ m.temperature }}</span><span class="unit">°C</span>
+                            {% else %}
+                            <span class="text-muted">---</span>
+                            {% endif %}
+                        </div>
+                        <span class="metric-subtext {{ m.status_subtext_class }}">
+                            {{ m.status_subtext }}
+                        </span>
+                    </div>
+
+                    <!-- Kolom 2: GRADIEN / LAJU & REAL HEAT -->
+                    <div class="metric-col">
+                        <span class="metric-label">GRADIEN & WAKTU</span>
+                        <div class="metric-value-grad {% if m.grad_direction == 'up' %}grad-rising{% elif m.grad_direction == 'down' %}grad-falling{% else %}grad-flat{% endif %}">
+                            {{ m.grad_display }}
+                        </div>
+                        <span class="metric-subtext text-muted" title="{{ m.time_badge }}">
+                            {{ m.time_badge|default:"-" }}
+                        </span>
+                    </div>
+
+                    <!-- Kolom 3: RAMP PROFILE / TREN SIKLUS (GRAFIK DI KANAN) -->
+                    <div class="metric-col-chart">
+                        <span class="metric-label">RAMP PROFILE</span>
+                        <div class="ramp-chart-wrap" title="Profil kurva suhu siklus">
+                            {% if m.chart.has_data %}
+                            <svg viewBox="0 0 120 38" class="ramp-svg" preserveAspectRatio="none">
+                                <path d="{{ m.chart.area }}" fill="{{ m.chart_fill }}" />
+                                <polyline fill="none" stroke="{{ m.chart_stroke }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="{{ m.chart.points }}" />
+                                <circle cx="{{ m.chart.last_x }}" cy="{{ m.chart.last_y }}" r="3" fill="{{ m.chart_stroke }}" stroke="#151924" stroke-width="1.5" />
+                            </svg>
+                            {% else %}
+                            <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="font-size: 0.65rem;">
+                                Standby
+                            </div>
+                            {% endif %}
+                        </div>
+                        <span class="ramp-subtext">{{ m.cycle_label }}</span>
+                    </div>
+
+                </div>
+
+                <!-- BARIS 4: FOOTER & AKSI CEPAT (SODA ASH CURVE style) -->
+                <div class="card-footer-strip">
+                    <div class="d-flex align-items-center gap-1.5 text-truncate">
+                        <span class="material-symbols-outlined" style="font-size: 14px; color: #38bdf8;">timer</span>
+                        <span class="text-truncate">
+                            <strong>{{ m.time_badge }}</strong>
+                            {% if m.time_subtext %}
+                            <span class="text-muted ms-0.5">({{ m.time_subtext }})</span>
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Tombol Toggle Khusus Mesin Manual atau Aksi Cepat -->
+                    {% if m.can_toggle %}
+                    <div onclick="event.stopPropagation()" class="flex-shrink-0">
+                        {% if m.status == 'RUNNING' %}
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0.5 px-2 fw-bold" style="font-size: 0.68rem;" onclick="toggleManual({{ m.id }}, 'stop', this)">
+                            Matikan
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-sm btn-success py-0.5 px-2 fw-bold text-white" style="font-size: 0.68rem;" onclick="toggleManual({{ m.id }}, 'running', this)">
+                            Nyalakan
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <span class="text-muted font-monospace" style="font-size: 0.68rem;">
+                        Detail &rarr;
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Bottom Linear Progress Line -->
+                <div class="card-bottom-progress" style="width: {{ m.progress_pct }}%; background: {{ m.chart_stroke }};"></div>
+
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<!-- MODAL DETAIL MESIN (Chart.js Interaktif) -->
+<div class="modal fade" id="machineDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow" style="background: #141824; border: 1px solid #232b3d; color: #ffffff;">
+            <div class="modal-header border-bottom py-3" style="border-color: #232b3d !important;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0 text-white" id="modalMachineName">Detail Mesin</h5>
+                    <small class="text-muted" id="modalMachineCode">Memuat...</small>
+                </div>
+                <div class="d-flex align-items-center gap-2 ms-auto me-2">
+                    <span id="modalStatus" class="badge bg-secondary px-3 py-1.5">OFF</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Ringkasan Suhu -->
+                <div class="row g-2 text-center mb-3">
+                    <div class="col-4">
+                        <div class="p-2 rounded-3 border" style="background: #0d1017; border-color: #1e2434 !important;">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Suhu Terkini</small>
+                            <span class="fs-4 fw-bold text-primary" id="modalCurrentTemp">-</span> <span class="small text-muted">°C</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded-3 border" style="background: #0d1017; border-color: #1e2434 !important;">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Suhu Maks</small>
+                            <span class="fs-4 fw-bold text-danger" id="modalMaxTemp">-</span> <span class="small text-muted">°C</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded-3 border" style="background: #0d1017; border-color: #1e2434 !important;">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Suhu Min</small>
+                            <span class="fs-4 fw-bold text-success" id="modalMinTemp">-</span> <span class="small text-muted">°C</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Range Selector (1j, 6j, 24j) -->
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="small text-muted fw-semibold">Rentang Tren:</span>
+                    <div class="btn-group btn-group-sm" role="group" id="modalRangeGroup">
+                        <button type="button" class="btn btn-outline-secondary py-0.5 px-2.5" data-hours="1">1 Jam</button>
+                        <button type="button" class="btn btn-secondary active py-0.5 px-2.5" data-hours="6">6 Jam</button>
+                        <button type="button" class="btn btn-outline-secondary py-0.5 px-2.5" data-hours="24">24 Jam</button>
+                    </div>
+                </div>
+
+                <!-- Canvas Grafik & Overlay State -->
+                <div style="height: 290px; position: relative;">
+                    <div id="modalLoadingOverlay" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 5; background: rgba(20, 24, 36, 0.85);">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        <small class="text-muted fw-semibold">Memuat data grafik...</small>
+                    </div>
+                    <div id="modalNoData" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                        <span class="material-symbols-outlined fs-2 mb-1">show_chart</span>
+                        <small>Tidak ada data log suhu dalam rentang waktu ini.</small>
+                    </div>
+                    <canvas id="modalChart"></canvas>
+                </div>
+            </div>
+            <div class="modal-footer border-top py-2 d-flex justify-content-between" style="border-color: #232b3d !important;">
+                <small class="text-muted" id="modalLastUpdate">Grafik realtime</small>
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'vendor/chartjs/chart.min.js' %}"></script>
+<script>
+    // --- STATE FILTER & SEARCH ---
+    let currentStatusFilter = 'all';
+    let currentSearchTerm = '';
+
+    const searchInput = document.getElementById('machineSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const emptyState = document.getElementById('emptySearchState');
+
+    function applyFilterAndSearch() {
+        const cards = document.querySelectorAll('.industrial-card');
+        let totalVisibleCards = 0;
+
+        cards.forEach(card => {
+            const cardStatus = card.dataset.status;
+            const cardName = (card.dataset.name || '').toLowerCase();
+            const cardCode = (card.dataset.code || '').toLowerCase();
+            const cardTitle = (card.dataset.displayTitle || '').toLowerCase();
+            const cardGroup = (card.dataset.groupCode || '').toLowerCase();
+            const cardBatch = (card.dataset.batch || '').toLowerCase();
+
+            // Status Match
+            let matchStatus = false;
+            if (currentStatusFilter === 'all') {
+                matchStatus = true;
+            } else if (currentStatusFilter === 'heat') {
+                matchStatus = (cardStatus === 'heat');
+            } else if (currentStatusFilter === 'steady') {
+                matchStatus = (cardStatus === 'steady');
+            } else if (currentStatusFilter === 'cool') {
+                matchStatus = (cardStatus === 'cool');
+            } else if (currentStatusFilter === 'running') {
+                matchStatus = (cardStatus === 'running');
+            } else if (currentStatusFilter === 'off') {
+                matchStatus = (cardStatus === 'off');
+            } else if (currentStatusFilter === 'nosignal') {
+                matchStatus = (cardStatus === 'nosignal');
+            }
+
+            // Search Match
+            let matchSearch = true;
+            if (currentSearchTerm) {
+                matchSearch = cardName.includes(currentSearchTerm) ||
+                              cardCode.includes(currentSearchTerm) ||
+                              cardTitle.includes(currentSearchTerm) ||
+                              cardGroup.includes(currentSearchTerm) ||
+                              cardBatch.includes(currentSearchTerm);
+            }
+
+            if (matchStatus && matchSearch) {
+                card.style.display = 'flex';
+                totalVisibleCards++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Sembunyikan grup jika tidak ada kartu yang lolos filter
+        document.querySelectorAll('.group-section').forEach(group => {
+            const visibleInGroup = group.querySelectorAll('.industrial-card[style="display: flex;"]').length;
+            const totalInGroup = group.querySelectorAll('.industrial-card').length;
+            if (visibleInGroup === 0 && totalInGroup > 0) {
+                group.style.display = 'none';
+            } else {
+                group.style.display = 'block';
+            }
+        });
+
+        // Empty Search State
+        if (totalVisibleCards === 0) {
+            emptyState.style.display = 'block';
+        } else {
+            emptyState.style.display = 'none';
+        }
+    }
+
+    // --- EVENT LISTENERS: FILTER CHIPS ---
+    document.querySelectorAll('#filterChips .filter-chip-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#filterChips .filter-chip-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentStatusFilter = this.dataset.filter;
+            applyFilterAndSearch();
+        });
+    });
+
+    // --- EVENT LISTENERS: SEARCH INPUT ---
+    searchInput.addEventListener('input', function() {
+        currentSearchTerm = this.value.trim().toLowerCase();
+        if (currentSearchTerm.length > 0) {
+            clearSearchBtn.style.display = 'block';
+        } else {
+            clearSearchBtn.style.display = 'none';
+        }
+        applyFilterAndSearch();
+    });
+
+    clearSearchBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        currentSearchTerm = '';
+        this.style.display = 'none';
+        searchInput.focus();
+        applyFilterAndSearch();
+    });
+
+    // --- TOGGLE MESIN MANUAL ---
+    async function toggleManual(machineId, targetAction, btn) {
+        btn.disabled = true;
+        const originalText = btn.textContent;
+        btn.textContent = '...';
+
+        try {
+            const resp = await fetch(`/api/v1/machines/manual/${machineId}/toggle`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!resp.ok) throw new Error('Gagal toggle');
+            setTimeout(() => { location.reload(); }, 300);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengubah status mesin manual.');
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // --- MODAL CHART DETAIL INTERAKTIF ---
+    let currentModalCode = '';
+    let currentModalHours = 6;
+    let modalChartInstance = null;
+
+    function setModalStatusBadge(status) {
+        const el = document.getElementById('modalStatus');
+        if (!el) return;
+        const st = (status || '').toUpperCase();
+        el.textContent = st || 'OFF';
+        if (st === 'HEAT') {
+            el.className = 'badge bg-danger text-white px-3 py-1.5';
+        } else if (st === 'STEADY') {
+            el.className = 'badge bg-warning text-dark px-3 py-1.5';
+        } else if (st === 'COOL') {
+            el.className = 'badge bg-primary text-white px-3 py-1.5';
+        } else if (st === 'RUNNING') {
+            el.className = 'badge bg-success text-white px-3 py-1.5';
+        } else if (st === 'NOSIGNAL') {
+            el.className = 'badge bg-warning text-dark px-3 py-1.5';
+        } else {
+            el.className = 'badge bg-secondary text-white px-3 py-1.5';
+        }
+    }
+
+    async function loadModalChartData(code, hours) {
+        currentModalHours = hours;
+        const overlay = document.getElementById('modalLoadingOverlay');
+        const noDataEl = document.getElementById('modalNoData');
+        if (overlay) overlay.classList.remove('d-none');
+        if (noDataEl) noDataEl.classList.add('d-none');
+
+        // Update active range button
+        document.querySelectorAll('#modalRangeGroup button').forEach(btn => {
+            if (parseInt(btn.dataset.hours) === hours) {
+                btn.className = 'btn btn-secondary active py-0.5 px-2.5';
+            } else {
+                btn.className = 'btn btn-outline-secondary py-0.5 px-2.5';
+            }
+        });
+
+        try {
+            const resp = await fetch(`/api/chart/${encodeURIComponent(code)}/?hours=${hours}`);
+            if (!resp.ok) throw new Error('Gagal memuat API');
+            const data = await resp.json();
+
+            if (data.status) {
+                setModalStatusBadge(data.status);
+            }
+
+            const labels = data.labels || data.timestamps || [];
+            const rawTemps = data.temperatures || [];
+            const validTemps = rawTemps.filter(t => t !== null && t !== undefined);
+
+            if (validTemps.length > 0) {
+                document.getElementById('modalCurrentTemp').textContent = validTemps[validTemps.length - 1].toFixed(1);
+                document.getElementById('modalMaxTemp').textContent = Math.max(...validTemps).toFixed(1);
+                document.getElementById('modalMinTemp').textContent = Math.min(...validTemps).toFixed(1);
+            } else if (data.current_temperature !== null && data.current_temperature !== undefined) {
+                document.getElementById('modalCurrentTemp').textContent = data.current_temperature.toFixed(1);
+                document.getElementById('modalMaxTemp').textContent = '-';
+                document.getElementById('modalMinTemp').textContent = '-';
+            } else {
+                document.getElementById('modalCurrentTemp').textContent = '-';
+                document.getElementById('modalMaxTemp').textContent = '-';
+                document.getElementById('modalMinTemp').textContent = '-';
+            }
+
+            document.getElementById('modalLastUpdate').textContent = `Terakhir diperbarui: ${new Date().toLocaleTimeString('id-ID')}`;
+
+            if (labels.length === 0 || validTemps.length === 0) {
+                if (noDataEl) noDataEl.classList.remove('d-none');
+                if (modalChartInstance) {
+                    modalChartInstance.destroy();
+                    modalChartInstance = null;
+                }
+                return;
+            }
+
+            const canvas = document.getElementById('modalChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (modalChartInstance) {
+                modalChartInstance.destroy();
+                modalChartInstance = null;
+            }
+
+            let strokeColor = '#38bdf8';
+            let bgColor = 'rgba(56, 189, 248, 0.1)';
+            const st = (data.status || '').toUpperCase();
+            if (st === 'HEAT') {
+                strokeColor = '#f87171';
+                bgColor = 'rgba(248, 113, 113, 0.15)';
+            } else if (st === 'STEADY') {
+                strokeColor = '#fbbf24';
+                bgColor = 'rgba(251, 191, 36, 0.15)';
+            } else if (st === 'COOL') {
+                strokeColor = '#38bdf8';
+                bgColor = 'rgba(56, 189, 248, 0.15)';
+            } else if (st === 'RUNNING') {
+                strokeColor = '#34d399';
+                bgColor = 'rgba(52, 211, 153, 0.15)';
+            }
+
+            modalChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `${data.name || code} (${data.unit || '°C'})`,
+                        data: rawTemps,
+                        borderColor: strokeColor,
+                        backgroundColor: bgColor,
+                        borderWidth: 2,
+                        pointRadius: labels.length > 60 ? 0 : 2,
+                        pointHoverRadius: 5,
+                        fill: true,
+                        tension: 0.25
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return `Suhu: ${ctx.parsed.y !== null ? ctx.parsed.y : '-'} °C`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { maxTicksLimit: 8, font: { size: 10 }, color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            font: { size: 10 },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function(v) { return v + '°'; }
+                            },
+                            suggestedMin: 20
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('Error loading chart:', e);
+            if (noDataEl) noDataEl.classList.remove('d-none');
+        } finally {
+            if (overlay) overlay.classList.add('d-none');
+        }
+    }
+
+    window.openMachineDetail = function(code, name, status) {
+        currentModalCode = code;
+        const modalEl = document.getElementById('machineDetailModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+
+        document.getElementById('modalMachineName').textContent = name;
+        document.getElementById('modalMachineCode').textContent = code;
+        setModalStatusBadge(status);
+
+        loadModalChartData(code, currentModalHours);
+    };
+
+    document.querySelectorAll('#modalRangeGroup button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const hours = parseInt(this.dataset.hours) || 6;
+            if (currentModalCode) {
+                loadModalChartData(currentModalCode, hours);
+            }
+        });
+    });
+
+    document.getElementById('machineDetailModal').addEventListener('hidden.bs.modal', function () {
+        if (modalChartInstance) {
+            modalChartInstance.destroy();
+            modalChartInstance = null;
+        }
+    });
+</script>
+{% endblock %}

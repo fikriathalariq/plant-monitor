@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+{% load static %}
+{% load performance_filters %}
+
+{% block header_title %}Machine Performance Summary{% endblock %}
+
+{% block header_subtitle %}
+  Real-time factory performance monitoring for {{ selected_month|date:"F" }} {{ selected_year }}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* --- DESKTOP STYLES (Default) --- */
+
+  .page-title {
+    font-size: 2rem;
+    letter-spacing: -0.02em;
+  }
+
+  .summary-card {
+    transition: all 0.3s ease;
+    border: 1px solid var(--suritex-border);
+    background: var(--suritex-surface-light);
+  }
+
+  .summary-card:hover {
+    border-color: rgba(249, 245, 6, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--suritex-text-main);
+    font-family: var(--bs-body-font-family);
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--suritex-text-muted);
+  }
+
+  /* Font default tabel untuk desktop */
+  .table-text {
+    font-size: 0.875rem; /* sktr 14px */
+    color: var(--suritex-text-main);
+  }
+
+  .table-header-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(249, 245, 6, 0.05);
+  }
+
+  /* --- MOBILE STYLES (HP) --- */
+  @media (max-width: 768px) {
+    /* Perkecil Judul Halaman */
+    .page-title {
+      font-size: 1.5rem;
+    }
+
+    /* Perkecil Angka di Kartu Summary */
+    .stat-value {
+      font-size: 1.35rem;
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+    }
+
+    /* Perkecil Text di dalam Tabel agar muat */
+    .table-text,
+    .table-text span,
+    .table-text div {
+      font-size: 0.75rem !important; /* sktr 12px */
+    }
+
+    .table-header-text {
+      font-size: 0.65rem;
+    }
+
+    /* Perkecil icon di tabel */
+    .table .material-symbols-outlined {
+      font-size: 16px !important;
+    }
+
+    /* Padding tabel diperkecil */
+    .table th,
+    .table td {
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+  <h1 class="fw-black mb-2 page-title">
+    Machine Performance Summary
+  </h1>
+  <p class="text-muted mb-0 small">
+    Real-time factory energy monitoring and process management dashboard.
+  </p>
+</div>
+
+<div class="card border-0 shadow-sm mb-4" style="border: 1px solid var(--suritex-border) !important;">
+  <div class="card-body p-4">
+    <form method="get" class="row g-3 align-items-end">
+
+      <div class="col-12 col-md-6 col-lg-3">
+        <label for="month" class="form-label fw-bold small" style="color: var(--suritex-text-main);">
+          Month
+        </label>
+        <select name="month" id="month" class="form-select form-select-sm" style="border-color: var(--suritex-border); background-color: var(--suritex-bg-light);">
+          {% for m_num, m_name in months %}
+            <option value="{{ m_num }}" {% if m_num == selected_month %}selected{% endif %}>
+              {{ m_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-md-6 col-lg-2">
+        <label for="year" class="form-label fw-bold small" style="color: var(--suritex-text-main);">
+          Year
+        </label>
+        <select name="year" id="year" class="form-select form-select-sm" style="border-color: var(--suritex-border); background-color: var(--suritex-bg-light);">
+          {% for y in years %}
+            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+              {{ y }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-md-6 col-lg-auto">
+        <button type="submit" class="btn btn-primary-suritex btn-sm d-flex align-items-center justify-content-center gap-2 w-100 w-lg-auto py-2">
+          <span class="material-symbols-outlined" style="font-size: 18px;">filter_list</span>
+          Apply Filters
+        </button>
+      </div>
+
+      <div class="col-12 col-md-6 col-lg-auto ms-lg-auto">
+        <a href="{% url 'machine_performance_summary' %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-2 w-100 w-lg-auto py-2">
+          <span class="material-symbols-outlined" style="font-size: 18px;">refresh</span>
+          Reset
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-2 g-md-3 mb-4">
+
+  <div class="col-6 col-md-3">
+    <div class="summary-card p-3 rounded-3 h-100">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <div class="stat-label">Total Batches</div>
+          <div class="stat-value text-primary">{{ global_stats.total_batches|default:"0" }}</div>
+        </div>
+        <div class="p-2 rounded d-none d-sm-block" style="background-color: rgba(249, 245, 6, 0.1);">
+          <span class="material-symbols-outlined" style="color: var(--suritex-primary); font-size: 20px;">inventory_2</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="summary-card p-3 rounded-3 h-100">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <div class="stat-label">Avg Efficiency</div>
+          <div class="stat-value">
+            {% if global_stats.avg_ideal_heating_time and global_stats.avg_real_heating_duration %}
+              {% with eff=global_stats.avg_ideal_heating_time|calc_efficiency:global_stats.avg_real_heating_duration %}
+                {% if eff %}
+                  {{ eff|floatformat:2 }}%
+                {% else %}
+                  -
+                {% endif %}
+              {% endwith %}
+            {% else %}
+              -
+            {% endif %}
+          </div>
+        </div>
+        <div class="p-2 rounded d-none d-sm-block" style="background-color: rgba(168, 85, 247, 0.1);">
+          <span class="material-symbols-outlined" style="color: #a855f7; font-size: 20px;">analytics</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="summary-card p-3 rounded-3 h-100">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <div class="stat-label">Avg Rise Time</div>
+          <div class="stat-value">
+            {% if global_stats.avg_real_heating_duration %}
+              {{ global_stats.avg_real_heating_duration|floatformat:1 }}
+              <span class="fs-6 text-muted">min</span>
+            {% else %}
+              -
+            {% endif %}
+          </div>
+        </div>
+        <div class="p-2 rounded d-none d-sm-block" style="background-color: rgba(245, 158, 11, 0.1);">
+          <span class="material-symbols-outlined" style="color: #f59e0b; font-size: 20px;">schedule</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="summary-card p-3 rounded-3 h-100">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <div class="stat-label">Avg Steam Temp</div>
+          <div class="stat-value">
+            {% if global_stats.avg_avg_steam_temp %}
+              {{ global_stats.avg_avg_steam_temp|floatformat:1 }}
+              <span class="fs-6 text-muted">°C</span>
+            {% else %}
+              -
+            {% endif %}
+          </div>
+        </div>
+        <div class="p-2 rounded d-none d-sm-block" style="background-color: rgba(239, 68, 68, 0.1);">
+          <span class="material-symbols-outlined" style="color: #ef4444; font-size: 20px;">thermostat</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border: 1px solid var(--suritex-border) !important;">
+
+  <div class="card-header bg-white border-bottom py-3 px-4" style="border-color: var(--suritex-border) !important;">
+    <h5 class="mb-0 fw-bold" style="color: var(--suritex-text-main);">Machine Details</h5>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead style="background-color: var(--suritex-bg-light); border-bottom: 2px solid var(--suritex-border);">
+          <tr class="text-uppercase table-header-text" style="color: var(--suritex-text-muted);">
+
+            <th class="ps-3 ps-md-4 py-3">
+              <a href="?month={{ selected_month }}&year={{ selected_year }}&sort={% if current_sort == 'code' %}-code{% else %}code{% endif %}"
+                 class="text-decoration-none d-flex align-items-center gap-1"
+                 style="color: var(--suritex-text-muted);">
+                Machine
+                {% if current_sort == 'code' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                {% elif current_sort == '-code' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+                {% endif %}
+              </a>
+            </th>
+
+            <th class="text-center py-3">
+              <a href="?month={{ selected_month }}&year={{ selected_year }}&sort={% if current_sort == 'total_batches' %}-total_batches{% else %}total_batches{% endif %}"
+                 class="text-decoration-none d-flex align-items-center justify-content-center gap-1"
+                 style="color: var(--suritex-text-muted);">
+                <span class="d-none d-md-inline">Batches</span>
+                <span class="d-md-none">Batch</span>
+                {% if current_sort == 'total_batches' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                {% elif current_sort == '-total_batches' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+                {% endif %}
+              </a>
+            </th>
+
+            <th class="text-end py-3">
+              <a href="?month={{ selected_month }}&year={{ selected_year }}&sort={% if current_sort == 'avg_heating_efficiency' %}-avg_heating_efficiency{% else %}avg_heating_efficiency{% endif %}"
+                 class="text-decoration-none d-flex align-items-center justify-content-end gap-1"
+                 style="color: var(--suritex-text-muted);">
+                <span class="d-none d-md-inline">Efficiency</span>
+                <span class="d-md-none">Eff</span>
+                {% if current_sort == 'avg_heating_efficiency' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                {% elif current_sort == '-avg_heating_efficiency' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+                {% endif %}
+              </a>
+            </th>
+
+            <th class="text-end py-3">
+              <a href="?month={{ selected_month }}&year={{ selected_year }}&sort={% if current_sort == 'avg_real_heating_duration' %}-avg_real_heating_duration{% else %}avg_real_heating_duration{% endif %}"
+                 class="text-decoration-none d-flex align-items-center justify-content-end gap-1"
+                 style="color: var(--suritex-text-muted);">
+                <span class="d-none d-md-inline">Rise Time</span>
+                <span class="d-md-none">Rise</span>
+                {% if current_sort == 'avg_real_heating_duration' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                {% elif current_sort == '-avg_real_heating_duration' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+                {% endif %}
+              </a>
+            </th>
+
+            <th class="text-end py-3">
+              <a href="?month={{ selected_month }}&year={{ selected_year }}&sort={% if current_sort == 'avg_heating_duration' %}-avg_heating_duration{% else %}avg_heating_duration{% endif %}"
+                 class="text-decoration-none d-flex align-items-center justify-content-end gap-1"
+                 style="color: var(--suritex-text-muted);">
+                <span class="d-none d-md-inline">Heat Dur</span>
+                <span class="d-md-none">Heat</span>
+                {% if current_sort == 'avg_heating_duration' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                {% elif current_sort == '-avg_heating_duration' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+                {% endif %}
+              </a>
+            </th>
+
+            <th class="text-end py-3">
+              <a href="?month={{ selected_month }}&year={{ selected_year }}&sort={% if current_sort == 'avg_max_temp' %}-avg_max_temp{% else %}avg_max_temp{% endif %}"
+                 class="text-decoration-none d-flex align-items-center justify-content-end gap-1"
+                 style="color: var(--suritex-text-muted);">
+                <span class="d-none d-md-inline">Max Temp</span>
+                <span class="d-md-none">Max T</span>
+                {% if current_sort == 'avg_max_temp' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                {% elif current_sort == '-avg_max_temp' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+                {% endif %}
+              </a>
+            </th>
+
+            <th class="text-end pe-3 pe-md-4 py-3">
+              <a href="?month={{ selected_month }}&year={{ selected_year }}&sort={% if current_sort == 'avg_avg_steam_pressure' %}-avg_avg_steam_pressure{% else %}avg_avg_steam_pressure{% endif %}"
+                 class="text-decoration-none d-flex align-items-center justify-content-end gap-1"
+                 style="color: var(--suritex-text-muted);">
+                <span class="d-none d-md-inline">Steam Press</span>
+                <span class="d-md-none">Bar</span>
+                {% if current_sort == 'avg_avg_steam_pressure' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                {% elif current_sort == '-avg_avg_steam_pressure' %}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+                {% endif %}
+              </a>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody style="border-top: 2px solid var(--suritex-border);">
+          {% for machine in machines %}
+            <tr style="border-bottom: 1px solid var(--suritex-border);">
+
+              <td class="ps-3 ps-md-4 py-3">
+                <div class="d-flex align-items-center gap-2 gap-md-3">
+                  <div class="d-none d-md-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: var(--suritex-bg-light);">
+                    <span class="material-symbols-outlined" style="color: var(--suritex-text-muted);">precision_manufacturing</span>
+                  </div>
+                  <div>
+                    <div class="fw-bold table-text" style="color: var(--suritex-text-main);">
+                      {{ machine.code }}
+                    </div>
+                    <div class="small text-muted d-none d-sm-block">{{ machine.name }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <td class="text-center py-3">
+                <span class="fw-bold table-text" style="color: var(--suritex-text-main);">
+                  {{ machine.total_batches }}
+                </span>
+              </td>
+
+              <td class="text-end py-3">
+                {% if machine.avg_ideal_heating_time and machine.avg_real_heating_duration %}
+                  {% with eff=machine.avg_ideal_heating_time|calc_efficiency:machine.avg_real_heating_duration %}
+                    {% if eff %}
+                      <div class="d-flex align-items-center justify-content-end gap-2">
+                        <span class="fw-bold table-text" style="color: var(--suritex-text-main);">
+                          {{ eff|floatformat:2 }}%
+                        </span>
+                        <div class="d-none d-lg-block" style="width: 4rem; height: 0.375rem; background-color: var(--suritex-bg-light); border-radius: 9999px; overflow: hidden;">
+                          <div class="h-100 {% if eff >= 80 %}bg-success{% elif eff >= 60 %}bg-warning{% else %}bg-danger{% endif %}"
+                               style="width: {% widthratio eff 100 100 %}%; border-radius: 9999px;">
+                          </div>
+                        </div>
+                      </div>
+                    {% else %}
+                      <span class="text-muted table-text">-</span>
+                    {% endif %}
+                  {% endwith %}
+                {% else %}
+                  <span class="text-muted table-text">-</span>
+                {% endif %}
+              </td>
+
+              <td class="text-end py-3 table-text" style="font-family: monospace; color: var(--suritex-text-main);">
+                {% if machine.avg_real_heating_duration %}
+                  {{ machine.avg_real_heating_duration|floatformat:1 }}m
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+
+              <td class="text-end py-3 table-text" style="font-family: monospace; color: var(--suritex-text-main);">
+                {% if machine.avg_heating_duration %}
+                  {{ machine.avg_heating_duration|floatformat:1 }}m
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+
+              <td class="text-end py-3 table-text" style="font-family: monospace; color: var(--suritex-text-main);">
+                {% if machine.avg_max_temp %}
+                  {{ machine.avg_max_temp|floatformat:1 }}°
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+
+              <td class="text-end pe-3 pe-md-4 py-3 table-text" style="font-family: monospace; color: var(--suritex-text-main);">
+                {% if machine.avg_avg_steam_pressure %}
+                  {{ machine.avg_avg_steam_pressure|floatformat:2 }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+            </tr>
+
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <span class="material-symbols-outlined d-block mb-2" style="font-size: 3rem; color: var(--suritex-text-muted);">
+                  inbox
+                </span>
+                <p class="text-muted mb-0 small">No data found for selected period.</p>
+              </td>
+            </tr>
+          {% endfor %}
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

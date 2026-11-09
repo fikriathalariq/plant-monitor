@@ -1,0 +1,79 @@
+name: Plant Monitor CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  backend-tests:
+    name: Backend Unit Tests & Coverage (Django 5.x + Ninja)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install coverage
+
+      - name: Run Backend Unit Tests with In-Memory Mocking
+        env:
+          DJANGO_SETTINGS_MODULE: plant_monitor.settings
+          SECRET_KEY: ci-test-secret-key-plant-monitor-enterprise-12345
+          DEBUG: 'True'
+          ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          coverage run --rcfile=.coveragerc manage.py test \
+            monitoring.tests.test_pinn_engine \
+            monitoring.tests.test_electricity_metrics \
+            monitoring.tests.test_admin_and_routes \
+            monitoring.tests.test_root_entrypoints \
+            monitoring.tests.test_batch_analyzer \
+            monitoring.tests.test_modbus_and_telemetry \
+            monitoring.tests.test_steam_and_shift_calc \
+            monitoring.tests.test_production_reports \
+            monitoring.tests.test_security_and_rbac \
+            monitoring.tests.test_ninja_api
+
+      - name: Generate Coverage Report
+        run: |
+          coverage report --rcfile=.coveragerc
+
+  frontend-tests:
+    name: Frontend Unit Tests & Production Build (React 18 + Vite)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Run Frontend Unit Tests (Node.js Test Runner)
+        run: npm test
+
+      - name: Verify Frontend Production Build (Vite)
+        run: npm run build

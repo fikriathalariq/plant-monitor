@@ -1,0 +1,2650 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Monitoring Pabrik{% endblock %}
+
+{% block header_title %}Dashboard Monitoring Energi{% endblock %}
+{% block header_subtitle %}Overview of factory performance and machine status{% endblock %}
+
+{% block content %}
+<style>
+    /* --- Modern Dashboard Styles --- */
+
+    /* Profile Header */
+    .profile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem 0 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .profile-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid var(--suritex-primary);
+        background: linear-gradient(135deg, #f9f506 0%, #e3df05 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--suritex-text-main);
+        position: relative;
+    }
+
+    .profile-avatar::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        background: #10b981;
+        border-radius: 50%;
+        border: 2px solid #fff;
+    }
+
+    .greeting-text {
+        font-size: 0.875rem;
+        color: var(--suritex-text-muted);
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+    .user-name {
+        font-size: 1.125rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--suritex-text-main);
+    }
+
+    .date-time-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        color: var(--suritex-text-muted);
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    .notification-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid var(--suritex-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .notification-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Status Overview Card */
+    .status-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1rem;
+        background: #fff;
+        border: 1px solid var(--suritex-border);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        padding: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 50rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-badge.success {
+        background: #d1fae5;
+        color: #047857;
+    }
+
+    .status-glow {
+        position: absolute;
+        right: -2rem;
+        bottom: -2rem;
+        width: 8rem;
+        height: 8rem;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(249, 245, 6, 0.15) 0%, transparent 70%);
+        filter: blur(40px);
+        pointer-events: none;
+    }
+
+    /* ===== KPI STAT BAR (reference style) ===== */
+
+    /* Outer card container */
+    .kpi-stat-bar {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        background: #fff;
+        border-radius: 1rem;
+        border: 1px solid var(--suritex-border);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .kpi-stat-bar {
+            grid-template-columns: repeat(5, 1fr);
+        }
+    }
+
+    /* Each stat cell */
+    .kpi-stat-item {
+        padding: 1rem 1.1rem;
+        position: relative;
+        transition: background 0.15s ease;
+    }
+
+    .kpi-stat-item:hover {
+        background: #fafafa;
+    }
+
+    /* Dividers: right border on all cells except last-in-row */
+    /* Mobile 2-col: right border on odd items */
+    .kpi-stat-item:nth-child(odd) {
+        border-right: 1px solid var(--suritex-border);
+    }
+
+    /* Mobile 2-col: bottom border on first row */
+    .kpi-stat-item:nth-child(-n+2) {
+        border-bottom: 1px solid var(--suritex-border);
+    }
+
+    /* 5th item (full width on mobile) */
+    .kpi-stat-item:nth-child(5) {
+        grid-column: span 2;
+        border-right: none;
+        border-top: 1px solid var(--suritex-border);
+    }
+
+    @media (min-width: 768px) {
+        .kpi-stat-item {
+            border-right: 1px solid var(--suritex-border);
+            border-bottom: none !important;
+            border-top: none !important;
+        }
+
+        .kpi-stat-item:last-child {
+            border-right: none;
+        }
+
+        .kpi-stat-item:nth-child(5) {
+            grid-column: span 1;
+        }
+    }
+
+    /* Label */
+    .kpi-stat-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #9ca3af;
+        margin-bottom: 0.3rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Value row */
+    .kpi-stat-value-row {
+        display: flex;
+        align-items: baseline;
+        gap: 3px;
+        margin-bottom: 0.3rem;
+    }
+
+    .kpi-stat-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1;
+    }
+
+    @media (max-width: 767px) {
+        .kpi-stat-value {
+            font-size: 1.3rem;
+        }
+    }
+
+    .kpi-stat-unit {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    /* Trend / sub-info line */
+    .kpi-stat-sub {
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .kpi-sub-pos {
+        color: #059669;
+    }
+
+    .kpi-sub-neg {
+        color: #dc2626;
+    }
+
+    .kpi-sub-neu {
+        color: #6b7280;
+    }
+
+    .kpi-sub-blue {
+        color: #2563eb;
+    }
+
+    /* Legacy kpi-value — still referenced in JS */
+    .kpi-value {
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.1;
+        color: var(--suritex-text-main);
+    }
+
+    .trend-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.25rem 0.5rem;
+        border-radius: 50rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .trend-up {
+        background-color: #d1fae5;
+        color: #047857;
+    }
+
+    .trend-down {
+        background-color: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .trend-neutral {
+        background-color: #f3f4f6;
+        color: #6b7280;
+    }
+
+    /* ===== STOCKBIT-STYLE MACHINE LIST ===== */
+
+    /* Status badge colors */
+    .badge.status-running {
+        background-color: #10b981 !important;
+        color: white !important;
+    }
+
+    .badge.status-heat {
+        background-color: #ef4444 !important;
+        color: white !important;
+    }
+
+    .badge.status-cool {
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+
+    .badge.status-steady {
+        background-color: #8b5cf6 !important;
+        color: white !important;
+    }
+
+    .badge.status-stop {
+        background-color: #71717a !important;
+        color: white !important;
+    }
+
+    .badge.status-off {
+        background-color: #a1a1aa !important;
+        color: white !important;
+    }
+
+    .badge.status-offline {
+        background-color: #d4d4d8 !important;
+        color: #3f3f46 !important;
+    }
+
+    .badge.status-warning {
+        background-color: #f59e0b !important;
+        color: white !important;
+    }
+
+    .badge.status-default {
+        background-color: #9ca3af !important;
+        color: white !important;
+    }
+
+    /* Machine list container */
+    .machine-list-container {
+        background: #fff;
+    }
+
+    /* Column header */
+    .machine-list-header {
+        display: flex;
+        align-items: center;
+        padding: 0.4rem 1rem;
+        gap: 0.75rem;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .machine-list-header span {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #9ca3af;
+    }
+
+    .mlh-dot {
+        width: 10px;
+        flex-shrink: 0;
+    }
+
+    .mlh-name {
+        flex: 1;
+    }
+
+    .mlh-temp {
+        min-width: 70px;
+        text-align: right;
+    }
+
+    .mlh-grad {
+        min-width: 58px;
+        text-align: right;
+    }
+
+    .mlh-status {
+        min-width: 64px;
+        text-align: center;
+    }
+
+    /* Each machine row */
+    .machine-row {
+        display: flex;
+        align-items: center;
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        gap: 0.75rem;
+    }
+
+    .machine-row:last-child {
+        border-bottom: none;
+    }
+
+    .machine-row:hover {
+        background-color: #f9fafb;
+    }
+
+    .machine-row:active {
+        background-color: #f3f4f6;
+    }
+
+    /* Status dot */
+    .machine-row-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        transition: transform 0.2s;
+    }
+
+    .machine-row:hover .machine-row-dot {
+        transform: scale(1.35);
+    }
+
+    .dot-running {
+        background-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, .15);
+    }
+
+    .dot-heat {
+        background-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, .15);
+    }
+
+    .dot-cool {
+        background-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+    }
+
+    .dot-steady {
+        background-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, .15);
+    }
+
+    .dot-warning {
+        background-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, .15);
+    }
+
+    .dot-stop {
+        background-color: #71717a;
+    }
+
+    .dot-off {
+        background-color: #a1a1aa;
+    }
+
+    .dot-offline {
+        background-color: #d4d4d8;
+    }
+
+    /* Name column */
+    .machine-row-name {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .machine-row-name .mname {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #111827;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
+    }
+
+    .machine-row-name .mcode {
+        font-size: 0.68rem;
+        color: #9ca3af;
+        line-height: 1.2;
+    }
+
+    /* Temperature column */
+    .machine-row-temp {
+        text-align: right;
+        flex-shrink: 0;
+        min-width: 70px;
+    }
+
+    .machine-row-temp .temp-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #111827;
+        display: block;
+        line-height: 1.1;
+    }
+
+    .machine-row-temp .temp-unit {
+        font-size: 0.65rem;
+        color: #9ca3af;
+    }
+
+    /* Gradient column */
+    .machine-row-grad {
+        text-align: right;
+        flex-shrink: 0;
+        min-width: 58px;
+    }
+
+    .grad-value {
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .grad-positive {
+        color: #ef4444;
+    }
+
+    .grad-negative {
+        color: #3b82f6;
+    }
+
+    .grad-neutral {
+        color: #9ca3af;
+    }
+
+    /* Status badge column */
+    .machine-row-status {
+        flex-shrink: 0;
+        min-width: 64px;
+        text-align: center;
+    }
+
+    .ms-badge {
+        font-size: 0.62rem;
+        font-weight: 700;
+        padding: 0.22rem 0.5rem;
+        border-radius: 50rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+    }
+
+    /* Chart & Headers */
+    .card-chart {
+        border-radius: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        background: #fff;
+        padding: 1.25rem;
+        height: 100%;
+        border: 1px solid var(--suritex-border);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 1.5rem;
+        padding-bottom: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--suritex-text-main);
+        margin: 0;
+    }
+
+    .section-action {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--suritex-text-muted);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: color 0.2s;
+    }
+
+    .section-action:hover {
+        color: var(--suritex-text-main);
+    }
+
+    /* --- [MODIFIKASI: Responsivitas Grafik] --- */
+    .steam-chart-container {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        /* Tampilan Desktop */
+    }
+
+    /* ========================================
+       ALERT NOTIFICATION SYSTEM STYLES
+       ======================================== */
+
+    .alert-bell-container {
+        display: inline-block;
+        position: relative;
+    }
+
+    #alert-bell {
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    #alert-bell:hover {
+        transform: scale(1.1);
+    }
+
+    #alert-badge {
+        min-width: 18px;
+        height: 18px;
+        padding: 2px 5px;
+        font-size: 0.65rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+    }
+
+    .alert-dropdown {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 400px;
+        max-height: 500px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        overflow: hidden;
+    }
+
+    .alert-dropdown-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f9fafb;
+    }
+
+    .alert-dropdown-header h6 {
+        font-weight: 700;
+        margin: 0;
+        color: #1f2937;
+    }
+
+    .alert-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .alert-item {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f3f4f6;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .alert-item:hover {
+        background: #f9fafb;
+    }
+
+    .alert-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .alert-severity-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+
+    .alert-severity-badge.critical {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .alert-severity-badge.warning {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .alert-item-time {
+        font-size: 0.75rem;
+        color: #9ca3af;
+    }
+
+    .alert-item-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+
+    .alert-item-message {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+
+    .alert-item-details {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        display: flex;
+        gap: 1rem;
+    }
+
+    .alert-item-actions {
+        margin-top: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .alert-item-actions button {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-acknowledge {
+        background: #10b981;
+        color: white;
+    }
+
+    .btn-acknowledge:hover {
+        background: #059669;
+    }
+
+    /* Toast Notifications */
+    .toast-notification {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        min-width: 350px;
+        max-width: 400px;
+        pointer-events: all;
+        animation: slideIn 0.3s ease-out;
+        border-left: 4px solid;
+    }
+
+    .toast-notification.critical {
+        border-left-color: #dc2626;
+    }
+
+    .toast-notification.warning {
+        border-left-color: #d97706;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .toast-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .toast-title {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 0.875rem;
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #9ca3af;
+        font-size: 1.25rem;
+        line-height: 1;
+        padding: 0;
+    }
+
+
+    .toast-message {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    /* Critical Alerts List in Status Card */
+    .critical-alert-item {
+        background: #fee2e2;
+        border-left: 3px solid #dc2626;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .critical-alert-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .critical-alert-item strong {
+        color: #991b1b;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .critical-alert-item small {
+        color: #7f1d1d;
+    }
+
+    /* Mobile Optimizations */
+    @media (max-width: 767.98px) {
+        .profile-header {
+            padding: 1rem 0 0.75rem;
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+
+        .user-name {
+            font-size: 1rem;
+        }
+
+        .status-card {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-kpi {
+            padding: 0.875rem;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+        }
+
+        .kpi-icon-box {
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+        }
+
+        .machine-tile {
+            padding: 0.75rem;
+        }
+
+        .machine-tile .display-6 {
+            font-size: 1.5rem;
+        }
+
+        .machine-tile .fw-bold.small {
+            font-size: 0.75rem !important;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+        }
+
+        /* [MODIFIKASI MOBILE] */
+        .card-chart {
+            padding: 0.75rem !important;
+            /* Kurangi padding agar grafik lebih lebar */
+        }
+
+        .steam-chart-container {
+            height: 320px;
+            /* Sesuaikan tinggi untuk HP */
+        }
+    }
+</style>
+
+<div class="profile-header">
+    <div class="d-flex align-items-center gap-3">
+        <div class="profile-avatar">
+            {{ request.user.username|first|upper|default:"S" }}
+        </div>
+        <div>
+            <div class="greeting-text">Welcome back,</div>
+            <div class="user-name">{{ request.user.get_full_name|default:request.user.username|default:"Supervisor" }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Notification Bell -->
+    <div class="alert-bell-container position-relative">
+        <button id="alert-bell" class="btn btn-link p-0 position-relative" type="button">
+            <span class="material-symbols-outlined" style="font-size: 28px; color: var(--suritex-text-main);">
+                notifications
+            </span>
+            <span id="alert-badge" class="badge bg-danger rounded-pill position-absolute"
+                style="top: -5px; right: -8px; display: none; font-size: 0.65rem;">
+                0
+            </span>
+        </button>
+
+        <!-- Dropdown Panel -->
+        <div id="alert-dropdown" class="alert-dropdown" style="display: none;">
+            <div class="alert-dropdown-header">
+                <h6 class="mb-0">Notifications</h6>
+                <span id="alert-count-text" class="text-muted small">0 alerts</span>
+            </div>
+            <div id="alert-list" class="alert-list">
+                <div class="text-center text-muted py-4">
+                    <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.3;">
+                        notifications_off
+                    </span>
+                    <p class="small mt-2">No active alerts</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container for Real-time Alerts -->
+<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
+<!-- Compact datetime + system status bar -->
+<div class="d-flex align-items-center justify-content-between mt-2 mb-1" style="gap:0.5rem;">
+    <div class="date-time-badge">
+        <span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>
+        <span id="current-datetime">Loading...</span>
+    </div>
+    <!-- Inline status pill -->
+    <div id="inline-status" class="d-inline-flex align-items-center gap-1" style="font-size:0.72rem; font-weight:700; padding:0.2rem 0.65rem; border-radius:50rem;
+               background:#d1fae5; color:#047857; cursor:default; transition:all 0.3s;">
+        <span class="material-symbols-outlined" id="inline-status-icon" style="font-size:14px;">check_circle</span>
+        <span id="inline-status-text">Normal</span>
+    </div>
+</div>
+
+
+<!-- KPI Stat Bar -->
+<div class="kpi-stat-bar">
+
+    <!-- 1. Steam Pressure -->
+    <div class="kpi-stat-item">
+        <div class="kpi-stat-label">Tekanan Uap</div>
+        <div class="kpi-stat-value-row">
+            {% if kpi.steam.value is not None %}
+            <span id="steam-value" class="kpi-stat-value">{{ kpi.steam.value|floatformat:2 }}</span>
+            <span class="kpi-stat-unit">bar</span>
+            {% else %}
+            <span class="kpi-stat-value" style="color:#d1d5db;">---</span>
+            {% endif %}
+        </div>
+        <div class="kpi-stat-sub">
+            <span class="material-symbols-outlined" style="font-size:13px; color:#9ca3af;">speed</span>
+            <span id="steam-badge" class="kpi-sub-blue">Skala</span>
+        </div>
+    </div>
+
+    <!-- 2. HTO Temperature -->
+    <div class="kpi-stat-item">
+        <div class="kpi-stat-label">Suhu HTO</div>
+        <div class="kpi-stat-value-row">
+            {% if kpi.hto.value is not None %}
+            <span id="hto-value" class="kpi-stat-value">{{ kpi.hto.value|floatformat:1 }}</span>
+            <span class="kpi-stat-unit">°C</span>
+            {% else %}
+            <span class="kpi-stat-value" style="color:#d1d5db;">---</span>
+            {% endif %}
+        </div>
+        <div class="kpi-stat-sub">
+            <span class="material-symbols-outlined" style="font-size:13px; color:#dc2626;">thermostat</span>
+            <span class="kpi-sub-neu">Real-time</span>
+        </div>
+    </div>
+
+    <!-- 3. Total Steam Today -->
+    <div class="kpi-stat-item">
+        <div class="kpi-stat-label">Total Uap</div>
+        <div class="kpi-stat-value-row">
+            <span class="kpi-stat-value">{{ total_steam|floatformat:1 }}</span>
+            <span class="kpi-stat-unit">kg</span>
+        </div>
+        <div class="kpi-stat-sub">
+            <span class="material-symbols-outlined" style="font-size:13px; color:#ea580c;">water_drop</span>
+            <span class="kpi-sub-neu">Hari Ini</span>
+        </div>
+    </div>
+
+    <!-- 4. HTO Calories -->
+    <div class="kpi-stat-item">
+        <div class="kpi-stat-label">Kalori HTO</div>
+        <div class="kpi-stat-value-row">
+            <span class="kpi-stat-value">{{ total_hto|floatformat:0 }}</span>
+            <span class="kpi-stat-unit">kcal</span>
+        </div>
+        <div class="kpi-stat-sub">
+            <span class="material-symbols-outlined" style="font-size:13px; color:#d97706;">local_fire_department</span>
+            <span class="kpi-sub-neu">Hari Ini</span>
+        </div>
+    </div>
+
+    <!-- 5. Energy Consumption -->
+    <div class="kpi-stat-item">
+        <div class="kpi-stat-label">Konsumsi Energi</div>
+        <div class="kpi-stat-value-row">
+            <span class="kpi-stat-value">{{ kpi.energy.value }}</span>
+            <span class="kpi-stat-unit">kWh</span>
+        </div>
+        <div class="kpi-stat-sub">
+            {% if kpi.energy.trend >= 0 %}
+            <span class="material-symbols-outlined" style="font-size:13px;">trending_up</span>
+            <span class="kpi-sub-neg">▲ {{ kpi.energy.trend }}% vs kemarin</span>
+            {% else %}
+            <span class="material-symbols-outlined" style="font-size:13px;">trending_down</span>
+            <span class="kpi-sub-pos">▼ {{ kpi.energy.trend|slice:"1:" }}% vs kemarin</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-chart">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <h5 class="fw-bold mb-0">Riwayat Penggunaan & Tekanan Uap</h5>
+                    <small class="text-muted" id="steam-chart-subtitle">24 Jam Terakhir</small>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <!-- Time Range Selector -->
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Time range selector">
+                        <button type="button" class="btn btn-outline-primary time-range-btn" data-hours="1">
+                            1J
+                        </button>
+                        <button type="button" class="btn btn-outline-primary time-range-btn active" data-hours="24">
+                            24J
+                        </button>
+                        <button type="button" class="btn btn-outline-primary time-range-btn" data-hours="168">
+                            7H
+                        </button>
+                        <button type="button" class="btn btn-outline-primary time-range-btn" data-hours="720">
+                            30H
+                        </button>
+                        <button type="button" class="btn btn-outline-primary time-range-btn" data-hours="8760">
+                            YTD
+                        </button>
+                    </div>
+                    <!-- Refresh Button -->
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="refreshSteamChart()">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">refresh</span>
+                        Segarkan
+                    </button>
+                </div>
+            </div>
+            <div class="steam-chart-container">
+                <canvas id="steamUsageChart"></canvas>
+            </div>
+            <!-- Machine Count Mini Chart (Navigator) -->
+            <div class="mt-3 pt-2 border-top">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="text-muted fw-semibold" style="font-size:0.72rem;">
+                        <span class="material-symbols-outlined align-middle"
+                            style="font-size:14px;">precision_manufacturing</span>
+                        Jumlah Mesin Aktif
+                    </small>
+                    <span class="badge bg-teal-subtle text-teal rounded-pill" id="currentMachineCountBadge"
+                        style="font-size:0.7rem;"></span>
+                </div>
+                <div style="position:relative; height:120px; width:100%;">
+                    <canvas id="machineCountChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Lihat Rincian Uap -->
+<div class="modal fade" id="steamConfirmModal" tabindex="-1" aria-labelledby="steamConfirmModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 48px;">info</span>
+                </div>
+                <h5 class="fw-bold mb-3">Waktu Dipilih</h5>
+                <p class="mb-4">Anda memilih jam <strong id="confirmTimeDisplay"></strong>. Ingin melihat daftar mesin
+                    yang aktif?</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="btnConfirmSteamDetail">Lihat
+                        Rincian</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Steam Usage Details Modal -->
+<div class="modal fade" id="steamDetailModal" tabindex="-1" aria-labelledby="steamDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0 bg-light pb-2">
+                <div>
+                    <h5 class="modal-title fw-bold" id="steamDetailModalLabel">Rincian Pemakaian Uap</h5>
+                    <small class="text-muted" id="steamDetailTimeDisplay">Menyiapkan data...</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0" id="steamDetailContent">
+                <!-- Data will be injected here via JS -->
+                <div class="p-4 text-center text-muted">
+                    <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
+                    <div>Memuat mesin aktif...</div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 bg-light py-2">
+                <button type="button" class="btn btn-secondary rounded-pill btn-sm px-3"
+                    data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <div class="section-header px-2">
+        <h2 class="section-title">Status Detail Mesin</h2>
+    </div>
+
+    <div class="row g-4">
+        {% for panel in group_panels %}
+        <div class="col-12 col-xl-6">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-white border-bottom py-3" data-bs-toggle="collapse"
+                    data-bs-target="#collapse-group-{{ forloop.counter }}" aria-expanded="true"
+                    style="cursor: pointer; user-select: none;">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined text-muted collapse-arrow">expand_more</span>
+                            <h6 class="mb-0 fw-bold">{{ panel.name }} <span class="text-muted fw-normal">({{ panel.count }} Total Mesin)</span></h6>
+                        </div>
+                        <span class="badge bg-light text-dark border">{{ panel.code }}</span>
+                    </div>
+
+                    <div class="progress mb-2" style="height: 6px; border-radius: 50rem;">
+                        {% if panel.status_percentages.running > 0 %}
+                        <div class="progress-bar"
+                            style="width: {{ panel.status_percentages.running }}%; background-color: #10b981;"
+                            title="Running: {{ panel.status_counts.running }}"></div>
+                        {% endif %}
+                        {% if panel.status_percentages.heat > 0 %}
+                        <div class="progress-bar"
+                            style="width: {{ panel.status_percentages.heat }}%; background-color: #f59e0b;"
+                            title="Heat: {{ panel.status_counts.heat }}"></div>
+                        {% endif %}
+                        {% if panel.status_percentages.cool > 0 %}
+                        <div class="progress-bar"
+                            style="width: {{ panel.status_percentages.cool }}%; background-color: #3b82f6;"
+                            title="Cool: {{ panel.status_counts.cool }}"></div>
+                        {% endif %}
+                        {% if panel.status_percentages.steady > 0 %}
+                        <div class="progress-bar"
+                            style="width: {{ panel.status_percentages.steady }}%; background-color: #8b5cf6;"
+                            title="Steady: {{ panel.status_counts.steady }}"></div>
+                        {% endif %}
+                        {% if panel.status_percentages.off > 0 %}
+                        <div class="progress-bar"
+                            style="width: {{ panel.status_percentages.off }}%; background-color: #9ca3af;"
+                            title="Off: {{ panel.status_counts.off }}"></div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge rounded-pill"
+                            style="background-color: #d1fae5; color: #047857; font-size: 0.7rem; padding: 0.35rem 0.65rem;">
+                            <span
+                                style="width: 6px; height: 6px; display: inline-block; border-radius: 50%; background-color: #10b981; margin-right: 4px;"></span>
+                            RUN {{ panel.status_counts.running }}
+                        </span>
+                        <span class="badge rounded-pill"
+                            style="background-color: #fed7aa; color: #c2410c; font-size: 0.7rem; padding: 0.35rem 0.65rem;">
+                            <span
+                                style="width: 6px; height: 6px; display: inline-block; border-radius: 50%; background-color: #f59e0b; margin-right: 4px;"></span>
+                            HEAT {{ panel.status_counts.heat }}
+                        </span>
+                        <span class="badge rounded-pill"
+                            style="background-color: #dbeafe; color: #1e40af; font-size: 0.7rem; padding: 0.35rem 0.65rem;">
+                            <span
+                                style="width: 6px; height: 6px; display: inline-block; border-radius: 50%; background-color: #3b82f6; margin-right: 4px;"></span>
+                            COOL {{ panel.status_counts.cool }}
+                        </span>
+                        <span class="badge rounded-pill"
+                            style="background-color: #ede9fe; color: #6b21a8; font-size: 0.7rem; padding: 0.35rem 0.65rem;">
+                            <span
+                                style="width: 6px; height: 6px; display: inline-block; border-radius: 50%; background-color: #8b5cf6; margin-right: 4px;"></span>
+                            STEADY {{ panel.status_counts.steady }}
+                        </span>
+                        <span class="badge rounded-pill"
+                            style="background-color: #f3f4f6; color: #4b5563; font-size: 0.7rem; padding: 0.35rem 0.65rem;">
+                            <span
+                                style="width: 6px; height: 6px; display: inline-block; border-radius: 50%; background-color: #9ca3af; margin-right: 4px;"></span>
+                            MATI {{ panel.status_counts.off }}
+                        </span>
+                    </div>
+                </div>
+
+                <div id="collapse-group-{{ forloop.counter }}" class="collapse show"
+                    data-group-id="group-{{ forloop.counter }}">
+                    <!-- Stockbit-style machine list -->
+                    <div class="machine-list-container">
+
+                        <!-- Column headers -->
+                        <div class="machine-list-header">
+                            <span class="mlh-dot"></span>
+                            <span class="mlh-name">Mesin</span>
+                            <span class="mlh-temp">Suhu</span>
+                            <span class="mlh-grad">Grad</span>
+                            <span class="mlh-status text-center">Status</span>
+                        </div>
+
+                        {% for m in panel.machines %}
+                        {% with status=m.status|lower %}
+                        <div class="machine-row" data-code="{{ m.code }}" data-name="{{ m.name }}"
+                            data-mode="{{ m.operation_mode|default:'AUTO' }}"
+                            onclick="openMachineDetail('{{ m.code|escapejs }}', '{{ m.name|escapejs }}')">
+
+                            <!-- Status dot -->
+                            <span class="machine-row-dot js-dot
+                                {% if status == 'running' %}dot-running
+                                {% elif status == 'heat' %}dot-heat
+                                {% elif status == 'cool' %}dot-cool
+                                {% elif status == 'steady' %}dot-steady
+                                {% elif status == 'warning' %}dot-warning
+                                {% elif status == 'stop' %}dot-stop
+                                {% elif status == 'off' %}dot-off
+                                {% else %}dot-offline{% endif %}"></span>
+
+                            <!-- Name + code -->
+                            <div class="machine-row-name">
+                                <div class="mname">{{ m.name }}</div>
+                                <div class="mcode">{{ m.code }}</div>
+                            </div>
+
+                            <!-- Temperature -->
+                            <div class="machine-row-temp">
+                                <span class="temp-value js-temp">
+                                    {% if m.operation_mode == "AUTO" and m.temperature %}{{ m.temperature|floatformat:1 }}{% else %}---{% endif %}
+                                </span>
+                                <span class="temp-unit">{{ m.unit|default:"°C" }}</span>
+                            </div>
+
+                            <!-- Gradient -->
+                            <div class="machine-row-grad">
+                                {% if m.operation_mode == "AUTO" and m.temperature_gradient %}
+                                {% if m.temperature_gradient > 0 %}
+                                <span class="grad-value js-grad grad-positive">+{{ m.temperature_gradient|floatformat:2 }}</span>
+                                {% elif m.temperature_gradient < 0 %} <span class="grad-value js-grad grad-negative">{{
+                                    m.temperature_gradient|floatformat:2 }}</span>
+                                    {% else %}
+                                    <span class="grad-value js-grad grad-neutral">0.00</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="grad-value js-grad grad-neutral">-</span>
+                                    {% endif %}
+                            </div>
+
+                            <!-- Status badge -->
+                            <div class="machine-row-status position-relative">
+                                <span class="ms-badge js-status
+                                    {% if status == 'running' %}badge status-running
+                                    {% elif status == 'heat' %}badge status-heat
+                                    {% elif status == 'cool' %}badge status-cool
+                                    {% elif status == 'steady' %}badge status-steady
+                                    {% elif status == 'warning' %}badge status-warning
+                                    {% elif status == 'stop' %}badge status-stop
+                                    {% elif status == 'off' %}badge status-off
+                                    {% else %}badge status-offline{% endif %}">
+                                    {{ m.status }}
+                                </span>
+                                {% if m.is_new %}
+                                <span class="js-new-badge badge bg-success rounded-pill ms-1 position-absolute"
+                                    style="font-size: 0.55rem; top: 0px; right: -20px; transform: scale(0.85);">NEW</span>
+                                {% else %}
+                                <span class="js-new-badge badge bg-success rounded-pill ms-1 position-absolute d-none"
+                                    style="font-size: 0.55rem; top: 0px; right: -20px; transform: scale(0.85);">NEW</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endwith %}
+                        {% endfor %}
+
+                    </div><!-- /.machine-list-container -->
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="machineDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius: 1rem; border: 1px solid var(--suritex-border);">
+            <div class="modal-header border-bottom" style="background-color: var(--suritex-bg-light);">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="modalMachineName">Detail Mesin</h5>
+                    <small class="text-muted" id="modalMachineCode">Memuat...</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+                <div class="mb-4 d-flex align-items-center gap-2 flex-wrap">
+                    <span id="modalStatus" class="badge bg-secondary px-3 py-2">Memuat...</span>
+                    <span id="modalMode" class="badge bg-light text-dark border px-3 py-2">Memuat...</span>
+                    <span id="modalLastUpdate" class="text-muted small ms-auto">Terakhir diperbarui: -</span>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded" style="background-color: #dbeafe; border-left: 3px solid #2563eb;">
+                            <div class="text-muted small mb-1">Saat Ini</div>
+                            <div class="fs-4 fw-bold" style="color: #2563eb;" id="modalCurrentTemp">-</div>
+                            <small class="text-muted">°C</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded" style="background-color: #fee2e2; border-left: 3px solid #dc2626;">
+                            <div class="text-muted small mb-1">Maksimum</div>
+                            <div class="fs-4 fw-bold" style="color: #dc2626;" id="modalMaxTemp">-</div>
+                            <small class="text-muted">°C</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded" style="background-color: #d1fae5; border-left: 3px solid #059669;">
+                            <div class="text-muted small mb-1">Minimum</div>
+                            <div class="fs-4 fw-bold" style="color: #059669;" id="modalMinTemp">-</div>
+                            <small class="text-muted">°C</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded" style="background-color: #fef3c7; border-left: 3px solid #d97706;">
+                            <div class="text-muted small mb-1">Rata-rata</div>
+                            <div class="fs-4 fw-bold" style="color: #d97706;" id="modalAvgTemp">-</div>
+                            <small class="text-muted">°C</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3">Riwayat Suhu (1 Jam Terakhir)</h6>
+                    <div
+                        style="position: relative; height: 250px; background: #fff; border-radius: 0.5rem; padding: 1rem; border: 1px solid var(--suritex-border);">
+                        <canvas id="modalChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3">Gradien Suhu</h6>
+                    <div class="d-flex align-items-center gap-3 p-3 rounded"
+                        style="background-color: var(--suritex-bg-light); border: 1px solid var(--suritex-border);">
+                        <span class="material-symbols-outlined fs-1" id="modalGradientIcon">trending_flat</span>
+                        <div>
+                            <div class="fw-bold fs-5" id="modalGradient">-</div>
+                            <small class="text-muted">°C per menit</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="viewFullHistory()">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 16px; vertical-align: middle;">history</span> Riwayat Lengkap
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="exportData()">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 16px; vertical-align: middle;">download</span> Ekspor Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performa Mesin -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card-chart">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="fw-bold mb-0">Performa Mesin</h5>
+                    <small class="text-muted">Analisis Suhu Real-time</small>
+                </div>
+                <select id="machineSelect" class="form-select form-select-sm w-auto rounded-pill">
+                    <option value="Steam_Pr" selected>Tekanan Uap</option>
+                    {% for panel in group_panels %}
+                    {% for m in panel.machines %}
+                    {% if m.operation_mode == "AUTO" and m.code != "Steam_Pr" %}
+                    <option value="{{ m.code }}">{{ m.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="machineChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+    <div class="card-header bg-white border-bottom py-3" data-bs-toggle="collapse" data-bs-target="#collapse-alarms"
+        aria-expanded="true" style="cursor: pointer; user-select: none;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <span class="material-symbols-outlined text-muted collapse-arrow">expand_more</span>
+                <h5 class="fw-bold mb-0">Alarm & Kejadian Terbaru</h5>
+            </div>
+            <span class="badge bg-danger text-white">{{ alarms|length }} aktif</span>
+        </div>
+    </div>
+
+    <div id="collapse-alarms" class="collapse show">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3">Waktu</th>
+                            <th class="py-3">Mesin</th>
+                            <th class="py-3">Kode</th>
+                            <th class="py-3">Deskripsi</th>
+                            <th class="py-3">Tingkat</th>
+                            <th class="py-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in alarms %}
+                        <tr>
+                            <td class="px-4 py-3 text-muted small">{{ a.time }}</td>
+                            <td class="py-3 fw-bold small">{{ a.machine }}</td>
+                            <td class="py-3"><span class="badge bg-secondary rounded-pill">{{ a.code }}</span></td>
+                            <td class="py-3 small">{{ a.desc }}</td>
+                            <td class="py-3">
+                                <span class="badge 
+                                {% if a.level_badge == 'critical' %}bg-danger
+                                {% elif a.level_badge == 'warning' %}bg-warning text-dark
+                                {% else %}bg-info{% endif %} rounded-pill">
+                                    {{ a.level }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge 
+                                {% if a.status_badge == 'open' %}bg-danger
+                                {% elif a.status_badge == 'ack' %}bg-warning text-dark
+                                {% else %}bg-success{% endif %} rounded-pill">
+                                    {{ a.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">Tidak ada alarm aktif</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'vendor/chartjs/chart.min.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // --- Helper Functions ---
+
+        function getStatusClass(status) {
+            if (!status) return "status-default";
+            const s = status.toLowerCase();
+            if (s === "running" || s.includes("run")) return "status-running";
+            if (s.includes("heat")) return "status-heat";
+            if (s.includes("cool")) return "status-cool";
+            if (s.includes("steady")) return "status-steady";
+            if (s === "stop") return "status-stop";
+            if (s === "off") return "status-off";
+            if (s === "offline" || s === "no signal" || s.includes("signal")) return "status-offline";
+            if (s.includes("warning") || s.includes("warn")) return "status-warning";
+            return "status-default";
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
+            const el = document.getElementById('current-datetime');
+            if (el) el.textContent = now.toLocaleString('en-US', options);
+        }
+
+        // --- Core Logic ---
+
+        async function refreshMachines() {
+            try {
+                const resp = await fetch("{% url 'machine_status_api' %}");
+                if (!resp.ok) return;
+                const payload = await resp.json();
+                const list = payload.machines || [];
+
+                list.forEach(m => {
+                    const row = document.querySelector(`.machine-row[data-code="${m.code}"]`);
+                    if (!row) return;
+
+                    const mode = (m.operation_mode || row.dataset.mode || "AUTO").toUpperCase();
+                    row.dataset.mode = mode;
+
+                    // Update data attributes
+                    if (m.last_status) row.dataset.lastStatus = m.last_status;
+                    if (m.last_thermal_status) row.dataset.lastThermalStatus = m.last_thermal_status;
+
+                    // Elements
+                    const dotEl = row.querySelector(".js-dot");
+                    const tempEl = row.querySelector(".js-temp");
+                    const gradEl = row.querySelector(".js-grad");
+                    const statusEl = row.querySelector(".js-status");
+                    const newBadgeEl = row.querySelector(".js-new-badge");
+
+                    // Status UI Update
+                    if (m.status) {
+                        const s = m.status.toLowerCase();
+                        const statusClass = getStatusClass(m.status);
+
+                        // Badge
+                        if (statusEl) {
+                            statusEl.textContent = m.status;
+                            statusEl.className = `ms-badge js-status badge ${statusClass}`;
+                        }
+
+                        // NEW Badge
+                        if (newBadgeEl) {
+                            if (m.is_new) {
+                                newBadgeEl.classList.remove('d-none');
+                            } else {
+                                newBadgeEl.classList.add('d-none');
+                            }
+                        }
+
+                        // Dot
+                        if (dotEl) {
+                            dotEl.className = dotEl.className
+                                .replace(/dot-\S+/g, '')
+                                .trim();
+                            const dotClass =
+                                s === 'running' ? 'dot-running' :
+                                    s.includes('heat') ? 'dot-heat' :
+                                        s.includes('cool') ? 'dot-cool' :
+                                            s.includes('steady') ? 'dot-steady' :
+                                                s.includes('warning') ? 'dot-warning' :
+                                                    s === 'stop' ? 'dot-stop' :
+                                                        s === 'off' ? 'dot-off' : 'dot-offline';
+                            dotEl.className += ' ' + dotClass;
+                        }
+                    }
+
+                    // Value Updates based on Mode
+                    if (mode === "MANUAL") {
+                        if (tempEl) tempEl.innerText = "---";
+                        if (gradEl) { gradEl.innerText = "-"; gradEl.className = "grad-value js-grad grad-neutral"; }
+                    } else {
+                        if (tempEl) tempEl.innerText = (m.temperature != null) ? m.temperature.toFixed(1) : "---";
+                        if (gradEl && m.temperature_gradient != null) {
+                            const g = m.temperature_gradient;
+                            const gradClass = g > 0 ? 'grad-positive' : g < 0 ? 'grad-negative' : 'grad-neutral';
+                            gradEl.innerText = g > 0 ? '+' + g.toFixed(2) : g.toFixed(2);
+                            gradEl.className = `grad-value js-grad ${gradClass}`;
+                        } else if (gradEl) {
+                            gradEl.innerText = "-";
+                            gradEl.className = "grad-value js-grad grad-neutral";
+                        }
+                    }
+                });
+
+                updateRunningCounters();
+
+            } catch (err) { console.error("Machine Sync Error:", err); }
+        }
+
+        function updateRunningCounters() {
+            const groups = document.querySelectorAll('[data-group-id]');
+            groups.forEach(group => {
+                const groupId = group.dataset.groupId;
+                const rows = group.querySelectorAll('.machine-row');
+                let runningCount = 0;
+
+                rows.forEach(row => {
+                    const mode = row.dataset.mode || 'AUTO';
+                    if (mode === 'MANUAL') {
+                        const lastStatus = row.dataset.lastStatus;
+                        if (lastStatus && lastStatus.toLowerCase() === 'running') runningCount++;
+                    } else {
+                        const thermalStatus = row.dataset.lastThermalStatus;
+                        if (thermalStatus && thermalStatus.toUpperCase() === 'HEAT') runningCount++;
+                    }
+                });
+
+                const counterBadge = document.querySelector(`.running-counter[data-group-id="${groupId}"]`);
+                if (counterBadge) {
+                    const countSpan = counterBadge.querySelector('.running-count');
+                    if (countSpan) countSpan.textContent = runningCount;
+                }
+            });
+        }
+
+        async function refreshKPI() {
+            try {
+                const resp = await fetch("{% url 'kpi_realtime_api' %}");
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                // Steam
+                const steamEl = document.getElementById("steam-value");
+                const steamBadge = document.getElementById("steam-badge");
+                if (steamEl) {
+                    if (data.steam == null) {
+                        steamEl.innerText = "---";
+                        if (steamBadge) { steamBadge.className = "kpi-sub-neu"; steamBadge.innerText = "No Data"; }
+                    } else {
+                        const num = Number(data.steam);
+                        steamEl.innerText = num.toFixed(2);
+                        if (steamBadge) {
+                            if (num < 3) { steamBadge.className = "kpi-sub-neg"; steamBadge.innerText = "Low"; }
+                            else if (num >= 4) { steamBadge.className = "kpi-sub-blue"; steamBadge.innerText = "Stable"; }
+                            else { steamBadge.className = "kpi-sub-neg"; steamBadge.innerText = "Warning"; }
+                        }
+                    }
+                }
+
+                // HTO
+                const htoEl = document.getElementById("hto-value");
+                if (htoEl) htoEl.innerText = (data.hto != null) ? Number(data.hto).toFixed(1) : "---";
+
+            } catch (err) { console.error("KPI Sync Error:", err); }
+        }
+
+        // --- Chart Logic ---
+        let chartInstance = null;
+
+        async function loadChartData(machineCode) {
+            try {
+                const resp = await fetch(`/api/chart/${machineCode}/`);
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                const canvas = document.getElementById("machineChart");
+                if (!canvas) return;
+                const ctx = canvas.getContext("2d");
+
+                if (chartInstance) chartInstance.destroy();
+
+                chartInstance = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels: data.timestamps,
+                        datasets: [{
+                            label: `${data.machine} (${data.unit || "°C"})`,
+                            data: data.temperatures,
+                            borderColor: "#f9f506",
+                            backgroundColor: "rgba(249, 245, 6, 0.1)",
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            pointHitRadius: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { intersect: false, mode: 'index' },
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
+                            y: { beginAtZero: false, border: { dash: [4, 4] } }
+                        }
+                    }
+                });
+            } catch (e) { console.log("Chart Load Error", e); }
+        }
+
+
+        // --- Initialization ---
+        updateDateTime();
+        refreshKPI();
+        refreshMachines();
+        updateRunningCounters();
+
+        setInterval(updateDateTime, 60000);
+        setInterval(refreshKPI, 30000);      // Polling KPI: setiap 30 detik (was 5s)
+        setInterval(refreshMachines, 30000); // Polling mesin: setiap 30 detik (was 5s)
+
+        const sel = document.getElementById("machineSelect");
+        if (sel) {
+            if (sel.value) loadChartData(sel.value);
+            sel.addEventListener("change", (e) => loadChartData(e.target.value));
+        }
+
+        // --- Persistent Dropdown State (localStorage) ---
+        const STORAGE_KEY = 'dashboard_dropdown_states';
+
+        // Load saved states from localStorage
+        function loadDropdownStates() {
+            try {
+                const savedStates = localStorage.getItem(STORAGE_KEY);
+                if (savedStates) {
+                    const states = JSON.parse(savedStates);
+
+                    // Apply saved states to each dropdown
+                    Object.keys(states).forEach(groupId => {
+                        const collapseElement = document.getElementById(groupId);
+                        if (collapseElement) {
+                            if (states[groupId] === 'collapsed') {
+                                // Remove 'show' class to collapse
+                                collapseElement.classList.remove('show');
+                            } else {
+                                // Add 'show' class to expand
+                                collapseElement.classList.add('show');
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Error loading dropdown states:', e);
+            }
+        }
+
+        // Save state to localStorage when dropdown is toggled
+        function saveDropdownState(groupId, isExpanded) {
+            try {
+                let states = {};
+                const savedStates = localStorage.getItem(STORAGE_KEY);
+                if (savedStates) {
+                    states = JSON.parse(savedStates);
+                }
+
+                states[groupId] = isExpanded ? 'expanded' : 'collapsed';
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(states));
+            } catch (e) {
+                console.error('Error saving dropdown state:', e);
+            }
+        }
+
+        // Attach event listeners to all collapse elements
+        document.querySelectorAll('[id^="collapse-group-"]').forEach(collapseElement => {
+            collapseElement.addEventListener('shown.bs.collapse', function () {
+                saveDropdownState(this.id, true);
+            });
+
+            collapseElement.addEventListener('hidden.bs.collapse', function () {
+                saveDropdownState(this.id, false);
+            });
+        });
+
+        // Load saved states on page load
+        loadDropdownStates();
+
+        // --- Machine Detail Modal Functions ---
+        window.currentMachineCode = null;
+        window.currentMachineName = null;
+        window.modalChartInstance = null;
+        window.modalRefreshInterval = null;
+
+        window.openMachineDetail = function (code, name) {
+            window.currentMachineCode = code;
+            window.currentMachineName = name;
+
+            const modal = new bootstrap.Modal(document.getElementById('machineDetailModal'));
+            modal.show();
+
+            document.getElementById('modalMachineName').textContent = name;
+            document.getElementById('modalMachineCode').textContent = `Code: ${code}`;
+
+            loadMachineDetail(code);
+
+            if (window.modalRefreshInterval) clearInterval(window.modalRefreshInterval);
+            window.modalRefreshInterval = setInterval(() => {
+                if (document.getElementById('machineDetailModal').classList.contains('show')) {
+                    loadMachineDetail(code);
+                }
+            }, 60000);
+
+            document.getElementById('machineDetailModal').addEventListener('hidden.bs.modal', function () {
+                if (window.modalRefreshInterval) {
+                    clearInterval(window.modalRefreshInterval);
+                    window.modalRefreshInterval = null;
+                }
+                if (window.modalChartInstance) {
+                    window.modalChartInstance.destroy();
+                    window.modalChartInstance = null;
+                }
+            });
+        };
+
+        async function loadMachineDetail(code) {
+            try {
+                const resp = await fetch(`/api/chart/${code}/`);
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                // Ambil info dari .machine-row (pengganti .machine-tile)
+                const row = document.querySelector(`.machine-row[data-code="${code}"]`);
+                const statusEl = row ? row.querySelector('.js-status') : null;
+                const gradientEl = row ? row.querySelector('.js-grad') : null;
+                const modeAttr = row ? row.dataset.mode : 'AUTO';
+
+                if (statusEl) {
+                    const modalStatus = document.getElementById('modalStatus');
+                    modalStatus.textContent = statusEl.textContent;
+                    modalStatus.className = `badge px-3 py-2 ${statusEl.className.replace('js-status', '')}`;
+                }
+
+                document.getElementById('modalMode').textContent = modeAttr || 'AUTO';
+                document.getElementById('modalLastUpdate').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+
+                const temps = data.temperatures.filter(t => t !== null && t !== undefined);
+                if (temps.length > 0) {
+                    const current = temps[temps.length - 1];
+                    const max = Math.max(...temps);
+                    const min = Math.min(...temps);
+                    const avg = temps.reduce((a, b) => a + b, 0) / temps.length;
+
+                    document.getElementById('modalCurrentTemp').textContent = current.toFixed(1);
+                    document.getElementById('modalMaxTemp').textContent = max.toFixed(1);
+                    document.getElementById('modalMinTemp').textContent = min.toFixed(1);
+                    document.getElementById('modalAvgTemp').textContent = avg.toFixed(1);
+                } else {
+                    ['modalCurrentTemp', 'modalMaxTemp', 'modalMinTemp', 'modalAvgTemp'].forEach(id =>
+                        document.getElementById(id).textContent = '-'
+                    );
+                }
+
+                if (gradientEl) {
+                    const gradValue = parseFloat(gradientEl.textContent);
+                    document.getElementById('modalGradient').textContent = isNaN(gradValue) ? '-' : gradValue.toFixed(2);
+                    const iconEl = document.getElementById('modalGradientIcon');
+                    if (gradValue > 0.5) {
+                        iconEl.textContent = 'trending_up';
+                        iconEl.style.color = '#dc2626';
+                    } else if (gradValue < -0.5) {
+                        iconEl.textContent = 'trending_down';
+                        iconEl.style.color = '#2563eb';
+                    } else {
+                        iconEl.textContent = 'trending_flat';
+                        iconEl.style.color = '#6b7280';
+                    }
+                } else {
+                    document.getElementById('modalGradient').textContent = '-';
+                }
+                updateModalChart(data);
+            } catch (error) { console.error('Error loading machine detail:', error); }
+        }
+
+        function updateModalChart(data) {
+            const canvas = document.getElementById('modalChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            if (window.modalChartInstance) window.modalChartInstance.destroy();
+
+            window.modalChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.timestamps,
+                    datasets: [{
+                        label: `${data.machine} Temperature`,
+                        data: data.temperatures,
+                        borderColor: '#f9f506',
+                        backgroundColor: 'rgba(249, 245, 6, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 2,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#f9f506',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)', padding: 12, displayColors: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+                        y: { beginAtZero: false, grid: { color: 'rgba(0, 0, 0, 0.05)' } }
+                    },
+                    animation: { duration: 750 }
+                }
+            });
+        }
+
+        window.viewFullHistory = function () {
+            if (window.currentMachineCode) {
+                window.location.href = `/history/?machine=${window.currentMachineCode}`;
+            }
+        };
+
+        window.exportData = function () {
+            if (window.currentMachineCode) {
+                alert(`Export feature for ${window.currentMachineName} coming soon!`);
+            }
+        };
+
+
+
+    });
+</script>
+
+<script>
+    // ===========================
+    // Steam Usage & Pressure Chart (Optimized for Mobile UI/UX)
+    // ===========================
+    let steamUsageChartInstance = null;
+    let machineCountChartInstance = null;
+    let currentSteamHours = 24; // Default time range
+
+    async function loadSteamUsageChart(hours = 24) {
+        try {
+            currentSteamHours = hours; // Store current selection
+            const response = await fetch(`/api/steam-usage-history/?hours=${hours}`);
+            if (!response.ok) {
+                console.error('Failed to fetch steam usage data');
+                return;
+            }
+
+            const data = await response.json();
+
+            // Update subtitle
+            const subtitle = document.getElementById('steam-chart-subtitle');
+            if (subtitle) {
+                if (hours === 8760) subtitle.textContent = 'Year-to-Date';
+                else if (hours === 720) subtitle.textContent = 'Last 30 Days';
+                else if (hours === 168) subtitle.textContent = 'Last 7 Days';
+                else subtitle.textContent = `Last ${hours} Hour${hours > 1 ? 's' : ''}`;
+            }
+
+            // Update machine count badge with latest value
+            const badge = document.getElementById('currentMachineCountBadge');
+            if (badge && data.machine_counts && data.machine_counts.length > 0) {
+                const latest = data.machine_counts[data.machine_counts.length - 1];
+                badge.textContent = `${latest} mesin aktif sekarang`;
+            }
+
+            const canvas = document.getElementById('steamUsageChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            // --- DETEKSI MOBILE UI ---
+            const isMobile = window.innerWidth < 768;
+
+            if (steamUsageChartInstance) {
+                steamUsageChartInstance.destroy();
+            }
+
+            // ─── MAIN LINE CHART (Steam Usage + Pressure) ─────────────────
+            steamUsageChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.timestamps,
+                    datasets: [
+                        {
+                            label: 'Usage (kg/h)',
+                            data: data.steam_totals,
+                            borderColor: '#0d9488',
+                            backgroundColor: 'rgba(13, 148, 136, 0.08)',
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: isMobile ? 0 : 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#0d9488',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            borderWidth: 2,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Press (bar)',
+                            data: data.steam_pressures,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                            fill: false,
+                            tension: 0.35,
+                            pointRadius: isMobile ? 0 : 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#f59e0b',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            borderWidth: 2,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const rawTimestamp = data.raw_timestamps[index];
+                            const displayTime = data.timestamps[index];
+
+                            // Show confirmation modal
+                            document.getElementById('confirmTimeDisplay').textContent = displayTime;
+                            const confirmBtn = document.getElementById('btnConfirmSteamDetail');
+
+                            // Remove previous event listeners
+                            const newBtn = confirmBtn.cloneNode(true);
+                            confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+                            newBtn.addEventListener('click', () => {
+                                const confirmModalEl = document.getElementById('steamConfirmModal');
+                                const confirmModal = bootstrap.Modal.getInstance(confirmModalEl);
+                                if (confirmModal) confirmModal.hide();
+
+                                setTimeout(() => {
+                                    showSteamDetailsModal(rawTimestamp, displayTime);
+                                }, 300);
+                            });
+
+                            const modal = new bootstrap.Modal(document.getElementById('steamConfirmModal'));
+                            modal.show();
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            // UI UX TRICK: Di HP, taruh legend di BAWAH agar grafik utama lebih lega
+                            position: isMobile ? 'bottom' : 'top',
+                            align: isMobile ? 'start' : 'end',
+                            labels: {
+                                usePointStyle: true,
+                                padding: isMobile ? 10 : 15,
+                                boxWidth: 8,
+                                font: {
+                                    size: isMobile ? 10 : 12, // Font lebih kecil di HP
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleFont: { size: 11 },
+                            bodyFont: { size: 11 },
+                            padding: 10,
+                            displayColors: true,
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2);
+                                        // Tambahkan satuan manual karena label dataset kita pendekkan
+                                        if (context.dataset.yAxisID === 'y') label += ' kg/h';
+                                        if (context.dataset.yAxisID === 'y1') label += ' bar';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                maxRotation: 0, // Mencegah text miring yang merusak layout HP
+                                minRotation: 0,
+                                maxTicksLimit: isMobile ? 4 : 8, // Kurangi jumlah jam yang tampil di HP
+                                font: {
+                                    size: isMobile ? 9 : 10
+                                }
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: !isMobile, // Sembunyikan judul axis di HP untuk hemat tempat
+                                text: 'Steam Usage (kg/h)',
+                                color: '#0d9488',
+                                font: { size: 11, weight: '600' }
+                            },
+                            ticks: {
+                                color: '#0d9488',
+                                font: { size: isMobile ? 9 : 11 },
+                                callback: function (value) {
+                                    // Di HP hilangkan satuan 'kg' di axis biar tidak sempit
+                                    return isMobile ? value : value + ' kg';
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            title: {
+                                display: !isMobile, // Sembunyikan judul axis di HP
+                                text: 'Pressure (bar)',
+                                color: '#f59e0b',
+                                font: { size: 11, weight: '600' }
+                            },
+                            ticks: {
+                                color: '#f59e0b',
+                                font: { size: isMobile ? 9 : 11 },
+                                callback: function (value) {
+                                    // Round to 1 decimal place for cleaner display
+                                    const rounded = parseFloat(value).toFixed(1);
+                                    return isMobile ? rounded : rounded + ' bar';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ─── MACHINE COUNT AREA CHART (Navigator) ─────────────────────
+            const mcCanvas = document.getElementById('machineCountChart');
+            if (mcCanvas && data.machine_counts && data.machine_counts.length > 0) {
+                const mcCtx = mcCanvas.getContext('2d');
+                if (machineCountChartInstance) {
+                    machineCountChartInstance.destroy();
+                }
+
+                // Build datasets — use per-group data if available, fallback to total
+                const GROUP_COLORS = [
+                    ['#0d9488', 'rgba(13,148,136,0.5)'],
+                    ['#3b82f6', 'rgba(59,130,246,0.5)'],
+                    ['#f59e0b', 'rgba(245,158,11,0.5)'],
+                    ['#8b5cf6', 'rgba(139,92,246,0.5)'],
+                    ['#ec4899', 'rgba(236,72,153,0.5)'],
+                    ['#10b981', 'rgba(16,185,129,0.5)'],
+                ];
+
+                let mcDatasets = [];
+
+                const groups = data.machine_groups || [];
+                const groupCounts = data.machine_group_counts || {};
+
+                if (groups.length > 0) {
+                    groups.forEach((gname, idx) => {
+                        const [border, bg] = GROUP_COLORS[idx % GROUP_COLORS.length];
+                        mcDatasets.push({
+                            label: gname,
+                            data: groupCounts[gname] || [],
+                            borderColor: border,
+                            backgroundColor: bg,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            borderWidth: 1.5
+                        });
+                    });
+                } else {
+                    // Fallback: single total line
+                    mcDatasets.push({
+                        label: 'Mesin Aktif',
+                        data: data.machine_counts,
+                        borderColor: '#0d9488',
+                        backgroundColor: 'rgba(13,148,136,0.4)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        borderWidth: 1.5
+                    });
+                }
+
+                machineCountChartInstance = new Chart(mcCtx, {
+                    type: 'line',
+                    data: { labels: data.timestamps, datasets: mcDatasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: groups.length > 1,
+                                position: 'bottom',
+                                align: 'start',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 8,
+                                    font: { size: isMobile ? 8 : 9 },
+                                    padding: 6
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y} mesin`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                stacked: true,
+                                grid: { display: false },
+                                ticks: {
+                                    font: { size: isMobile ? 8 : 9 },
+                                    color: '#9ca3af',
+                                    maxTicksLimit: isMobile ? 4 : 8,
+                                    maxRotation: 0,
+                                    autoSkip: true
+                                }
+                            },
+                            y: {
+                                display: true,
+                                stacked: true,
+                                position: 'right',
+                                grid: { color: 'rgba(0,0,0,0.04)' },
+                                ticks: {
+                                    font: { size: 9 },
+                                    color: '#6b7280',
+                                    stepSize: 1,
+                                    maxTicksLimit: 4,
+                                    callback: v => `${v}`
+                                }
+                                // no min: 0, let it auto-scale
+                            }
+                        }
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error('Error loading steam usage chart:', error);
+        }
+    }
+
+    function refreshSteamChart() {
+        loadSteamUsageChart(currentSteamHours);
+    }
+
+    // Initialize steam chart on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        // Load initial chart with default 24 hours
+        loadSteamUsageChart(24);
+
+        // Add event listeners to time range buttons
+        document.querySelectorAll('.time-range-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const hours = parseInt(this.getAttribute('data-hours'));
+
+                // Update active state
+                document.querySelectorAll('.time-range-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // Load chart with selected time range
+                loadSteamUsageChart(hours);
+            });
+        });
+
+        // Auto-refresh every 5 minutes with current time range
+        setInterval(() => loadSteamUsageChart(currentSteamHours), 5 * 60 * 1000);
+    });
+
+    // ========================================
+    // CRITICAL ALERT NOTIFICATION SYSTEM
+    // ========================================
+
+    let lastAlertCheck = new Date();
+    let knownAlertIds = new Set();
+
+    // Notification bell toggle
+    document.getElementById('alert-bell').addEventListener('click', function (e) {
+        e.stopPropagation();
+        const dropdown = document.getElementById('alert-dropdown');
+        if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+            dropdown.style.display = 'block';
+            fetchAlerts();  // Refresh alerts when opening
+        } else {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        const dropdown = document.getElementById('alert-dropdown');
+        const bell = document.getElementById('alert-bell');
+
+        if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Fetch and update alerts
+    function fetchAlerts() {
+        fetch('/api/alerts/active/')
+            .then(response => response.json())
+            .then(data => {
+                updateAlertUI(data.alerts);
+                updateAlertBadge(data.count);
+
+                // Check for new alerts to show as toasts
+                data.alerts.forEach(alert => {
+                    if (!knownAlertIds.has(alert.id)) {
+                        knownAlertIds.add(alert.id);
+                        // Only show toast for critical alerts
+                        if (alert.severity === 'CRITICAL') {
+                            showToast(alert);
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching alerts:', error));
+    }
+
+    // Update alert dropdown UI
+    function updateAlertUI(alerts) {
+        const alertList = document.getElementById('alert-list');
+        const countText = document.getElementById('alert-count-text');
+
+        countText.textContent = `${alerts.length} alert${alerts.length !== 1 ? 's' : ''}`;
+
+        if (alerts.length === 0) {
+            alertList.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.3;">
+                        notifications_off
+                    </span>
+                    <p class="small mt-2">No active alerts</p>
+                </div>
+            `;
+            // Update status card to normal
+            updateStatusCard([]);
+            return;
+        }
+
+        alertList.innerHTML = alerts.map(alert => `
+            <div class="alert-item ${alert.is_acknowledged ? 'acknowledged' : ''}" data-alert-id="${alert.id}">
+                <div class="alert-item-header">
+                    <span class="alert-severity-badge ${alert.severity.toLowerCase()}">
+                        ${alert.severity}
+                    </span>
+                    <span class="alert-item-time">${alert.time_ago}</span>
+                </div>
+                <div class="alert-item-title">
+                    ${alert.title}
+                    ${alert.is_acknowledged ? '<span style="color: #059669; font-size: 0.75rem; margin-left: 0.5rem;">✓ Acknowledged</span>' : ''}
+                </div>
+                <div class="alert-item-message">${alert.message}</div>
+                <div class="alert-item-details">
+                    <span>📍 ${alert.machine_name || 'N/A'}</span>
+                    <span>📊 ${alert.current_value.toFixed(2)} (Threshold: ${alert.threshold})</span>
+                </div>
+                <div class="alert-item-actions">
+                    ${alert.is_acknowledged
+                ? `<button class="btn-acknowledge" disabled style="opacity: 0.5; cursor: not-allowed;">✓ Acknowledged by ${alert.acknowledged_by || 'User'}</button>`
+                : `<button class="btn-acknowledge" onclick="acknowledgeAlert(${alert.id})">✓ Acknowledge</button>`
+            }
+                </div>
+            </div>
+        `).join('');
+
+        // Update status card with critical alerts
+        const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL');
+        updateStatusCard(criticalAlerts);
+    }
+
+    // Update compact inline status pill
+    function updateStatusCard(criticalAlerts) {
+        const pill = document.getElementById('inline-status');
+        const icon = document.getElementById('inline-status-icon');
+        const text = document.getElementById('inline-status-text');
+        if (!pill) return;
+
+        if (criticalAlerts.length === 0) {
+            pill.style.background = '#d1fae5';
+            pill.style.color = '#047857';
+            icon.textContent = 'check_circle';
+            text.textContent = 'Normal';
+        } else {
+            pill.style.background = '#fee2e2';
+            pill.style.color = '#dc2626';
+            icon.textContent = 'warning';
+            text.textContent = `${criticalAlerts.length} Critical Alert${criticalAlerts.length > 1 ? 's' : ''}`;
+        }
+    }
+
+    // Update alert badge count
+    function updateAlertBadge(count) {
+        const badge = document.getElementById('alert-badge');
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // Show toast notification for new critical alert
+    function showToast(alert) {
+        const container = document.getElementById('toast-container');
+
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${alert.severity.toLowerCase()}`;
+        toast.innerHTML = `
+            <div class="toast-header">
+                <span class="toast-title">🚨 ${alert.title}</span>
+                <button class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+            <div class="toast-message">${alert.message}</div>
+            <div class="text-muted small mt-2">
+                ${alert.machine_name} - ${alert.current_value.toFixed(2)} (Threshold: ${alert.threshold})
+            </div>
+        `;
+
+        container.appendChild(toast);
+
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 10000);
+
+        // TRIGGER BROWSER NOTIFICATION
+        showBrowserNotification(alert);
+    }
+
+    // Browser Push Notification
+    function showBrowserNotification(alert) {
+        // Check if browser supports notifications
+        if (!("Notification" in window)) {
+            console.log("This browser does not support desktop notifications");
+            return;
+        }
+
+        // Check if permission is granted
+        if (Notification.permission === "granted") {
+            createNotification(alert);
+        } else if (Notification.permission !== "denied") {
+            // Request permission
+            Notification.requestPermission().then(function (permission) {
+                if (permission === "granted") {
+                    createNotification(alert);
+                }
+            });
+        }
+    }
+
+    function createNotification(alert) {
+        const notificationTitle = `🚨 ${alert.title}`;
+        const notificationOptions = {
+            body: `${alert.message}\n\n${alert.machine_name}: ${alert.current_value.toFixed(2)} (Threshold: ${alert.threshold})`,
+            icon: '/static/favicon.ico', // You can customize this
+            badge: '/static/favicon.ico',
+            tag: `alert-${alert.id}`, // Prevents duplicate notifications
+            requireInteraction: true, // Notification stays until user interacts
+            vibrate: [200, 100, 200], // Vibration pattern for mobile
+            data: {
+                alertId: alert.id,
+                url: window.location.href
+            }
+        };
+
+        const notification = new Notification(notificationTitle, notificationOptions);
+
+        // Handle notification click - focus window and open dashboard
+        notification.onclick = function (event) {
+            event.preventDefault();
+            window.focus();
+            notification.close();
+
+            // Optionally scroll to status card or open alert dropdown
+            document.getElementById('alert-bell')?.click();
+        };
+
+        // Auto-close after 30 seconds
+        setTimeout(() => {
+            notification.close();
+        }, 30000);
+    }
+
+    // Request notification permission on page load
+    function requestNotificationPermission() {
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission().then(function (permission) {
+                if (permission === "granted") {
+                    console.log("✓ Browser notifications enabled");
+                } else {
+                    console.log("Browser notifications denied");
+                }
+            });
+        }
+    }
+
+    // Acknowledge alert
+    function acknowledgeAlert(alertId) {
+        fetch(`/api/alerts/${alertId}/acknowledge/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove from known alerts
+                    knownAlertIds.delete(alertId);
+                    // Refresh alerts list
+                    fetchAlerts();
+                } else {
+                    console.error('Failed to acknowledge alert:', data.error);
+                }
+            })
+            .catch(error => console.error('Error acknowledging alert:', error));
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Polling for new alerts every 10 seconds
+    setInterval(fetchAlerts, 30000); // Polling alerts: setiap 30 detik (was 10s)
+    async function showSteamDetailsModal(rawTimestamp, displayTime) {
+        const modal = new bootstrap.Modal(document.getElementById('steamDetailModal'));
+        document.getElementById('steamDetailTimeDisplay').textContent = `Memuat data untuk ${displayTime}...`;
+        const contentDiv = document.getElementById('steamDetailContent');
+        contentDiv.innerHTML = `
+            <div class="p-4 text-center text-muted">
+                <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
+                <div>Mengambil data mesin...</div>
+            </div>`;
+        modal.show();
+
+        try {
+            const response = await fetch(`/api/steam-usage-detail/?timestamp=${encodeURIComponent(rawTimestamp)}`);
+            if (!response.ok) throw new Error('Network error');
+            const result = await response.json();
+
+            document.getElementById('steamDetailTimeDisplay').textContent = result.timestamp_display;
+
+            if (!result.data || result.data.length === 0) {
+                contentDiv.innerHTML = `
+                    <div class="p-4 text-center text-muted">
+                        Tidak ada aktivitas mesin uap pada waktu ini.
+                    </div>`;
+                return;
+            }
+
+            let html = '<div class="list-group list-group-flush">';
+            result.data.forEach(group => {
+                // Group Header
+                html += `
+                    <div class="list-group-item bg-light border-bottom text-secondary fw-bold py-2" style="font-size: 0.85rem;">
+                        ${group.group_name}
+                    </div>
+                `;
+
+                // Machine Items
+                group.machines.forEach(machine => {
+                    const badgeHtml = machine.is_new ? '<span class="badge bg-success rounded-pill ms-2" style="font-size: 0.65rem;">NEW</span>' : '';
+
+                    let statusColor = "text-muted";
+                    if (machine.status === "Running" || machine.status === "HEAT") statusColor = "text-danger";
+                    else if (machine.status === "STEADY") statusColor = "text-success";
+
+                    html += `
+                    <div class="list-group-item py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 fw-bold text-dark">${machine.name} <span class="text-muted fw-normal" style="font-size: 0.8rem;">(${machine.code})</span></h6>
+                                <small class="${statusColor} fw-medium">Status: ${machine.status} ${badgeHtml}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold fs-6 text-dark">${machine.usage}</span>
+                                <small class="text-muted d-block" style="font-size: 0.7rem;">kg/h</small>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            });
+            html += '</div>';
+            contentDiv.innerHTML = html;
+
+        } catch (error) {
+            console.error("Error fetching steam details:", error);
+            contentDiv.innerHTML = `
+                <div class="p-4 text-center text-danger">
+                    Gagal mengambil data. Silakan coba lagi.
+                </div>`;
+        }
+    }
+
+    // Initial fetch
+    fetchAlerts();
+
+    // Request browser notification permission on page load
+    requestNotificationPermission();
+
+</script>
+{% endblock %}

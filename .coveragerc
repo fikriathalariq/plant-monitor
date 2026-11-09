@@ -1,0 +1,18 @@
+[run]
+source = monitoring
+branch = False
+omit =
+    monitoring/migrations/*
+    monitoring/tests/*
+    monitoring/templates/*
+    */virtualenvs/*
+    */venv/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+show_missing = True

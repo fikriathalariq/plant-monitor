@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        .chart-row { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
+        .chart-container { flex: 1; min-width: 45%; height: 400px; background: #fff; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>{{ title }}</h1>
+    <p style="text-align: center; color: #666;">Distribusi titik deviasi aktual selama 180 hari terakhir, dipetakan terhadap Master Threshold / Z-Score.</p>
+    
+    <div class="chart-row">
+        <div id="chart-suhu" class="chart-container"></div>
+        <div id="chart-heat" class="chart-container"></div>
+    </div>
+    <div class="chart-row">
+        <div id="chart-keep" class="chart-container"></div>
+        <div id="chart-cool" class="chart-container"></div>
+    </div>
+</div>
+
+<script>
+    const params = JSON.parse('{{ params|safe }}');
+    const actuals = JSON.parse('{{ actuals|safe }}');
+
+    function createNormalPDF(mean, std, xMin, xMax, points) {
+        if (!std || std === 0) return {x: [], y: []};
+        const x = [];
+        const y = [];
+        const step = (xMax - xMin) / points;
+        for (let i = 0; i <= points; i++) {
+            let val = xMin + i * step;
+            x.push(val);
+            // Normal PDF Formula
+            let p = (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((val - mean) / std, 2));
+            y.push(p);
+        }
+        return {x, y};
+    }
+
+    function renderChart(divId, title, p_data, a_data, color) {
+        if (!a_data || a_data.length === 0) {
+            document.getElementById(divId).innerHTML = `<div style="text-align:center; padding-top: 180px; color:#999;">Tidak ada data aktual untuk ${title}</div>`;
+            return;
+        }
+
+        const dataMin = Math.min(...a_data);
+        const dataMax = Math.max(...a_data);
+        
+        let boundLow = p_data.low !== null ? p_data.low : dataMin;
+        let boundUp = p_data.up !== null ? p_data.up : dataMax;
+        
+        // Pad the view slightly beyond bounds
+        const xMin = Math.min(dataMin, boundLow) - Math.abs(p_data.std);
+        const xMax = Math.max(dataMax, boundUp) + Math.abs(p_data.std);
+        
+        // Trace 1: Histogram of actuals (y-axis normalized as probability density)
+        const traceHist = {
+            x: a_data,
+            type: 'histogram',
+            histnorm: 'probability density',
+            name: 'Frekuensi Riwayat',
+            marker: { color: color, opacity: 0.5 },
+            nbinsx: 30
+        };
+
+        // Trace 2: Normal Curve
+        const pdf = createNormalPDF(p_data.mean, p_data.std, xMin, xMax, 100);
+        const traceNormal = {
+            x: pdf.x,
+            y: pdf.y,
+            mode: 'lines',
+            name: 'Kurva Normal (Z-Score)',
+            line: { color: 'black', width: 2, dash: 'dot' }
+        };
+
+        const layout = {
+            title: title,
+            xaxis: { title: 'Selisih (Deviasi)' },
+            yaxis: { title: 'Kepadatan (Density)' },
+            barmode: 'overlay',
+            shapes: [
+                {
+                    type: 'line',
+                    x0: p_data.low, x1: p_data.low,
+                    y0: 0, y1: 1,
+                    yref: 'paper',
+                    line: { color: 'red', width: 3, dash: 'dash' }
+                },
+                {
+                    type: 'line',
+                    x0: p_data.up, x1: p_data.up,
+                    y0: 0, y1: 1,
+                    yref: 'paper',
+                    line: { color: 'red', width: 3, dash: 'dash' }
+                }
+            ],
+            annotations: [
+                {
+                    x: p_data.low, y: 1, yref: 'paper',
+                    text: 'Lower Bound', showarrow: true, arrowhead: 1, ax: 40, ay: 0, font: {color: 'red'}
+                },
+                {
+                    x: p_data.up, y: 1, yref: 'paper',
+                    text: 'Upper Bound', showarrow: true, arrowhead: 1, ax: -40, ay: 0, font: {color: 'red'}
+                }
+            ]
+        };
+
+        Plotly.newPlot(divId, [traceHist, traceNormal], layout, {responsive: true});
+    }
+
+    renderChart('chart-suhu', 'Distribusi Suhu', params.suhu, actuals.suhu, '#FF9800');
+    renderChart('chart-heat', 'Distribusi Durasi Heat', params.heat, actuals.heat, '#F44336');
+    renderChart('chart-keep', 'Distribusi Durasi Keep', params.keep, actuals.keep, '#4CAF50');
+    renderChart('chart-cool', 'Distribusi Durasi Cool', params.cool, actuals.cool, '#2196F3');
+</script>
+
+</body>
+</html>

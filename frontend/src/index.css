@@ -1,0 +1,2394 @@
+@import "tailwindcss";
+
+
+
+@theme {
+
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+
+  --color-primary-50: #eff6ff;
+
+  --color-primary-100: #dbeafe;
+
+  --color-primary-500: #3b82f6;
+
+  --color-primary-600: #2563eb;
+
+  --color-primary-700: #1d4ed8;
+
+
+
+  --color-surface-container-lowest: #ffffff;
+
+  --color-surface-container-low: #eff4ff;
+
+  --color-surface-container: #e5eeff;
+
+  --color-surface-container-high: #dce9ff;
+
+  --color-surface-container-highest: #d3e4fe;
+
+  --color-surface-dim: #cbdbf5;
+
+  --color-surface: #f8f9ff;
+
+  --color-surface-bright: #f8f9ff;
+
+  --color-background: #f8f9ff;
+
+  --color-on-surface: #0b1c30;
+
+  --color-on-surface-variant: #45464d;
+
+  --color-outline: #76777d;
+
+  --color-outline-variant: #c6c6cd;
+
+  --color-primary-container: #131b2e;
+
+  --color-secondary: #006591;
+
+  --color-secondary-container: #39b8fd;
+
+  --color-secondary-fixed: #c9e6ff;
+
+  --color-secondary-fixed-dim: #89ceff;
+
+  --color-on-secondary-container: #004666;
+
+  --color-on-secondary-fixed: #001e2f;
+
+  --color-error: #ba1a1a;
+
+  --color-error-container: #ffdad6;
+
+  --color-on-error-container: #93000a;
+
+  --color-tertiary-fixed-dim: #4edea3;
+
+  --color-tertiary-container: #002113;
+
+  --color-tertiary-fixed: #6ffbbe;
+
+  --color-on-tertiary-container: #009668;
+
+}
+
+
+
+/* Typography tokens aligned with Port 8002 Hanken Grotesk / Inter standard */
+
+.font-headline-sm { font-family: inherit; font-size: 16px; line-height: 22px; font-weight: 600; }
+
+.font-headline-md { font-family: inherit; font-size: 18px; line-height: 24px; font-weight: 600; }
+
+.font-headline-lg { font-family: inherit; font-size: 22px; line-height: 28px; font-weight: 600; }
+
+.font-metric-display { font-family: inherit; font-size: 24px; line-height: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.font-metric-value { font-family: inherit; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.font-label-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+.font-label-ui { font-family: inherit; font-size: 12px; font-weight: 600; }
+
+.font-body-sm { font-family: inherit; font-size: 12px; }
+
+.font-body-md { font-family: inherit; font-size: 14px; }
+
+.font-body-lg { font-family: inherit; font-size: 15px; }
+
+
+
+/* Utility to hide scrollbars while keeping touch scroll active */
+
+.no-scrollbar::-webkit-scrollbar {
+
+  display: none;
+
+}
+
+.no-scrollbar {
+
+  -ms-overflow-style: none;
+
+  scrollbar-width: none;
+
+}
+
+
+
+body {
+
+  background-color: #f8fafc;
+
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+
+}
+
+
+
+.process-report {
+
+  color: #0f172a;
+
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+
+  font-size: 13.5px;
+
+  line-height: 1.4;
+
+  -webkit-font-smoothing: antialiased;
+
+  -moz-osx-font-smoothing: grayscale;
+
+}
+
+
+
+.process-report .report-data {
+
+  font-family: 'JetBrains Mono', Consolas, ui-monospace, monospace;
+
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+
+}
+
+
+
+.process-report .report-label {
+
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+
+  color: #64748b;
+
+  font-size: 11px;
+
+  font-weight: 650;
+
+  letter-spacing: 0.025em;
+
+  line-height: 1.15rem;
+
+}
+
+
+
+.process-report .report-card {
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  box-shadow: 0 1px 3px 0 rgb(15 23 42 / 0.04), 0 1px 2px -1px rgb(15 23 42 / 0.04);
+
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+}
+
+
+
+.process-report .report-card:hover {
+
+  box-shadow: 0 4px 6px -1px rgb(15 23 42 / 0.06), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+
+}
+
+
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+
+.hide-scrollbar::-webkit-scrollbar {
+
+  display: none;
+
+}
+
+
+
+/* Hide scrollbar for IE, Edge and Firefox */
+
+.hide-scrollbar {
+
+  -ms-overflow-style: none;  /* IE and Edge */
+
+  scrollbar-width: none;  /* Firefox */
+
+}
+
+
+
+/* Mode print A4 untuk Dyeing Analytics / Process Report (.print-area).
+
+   Tidak berlaku saat Snapshot / Planning / Grafik / Process Report sedang mencetak. */
+
+@media print {
+
+
+
+
+
+  body:not(.printing-snapshot):not(.printing-production-planning):not(.printing-grafik):not(.printing-process-report):not(.printing-performance):not(.printing-daily):not(.printing-process-daily) * {
+
+    visibility: hidden;
+
+  }
+
+
+
+  body:not(.printing-snapshot):not(.printing-production-planning):not(.printing-grafik):not(.printing-process-report):not(.printing-performance):not(.printing-daily):not(.printing-process-daily) .print-area,
+
+  body:not(.printing-snapshot):not(.printing-production-planning):not(.printing-grafik):not(.printing-process-report):not(.printing-performance):not(.printing-daily):not(.printing-process-daily) .print-area * {
+
+    visibility: visible;
+
+  }
+
+
+
+  body:not(.printing-snapshot):not(.printing-production-planning):not(.printing-grafik):not(.printing-process-report):not(.printing-performance):not(.printing-daily):not(.printing-process-daily) .print-area {
+
+    position: static !important;
+
+    left: auto !important;
+
+    top: auto !important;
+
+    width: 100% !important;
+
+    max-width: 100% !important;
+
+  }
+
+
+
+  body:not(.printing-snapshot):not(.printing-production-planning):not(.printing-grafik):not(.printing-process-report):not(.printing-performance):not(.printing-daily):not(.printing-process-daily) .no-print {
+
+    display: none !important;
+
+  }
+
+}
+
+
+
+/* Snapshot History + Production Planning — A4 landscape, paginasi penuh, thead berulang.
+
+   Rule struktural (flow/table/group) dipakai bersama. Rule
+
+   `td[data-chart-track] > div.absolute` HANYA untuk snapshot (lihat akhir blok). */
+
+@media print {
+
+  html.printing-snapshot,
+
+  html.printing-snapshot body,
+
+  html.printing-snapshot #root,
+
+  html.printing-production-planning,
+
+  html.printing-production-planning body,
+
+  html.printing-production-planning #root {
+
+    height: auto !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    width: auto !important;
+
+    background: #fff !important;
+
+  }
+
+
+
+  html.printing-snapshot aside,
+
+  html.printing-snapshot .no-print,
+
+  html.printing-production-planning aside,
+
+  html.printing-production-planning .no-print {
+
+    display: none !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-flow,
+
+  html.printing-production-planning .snapshot-print-flow {
+
+    display: block !important;
+
+    height: auto !important;
+
+    width: 100% !important;
+
+    min-height: 0 !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    flex: none !important;
+
+    position: static !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-root,
+
+  html.printing-production-planning .snapshot-print-root {
+
+    position: static !important;
+
+    width: 100% !important;
+
+    -webkit-print-color-adjust: exact;
+
+    print-color-adjust: exact;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-scroll,
+
+  html.printing-production-planning .snapshot-print-scroll {
+
+    display: block !important;
+
+    height: auto !important;
+
+    min-height: 0 !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    margin: 0 !important;
+
+    border: 0 !important;
+
+    border-radius: 0 !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table,
+
+  html.printing-production-planning .snapshot-print-table {
+
+    display: table !important;
+
+    width: 100% !important;
+
+    min-width: 0 !important;
+
+    table-layout: fixed !important;
+
+    border-collapse: separate !important;
+
+    border-spacing: 0 !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table thead,
+
+  html.printing-production-planning .snapshot-print-table thead {
+
+    display: table-header-group !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table tbody,
+
+  html.printing-production-planning .snapshot-print-table tbody {
+
+    display: table-row-group !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table tr,
+
+  html.printing-production-planning .snapshot-print-table tr {
+
+    break-inside: avoid;
+
+    page-break-inside: avoid;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table thead tr,
+
+  html.printing-production-planning .snapshot-print-table thead tr {
+
+    break-inside: auto;
+
+    page-break-inside: auto;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table .snapshot-group-row,
+
+  html.printing-production-planning .snapshot-print-table .snapshot-group-row {
+
+    break-after: avoid-page;
+
+    page-break-after: avoid;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table th,
+
+  html.printing-snapshot .snapshot-print-table td,
+
+  html.printing-production-planning .snapshot-print-table th,
+
+  html.printing-production-planning .snapshot-print-table td {
+
+    position: static !important;
+
+    top: auto !important;
+
+    left: auto !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-name-col,
+
+  html.printing-production-planning .snapshot-print-name-col {
+
+    width: 28mm !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-title-row,
+
+  html.printing-production-planning .snapshot-print-title-row {
+
+    display: table-row !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-legend,
+
+  html.printing-production-planning .snapshot-print-legend {
+
+    display: flex !important;
+
+  }
+
+
+
+  /* Pastikan tabel mengisi seluruh lebar halaman */
+
+  html.printing-snapshot .snapshot-print-table col:first-child,
+
+  html.printing-production-planning .snapshot-print-table col:first-child {
+
+    width: 28mm !important;
+
+  }
+
+  html.printing-snapshot .snapshot-print-table col:last-child,
+
+  html.printing-production-planning .snapshot-print-table col:last-child {
+
+    width: auto !important;
+
+  }
+
+
+
+  /* Chart cells HARUS tetap relative agar anak absolute (segmen/canvas) tidak
+
+     melayang ke ancestor — rule th/td { position:static } di atas hanya untuk
+
+     menonaktifkan sticky label. */
+
+  html.printing-snapshot .snapshot-print-table td[data-chart-track],
+
+  html.printing-snapshot .snapshot-print-table th[data-chart-cell],
+
+  html.printing-production-planning .snapshot-print-table td[data-chart-track],
+
+  html.printing-production-planning .snapshot-print-table th[data-chart-cell] {
+
+    position: relative !important;
+
+    overflow: hidden !important;
+
+    padding: 0 !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table .steam-heatmap-row th[data-chart-cell],
+
+  html.printing-production-planning .snapshot-print-table .steam-heatmap-row th[data-chart-cell] {
+
+    height: 5mm !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table .steam-pressure-row th[data-chart-cell] {
+
+    height: 5mm !important;
+
+  }
+
+
+
+  html.printing-snapshot .snapshot-print-table td[data-chart-track],
+
+  html.printing-production-planning .snapshot-print-table td[data-chart-track] {
+
+    height: 4mm !important;
+
+  }
+
+
+
+  /* EKSKLUSIF Snapshot History: satu div absolute pembungkus segmen per baris.
+
+     JANGAN terapkan ke Production Planning — batch blocks banyak & pakai left/width %. */
+
+  html.printing-snapshot .snapshot-print-table td[data-chart-track] > div.absolute {
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+  }
+
+}
+
+
+
+/* Process Report — A4 landscape (Estetis & Proporsional) */
+
+/* Aturan layout aktif saat class printing-process-report dipasang (sebelum window.print)
+
+   maupun saat @media print, sehingga ResizeObserver Recharts me-render ulang SVG dengan ukuran 1:1. */
+
+html.printing-process-report .process-report-content {
+
+  width: 1040px !important;
+
+  max-width: 1040px !important;
+
+}
+
+
+
+html.printing-process-report .process-report-content > * + * {
+
+  margin-top: 6px !important;
+
+}
+
+
+
+html.printing-process-report .print-report-header {
+
+  padding: 6px 10px !important;
+
+  box-shadow: none !important;
+
+  border-radius: 8px !important;
+
+}
+
+html.printing-process-report .print-report-header h1 {
+
+  font-size: 16px !important;
+
+  line-height: 1.2 !important;
+
+}
+
+html.printing-process-report .print-report-header .report-data {
+
+  font-size: 10px !important;
+
+}
+
+
+
+/* 1. KPI 6 Kolom Sejajar */
+
+html.printing-process-report .print-kpi-grid {
+
+  display: grid !important;
+
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+
+  gap: 5px !important;
+
+}
+
+html.printing-process-report .print-kpi-grid .report-card {
+
+  padding: 5px 8px !important;
+
+  min-height: 0 !important;
+
+  border-radius: 7px !important;
+
+}
+
+html.printing-process-report .print-kpi-grid .report-label {
+
+  font-size: 9.5px !important;
+
+}
+
+html.printing-process-report .print-kpi-grid .report-data {
+
+  font-size: 14.5px !important;
+
+  line-height: 1.15 !important;
+
+  margin-top: 2px !important;
+
+}
+
+
+
+/* 2. Audit Finansial 3 Kolom Sejajar */
+
+html.printing-process-report .print-3col-grid {
+
+  display: grid !important;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+
+  gap: 6px !important;
+
+  break-inside: avoid !important;
+
+  page-break-inside: avoid !important;
+
+}
+
+html.printing-process-report .print-3col-grid > .report-card {
+
+  grid-column: span 1 / span 1 !important;
+
+  padding: 7px 9px !important;
+
+  border-radius: 7px !important;
+
+}
+
+html.printing-process-report .print-3col-grid h2 {
+
+  font-size: 11.5px !important;
+
+  line-height: 1.2 !important;
+
+}
+
+html.printing-process-report .print-3col-grid p {
+
+  font-size: 9.5px !important;
+
+  line-height: 1.2 !important;
+
+}
+
+html.printing-process-report .print-3col-grid .space-y-2\.5 > * + * {
+
+  margin-top: 3.5px !important;
+
+}
+
+html.printing-process-report .print-3col-grid .space-y-2 > * + * {
+
+  margin-top: 3.5px !important;
+
+}
+
+html.printing-process-report .print-3col-grid .p-2\.5,
+
+html.printing-process-report .print-3col-grid .p-2 {
+
+  padding: 4px 6px !important;
+
+  font-size: 9.5px !important;
+
+  line-height: 1.2 !important;
+
+}
+
+html.printing-process-report .print-3col-grid .mt-3 {
+
+  margin-top: 4px !important;
+
+  padding-top: 4px !important;
+
+}
+
+
+
+/* 3. Komparasi Historis Program: Kiri (5fr) & Kanan Grafik (7fr) Berdampingan Penuh */
+
+html.printing-process-report .print-page-1-bottom {
+
+  break-inside: avoid !important;
+
+  page-break-inside: avoid !important;
+
+}
+
+html.printing-process-report .print-page-1-bottom .px-4.py-3 {
+
+  padding: 5px 10px !important;
+
+}
+
+html.printing-process-report .print-page-1-bottom h2 {
+
+  font-size: 12px !important;
+
+}
+
+html.printing-process-report .print-bench-grid {
+
+  display: grid !important;
+
+  grid-template-columns: 5fr 7fr !important;
+
+  gap: 8px !important;
+
+  padding: 7px !important;
+
+  align-items: stretch !important;
+
+}
+
+html.printing-process-report .print-bench-left,
+
+html.printing-process-report .print-bench-right {
+
+  grid-column: span 1 / span 1 !important;
+
+  min-width: 0 !important;
+
+}
+
+html.printing-process-report .print-bench-left > * + * {
+
+  margin-top: 4px !important;
+
+}
+
+html.printing-process-report .print-bench-left .p-3 {
+
+  padding: 4px 6px !important;
+
+}
+
+html.printing-process-report .print-bench-left p {
+
+  font-size: 9.5px !important;
+
+  line-height: 1.2 !important;
+
+}
+
+html.printing-process-report .print-bench-left table th,
+
+html.printing-process-report .print-bench-left table td {
+
+  padding: 2.5px 5px !important;
+
+  font-size: 9.5px !important;
+
+}
+
+html.printing-process-report .print-bench-right {
+
+  padding: 6px 8px !important;
+
+  display: flex !important;
+
+  flex-direction: column !important;
+
+}
+
+html.printing-process-report .print-bench-chart-box {
+
+  height: 225px !important;
+
+  min-height: 225px !important;
+
+  max-height: 225px !important;
+
+  width: 100% !important;
+
+}
+
+
+
+/* 4. Diagnostik Tekanan & 2 Grafik Boiler Berdampingan */
+
+html.printing-process-report .print-boiler-section {
+
+  break-inside: avoid !important;
+
+  page-break-inside: avoid !important;
+
+}
+
+html.printing-process-report .print-boiler-section .px-4.py-3 {
+
+  padding: 5px 10px !important;
+
+}
+
+html.printing-process-report .print-boiler-section .p-4 {
+
+  padding: 7px !important;
+
+}
+
+html.printing-process-report .print-boiler-section .space-y-4 > * + * {
+
+  margin-top: 6px !important;
+
+}
+
+html.printing-process-report .print-boiler-section .p-3\.5 {
+
+  padding: 5px 8px !important;
+
+}
+
+html.printing-process-report .print-boiler-section p {
+
+  font-size: 9.5px !important;
+
+  line-height: 1.25 !important;
+
+  margin-bottom: 3px !important;
+
+}
+
+html.printing-process-report .print-boiler-section .px-3.py-2 {
+
+  padding: 3px 6px !important;
+
+  font-size: 9.5px !important;
+
+}
+
+html.printing-process-report .print-2col-grid {
+
+  display: grid !important;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+
+  gap: 8px !important;
+
+}
+
+html.printing-process-report .print-2col-grid > * {
+
+  grid-column: span 1 / span 1 !important;
+
+  min-width: 0 !important;
+
+  padding: 6px 8px !important;
+
+}
+
+html.printing-process-report .print-boiler-chart-box {
+
+  height: 195px !important;
+
+  min-height: 195px !important;
+
+  max-height: 195px !important;
+
+  width: 100% !important;
+
+}
+
+
+
+/* 5. Forensik Operator */
+
+html.printing-process-report .print-forensics-section {
+
+  break-inside: avoid !important;
+
+  page-break-inside: avoid !important;
+
+}
+
+html.printing-process-report .print-forensics-section .px-4.py-3 {
+
+  padding: 5px 10px !important;
+
+}
+
+html.printing-process-report .print-forensics-section .p-4 {
+
+  padding: 6px !important;
+
+}
+
+html.printing-process-report .print-forensics-section .p-3\.5 {
+
+  padding: 5px 8px !important;
+
+}
+
+html.printing-process-report .print-forensics-section h3 {
+
+  font-size: 11px !important;
+
+  margin-bottom: 2px !important;
+
+}
+
+html.printing-process-report .print-forensics-section p {
+
+  font-size: 9.5px !important;
+
+  line-height: 1.2 !important;
+
+  margin-bottom: 3px !important;
+
+}
+
+
+
+/* 6. Identitas Kain & Kurva Suhu Utama Mesin (Kiri & Kanan Seimbang) */
+
+html.printing-process-report .process-report-grid {
+
+  display: grid !important;
+
+  grid-template-columns: 5fr 8fr !important;
+
+  gap: 8px !important;
+
+  align-items: stretch !important;
+
+  break-inside: avoid !important;
+
+  page-break-inside: avoid !important;
+
+}
+
+html.printing-process-report .process-report-grid .px-3.py-2,
+
+html.printing-process-report .process-report-grid .px-3\.5.py-2\.5 {
+
+  padding: 4px 8px !important;
+
+}
+
+html.printing-process-report .process-report-grid .p-3 {
+
+  padding: 5px 8px !important;
+
+  font-size: 9.5px !important;
+
+}
+
+html.printing-process-report .process-report-grid .space-y-3 > * + * {
+
+  margin-top: 4px !important;
+
+}
+
+html.printing-process-report .process-report-grid .space-y-2 > * + * {
+
+  margin-top: 3px !important;
+
+}
+
+html.printing-process-report .process-report-grid .px-2\.5.py-2 {
+
+  padding: 3px 6px !important;
+
+}
+
+html.printing-process-report .process-report-chart-container {
+
+  min-height: 0 !important;
+
+  overflow: visible !important;
+
+  display: flex !important;
+
+  flex-direction: column !important;
+
+}
+
+html.printing-process-report .print-main-chart-box {
+
+  height: 270px !important;
+
+  min-height: 270px !important;
+
+  max-height: 285px !important;
+
+  flex: 1 1 auto !important;
+
+  width: 100% !important;
+
+}
+
+
+
+@media print {
+
+  html.printing-process-report,
+
+  html.printing-process-report body,
+
+  html.printing-process-report #root {
+
+    height: auto !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    background: #fff !important;
+
+  }
+
+
+
+  html.printing-process-report {
+
+    -webkit-print-color-adjust: exact !important;
+
+    print-color-adjust: exact !important;
+
+  }
+
+  html.printing-process-report .print-area {
+
+    visibility: visible !important;
+
+    position: static !important;
+
+    width: 100% !important;
+
+    max-width: 100% !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    background: white !important;
+
+  }
+
+
+
+  html.printing-process-report .process-report-content {
+
+    width: 100% !important;
+
+    max-width: 100% !important;
+
+  }
+
+
+
+  html.printing-process-report aside,
+
+  html.printing-process-report .no-print {
+
+    display: none !important;
+
+  }
+
+
+
+  html.printing-process-report .snapshot-print-flow {
+
+    display: block !important;
+
+    height: auto !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    flex: none !important;
+
+    position: static !important;
+
+    width: 100% !important;
+
+  }
+
+
+
+  html.printing-process-report .report-card {
+
+    box-shadow: none !important;
+
+  }
+
+
+
+  html.printing-process-report .overflow-x-auto {
+
+    overflow: visible !important;
+
+  }
+
+
+
+  html.printing-process-report .recharts-tooltip-wrapper,
+
+  html.printing-process-report .recharts-default-tooltip,
+
+  html.printing-process-report .recharts-tooltip-cursor,
+
+  html.printing-process-report .recharts-active-dot {
+
+    display: none !important;
+
+    visibility: hidden !important;
+
+    opacity: 0 !important;
+
+  }
+
+
+
+  html.printing-process-report .recharts-responsive-container,
+
+  html.printing-process-report .recharts-responsive-container > div,
+
+  html.printing-process-report .recharts-wrapper {
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    position: relative !important;
+
+  }
+
+
+
+  html.printing-process-report .recharts-wrapper > svg.recharts-surface {
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    display: block !important;
+
+  }
+
+
+
+  html.printing-process-report .recharts-legend-wrapper {
+
+    position: relative !important;
+
+    width: 100% !important;
+
+    left: auto !important;
+
+    bottom: auto !important;
+
+    display: block !important;
+
+    margin-top: 2px !important;
+
+    text-align: center !important;
+
+  }
+
+  html.printing-process-report .recharts-legend-wrapper ul {
+
+    display: flex !important;
+
+    flex-wrap: wrap !important;
+
+    justify-content: center !important;
+
+    gap: 10px !important;
+
+    font-size: 10px !important;
+
+  }
+
+  html.printing-process-report .recharts-legend-item {
+
+    display: inline-flex !important;
+
+    align-items: center !important;
+
+    margin-right: 0 !important;
+
+  }
+
+  html.printing-process-report .recharts-legend-wrapper svg,
+
+  html.printing-process-report .recharts-legend-item svg,
+
+  html.printing-process-report .recharts-legend-icon,
+
+  html.printing-process-report svg.recharts-surface[width="12"],
+
+  html.printing-process-report svg.recharts-surface[width="14"] {
+
+    width: 11px !important;
+
+    height: 11px !important;
+
+    min-width: 11px !important;
+
+    min-height: 11px !important;
+
+    max-width: 11px !important;
+
+    max-height: 11px !important;
+
+    display: inline-block !important;
+
+    vertical-align: middle !important;
+
+    margin-right: 4px !important;
+
+  }
+
+}
+
+
+
+/* Performance Summary  A4 landscape */
+
+@media print {
+
+  html.printing-performance,
+
+  html.printing-performance body,
+
+  html.printing-performance #root {
+
+    height: auto !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    background: #fff !important;
+
+  }
+
+
+
+  html.printing-performance {
+
+    -webkit-print-color-adjust: exact;
+
+    print-color-adjust: exact;
+
+  }
+
+
+
+  /* Sembunyikan sidebar, header, bottom nav, filter bar, KPI cards */
+
+  html.printing-performance aside,
+
+  html.printing-performance .no-print {
+
+    display: none !important;
+
+  }
+
+
+
+  /* Bongkar flexbox/overflow container Layout */
+
+  html.printing-performance .snapshot-print-flow {
+
+    display: block !important;
+
+    height: auto !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    flex: none !important;
+
+    position: static !important;
+
+    width: 100% !important;
+
+  }
+
+
+
+  /* Print area  posisi statis, full-width, tanpa border dekoratif */
+
+  html.printing-performance .print-area {
+
+    position: static !important;
+
+    width: 100% !important;
+
+    max-width: 100% !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    background: white !important;
+
+    border: none !important;
+
+    border-radius: 0 !important;
+
+    box-shadow: none !important;
+
+    overflow: visible !important;
+
+  }
+
+
+
+  html.printing-performance .print-area * {
+
+    visibility: visible !important;
+
+  }
+
+
+
+  /* Tabel: kompak, header berulang, jangan potong baris */
+
+  html.printing-performance table {
+
+    font-size: 8pt !important;
+
+    width: 100% !important;
+
+    border-collapse: collapse !important;
+
+  }
+
+
+
+  html.printing-performance th,
+
+  html.printing-performance td {
+
+    padding: 2px 4px !important;
+
+    border-bottom: 0.5px solid #ddd !important;
+
+  }
+
+
+
+  html.printing-performance thead {
+
+    display: table-header-group;
+
+  }
+
+
+
+  html.printing-performance tr {
+
+    page-break-inside: avoid;
+
+  }
+
+
+
+  /* Header cetak: border bawah dan spacing kompak */
+
+  html.printing-performance .perf-print-header {
+
+    padding: 4mm !important;
+
+    margin-bottom: 2mm !important;
+
+    border-bottom: 1px solid #ccc !important;
+
+  }
+
+}
+
+/* ==========================================================================
+
+   Auto-hide Floating Scrollbar (Mantine ScrollArea behavior - Modern Standard)
+
+   ========================================================================== */
+
+
+
+/* Firefox: scrollbar-color dinamis */
+
+.sidebar-scroll-hover {
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  scrollbar-gutter: stable;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: transparent transparent;
+
+  
+
+  transition: scrollbar-color 0.25s ease-in-out;
+
+}
+
+
+
+.sidebar-scroll-hover:hover {
+
+  scrollbar-color: rgba(148, 163, 184, 0.5) transparent; /* slate-400 */
+
+}
+
+
+
+/* Chrome, Edge, Brave (Blink/WebKit) */
+
+.sidebar-scroll-hover::-webkit-scrollbar {
+
+  width: 4px;
+
+}
+
+
+
+.sidebar-scroll-hover::-webkit-scrollbar-track {
+
+  background: transparent;
+
+}
+
+
+
+.sidebar-scroll-hover::-webkit-scrollbar-thumb {
+
+  background-color: transparent;
+
+  border-radius: 9999px;
+
+  transition: background-color 0.25s ease-in-out;
+
+}
+
+
+
+.sidebar-scroll-hover:hover::-webkit-scrollbar-thumb {
+
+  background-color: rgba(148, 163, 184, 0.45);
+
+}
+
+
+
+.sidebar-scroll-hover::-webkit-scrollbar-thumb:hover {
+
+  background-color: rgba(100, 116, 139, 0.8); /* slate-500 saat di-drag */
+
+}
+
+
+
+
+
+
+
+/* ==========================================================================
+
+   Table Scrollbar (Horizontal & Vertical for wide data tables)
+
+   Jelas terlihat, elegan, dan mendukung scroll dua arah (X & Y)
+
+   ========================================================================== */
+
+.table-scrollbar {
+
+  overflow-x: auto;
+
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: rgba(148, 163, 184, 0.65) rgba(241, 245, 249, 0.7);
+
+  -webkit-overflow-scrolling: touch;
+
+}
+
+
+
+.table-scrollbar:hover {
+
+  scrollbar-color: rgba(100, 116, 139, 0.85) rgba(226, 232, 240, 0.9);
+
+}
+
+
+
+.table-scrollbar::-webkit-scrollbar {
+
+  width: 7px;
+
+  height: 8px; /* Tinggi scrollbar horizontal agar nyaman diklik & digeser */
+
+}
+
+
+
+.table-scrollbar::-webkit-scrollbar-track {
+
+  background: rgba(241, 245, 249, 0.9); /* slate-100 halus */
+
+  border-radius: 9999px;
+
+}
+
+
+
+.table-scrollbar::-webkit-scrollbar-thumb {
+
+  background-color: rgba(148, 163, 184, 0.65); /* slate-400 jelas terlihat tanpa hover */
+
+  border-radius: 9999px;
+
+  border: 1.5px solid rgba(241, 245, 249, 0.9);
+
+  transition: background-color 0.2s ease-in-out;
+
+}
+
+
+
+.table-scrollbar:hover::-webkit-scrollbar-thumb {
+
+  background-color: rgba(100, 116, 139, 0.85); /* slate-500 saat di-hover */
+
+}
+
+
+
+.table-scrollbar::-webkit-scrollbar-thumb:hover {
+
+  background-color: rgba(71, 85, 105, 1); /* slate-600 saat thumb digeser */
+
+}
+
+
+
+/* Cross-browser Auto-hiding Scrollbar for Data Table */
+
+.custom-scrollbar {
+
+  scrollbar-width: thin;
+
+  scrollbar-color: transparent transparent;
+
+  transition: scrollbar-color 0.3s ease;
+
+}
+
+.custom-scrollbar:hover {
+
+  scrollbar-color: rgba(156, 163, 175, 0.8) transparent;
+
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+
+  width: 8px;
+
+  height: 8px;
+
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+
+  background: transparent;
+
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+
+  background-color: transparent;
+
+  border-radius: 10px;
+
+  transition: background-color 0.3s ease;
+
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+
+  background-color: rgba(156, 163, 175, 0.8);
+
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+
+  background-color: rgba(107, 114, 128, 1);
+
+}
+
+
+
+/* Daily Report & Machine Daily Analytics — A4 landscape */
+
+/* Aturan layout aktif saat class printing-daily dipasang (sebelum window.print)
+
+   maupun saat @media print, agar ResizeObserver Recharts me-render ulang SVG 1:1 penuh. */
+
+html.printing-daily .daily-analytics-content {
+
+  width: 1040px !important;
+
+  max-width: 1040px !important;
+
+  padding: 0 !important;
+
+}
+
+
+
+html.printing-daily .daily-analytics-content > * + * {
+
+  margin-top: 8px !important;
+
+}
+
+
+
+html.printing-daily .daily-analytics-top-grid {
+
+  display: grid !important;
+
+  grid-template-columns: minmax(0, 1fr) 265px !important;
+
+  gap: 10px !important;
+
+  align-items: stretch !important;
+
+}
+
+
+
+html.printing-daily .daily-analytics-summary-col {
+
+  width: 265px !important;
+
+  gap: 6px !important;
+
+}
+
+
+
+html.printing-daily .daily-analytics-card {
+
+  padding: 10px 12px !important;
+
+}
+
+
+
+html.printing-daily .daily-analytics-chart-box {
+
+  height: 330px !important;
+
+  min-height: 330px !important;
+
+  max-height: 345px !important;
+
+  flex: 1 1 auto !important;
+
+  width: 100% !important;
+
+  overflow: visible !important;
+
+}
+
+
+
+@media print {
+
+  html.printing-daily,
+
+  html.printing-daily body,
+
+  html.printing-daily #root {
+
+    height: auto !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    background: #fff !important;
+
+  }
+
+
+
+  html.printing-daily {
+
+    -webkit-print-color-adjust: exact !important;
+
+    print-color-adjust: exact !important;
+
+  }
+
+
+
+  html.printing-daily aside,
+
+  html.printing-daily .no-print {
+
+    display: none !important;
+
+  }
+
+
+
+  /* Hancurkan flexbox utama agar tidak membatasi tinggi kertas */
+
+  html.printing-daily .snapshot-print-flow {
+
+    display: block !important;
+
+    height: auto !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    flex: none !important;
+
+    position: static !important;
+
+    width: 100% !important;
+
+  }
+
+
+
+  html.printing-daily .print-area {
+
+    position: static !important;
+
+    width: 100% !important;
+
+    max-width: 100% !important;
+
+    height: auto !important;
+
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    box-shadow: none !important;
+
+    background: white !important;
+
+    visibility: visible !important;
+
+  }
+
+
+
+  html.printing-daily .daily-analytics-content {
+
+    width: 100% !important;
+
+    max-width: 100% !important;
+
+  }
+
+
+
+  html.printing-daily .overflow-x-auto {
+
+    overflow: visible !important;
+
+  }
+
+
+
+  /* Hindari elemen terpotong setengah halaman */
+
+  html.printing-daily .bg-white.rounded-xl {
+
+    break-inside: avoid;
+
+    page-break-inside: avoid;
+
+    border: 1px solid #e5e7eb !important;
+
+    box-shadow: none !important;
+
+  }
+
+
+
+  /* Machine Daily Analytics Print Optimization (Fit 100% A4 Landscape) */
+
+  html.printing-daily .daily-analytics-print-header {
+
+    display: block !important;
+
+  }
+
+
+
+  /* Hide Recharts Tooltips, Cursors & Active Dots during print */
+
+  html.printing-daily .recharts-tooltip-wrapper,
+
+  html.printing-daily .recharts-default-tooltip,
+
+  html.printing-daily .recharts-tooltip-cursor,
+
+  html.printing-daily .recharts-active-dot {
+
+    display: none !important;
+
+    visibility: hidden !important;
+
+    opacity: 0 !important;
+
+  }
+
+
+
+  html.printing-daily .daily-analytics-chart-box .recharts-responsive-container,
+
+  html.printing-daily .daily-analytics-chart-box .recharts-responsive-container > div,
+
+  html.printing-daily .daily-analytics-chart-box .recharts-wrapper {
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    position: relative !important;
+
+  }
+
+
+
+  html.printing-daily .daily-analytics-chart-box .recharts-wrapper > svg.recharts-surface {
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    display: block !important;
+
+  }
+
+
+
+  html.printing-daily .daily-analytics-table-card {
+
+    overflow: visible !important;
+
+  }
+
+
+
+  html.printing-daily .daily-analytics-table {
+
+    width: 100% !important;
+
+    font-size: 7.5pt !important;
+
+  }
+
+
+
+  html.printing-daily .daily-analytics-table th,
+
+  html.printing-daily .daily-analytics-table td {
+
+    padding: 3px 4px !important;
+
+  }
+
+}
+
+
+
+
+
+/* ═══════════════════════════════════════════════════════════════════ */
+
+/* PLANT MONITOR DRIVER.JS PRODUCT TOUR THEME                         */
+
+/* ═══════════════════════════════════════════════════════════════════ */
+
+body.driver-tour-active {
+
+  padding-bottom: 60vh !important;
+
+}
+
+
+
+.driver-popover.pm-tour-popover {
+
+  background-color: #0f172a !important; /* slate-900 */
+
+  color: #f8fafc !important; /* slate-50 */
+
+  border: 1px solid #334155 !important; /* slate-700 */
+
+  border-radius: 1rem !important;
+
+  padding: 1.125rem !important;
+
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.08) !important;
+
+  font-family: 'Hanken Grotesk', system-ui, sans-serif !important;
+
+  width: auto !important;
+
+  max-width: min(390px, calc(100vw - 24px)) !important;
+
+  box-sizing: border-box !important;
+
+}
+
+
+
+@media (max-width: 640px) {
+
+  .driver-popover.pm-tour-popover {
+
+    max-width: calc(100vw - 20px) !important;
+
+    padding: 0.875rem !important;
+
+    border-radius: 0.75rem !important;
+
+  }
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-title {
+
+  font-size: 0.9375rem !important;
+
+  font-weight: 800 !important;
+
+  color: #ffffff !important;
+
+  margin-bottom: 0.5rem !important;
+
+  letter-spacing: -0.01em !important;
+
+  display: flex !important;
+
+  align-items: center !important;
+
+  gap: 0.5rem !important;
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-description {
+
+  font-size: 0.8125rem !important;
+
+  color: #cbd5e1 !important; /* slate-300 */
+
+  line-height: 1.55 !important;
+
+  margin-bottom: 1rem !important;
+
+}
+
+
+
+@media (max-width: 640px) {
+
+  .driver-popover.pm-tour-popover .driver-popover-title {
+
+    font-size: 0.8438rem !important;
+
+    margin-bottom: 0.375rem !important;
+
+  }
+
+  .driver-popover.pm-tour-popover .driver-popover-description {
+
+    font-size: 0.75rem !important;
+
+    line-height: 1.45 !important;
+
+    margin-bottom: 0.75rem !important;
+
+  }
+
+  .driver-popover.pm-tour-popover .driver-popover-footer-btn {
+
+    padding: 0.3rem 0.55rem !important;
+
+    font-size: 0.6875rem !important;
+
+  }
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-progress-text {
+
+  font-size: 0.6875rem !important;
+
+  font-weight: 700 !important;
+
+  color: #818cf8 !important; /* indigo-400 */
+
+  text-transform: uppercase !important;
+
+  letter-spacing: 0.05em !important;
+
+  font-family: 'JetBrains Mono', monospace !important;
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-close-btn {
+
+  color: #94a3b8 !important;
+
+  transition: color 0.15s ease !important;
+
+  padding: 4px !important;
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-close-btn:hover {
+
+  color: #ffffff !important;
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-footer-btn {
+
+  border-radius: 0.625rem !important;
+
+  padding: 0.375rem 0.75rem !important;
+
+  font-size: 0.75rem !important;
+
+  font-weight: 700 !important;
+
+  transition: all 0.15s ease !important;
+
+  cursor: pointer !important;
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-next-btn {
+
+  background-color: #4f46e5 !important; /* indigo-600 */
+
+  color: #ffffff !important;
+
+  border: 1px solid #6366f1 !important;
+
+  box-shadow: 0 2px 4px rgb(79 70 229 / 0.3) !important;
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-next-btn:hover {
+
+  background-color: #4338ca !important; /* indigo-700 */
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-prev-btn {
+
+  background-color: #1e293b !important; /* slate-800 */
+
+  color: #cbd5e1 !important;
+
+  border: 1px solid #334155 !important;
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-prev-btn:hover {
+
+  background-color: #334155 !important;
+
+  color: #ffffff !important;
+
+}
+
+
+
+.driver-popover.pm-tour-popover .driver-popover-arrow-side-top {
+
+  border-bottom-color: #0f172a !important;
+
+}
+
+.driver-popover.pm-tour-popover .driver-popover-arrow-side-bottom {
+
+  border-top-color: #0f172a !important;
+
+}
+
+.driver-popover.pm-tour-popover .driver-popover-arrow-side-left {
+
+  border-right-color: #0f172a !important;
+
+}
+
+.driver-popover.pm-tour-popover .driver-popover-arrow-side-right {
+
+  border-left-color: #0f172a !important;
+
+}
+
+
+
+.driver-overlay {
+
+  transition: opacity 0.25s ease !important;
+
+}
+
+
+
+/* ========================================================
+
+   Shimmer Skeleton Animation (Gojek / Modern Fluid Style)
+
+   ======================================================== */
+
+@keyframes shimmer {
+
+  0% {
+
+    transform: translateX(-100%);
+
+  }
+
+  100% {
+
+    transform: translateX(100%);
+
+  }
+
+}
+
+
+
+.skeleton-shimmer {
+
+  position: relative;
+
+  overflow: hidden;
+
+  background-color: #e2e8f0;
+
+}
+
+
+
+.skeleton-shimmer::after {
+
+  position: absolute;
+
+  top: 0;
+
+  right: 0;
+
+  bottom: 0;
+
+  left: 0;
+
+  transform: translateX(-100%);
+
+  background-image: linear-gradient(
+
+    90deg,
+
+    rgba(255, 255, 255, 0) 0%,
+
+    rgba(255, 255, 255, 0.35) 25%,
+
+    rgba(255, 255, 255, 0.8) 50%,
+
+    rgba(255, 255, 255, 0.35) 75%,
+
+    rgba(255, 255, 255, 0) 100%
+
+  );
+
+  animation: shimmer 1.6s infinite ease-in-out;
+
+  content: '';
+
+}
+
+
+
+.skeleton-shimmer-dark {
+
+  position: relative;
+
+  overflow: hidden;
+
+  background-color: #0f1d38;
+
+}
+
+
+
+.skeleton-shimmer-dark::after {
+
+  position: absolute;
+
+  top: 0;
+
+  right: 0;
+
+  bottom: 0;
+
+  left: 0;
+
+  transform: translateX(-100%);
+
+  background-image: linear-gradient(
+
+    90deg,
+
+    rgba(255, 255, 255, 0) 0%,
+
+    rgba(59, 130, 246, 0.15) 30%,
+
+    rgba(147, 197, 253, 0.35) 50%,
+
+    rgba(59, 130, 246, 0.15) 70%,
+
+    rgba(255, 255, 255, 0) 100%
+
+  );
+
+  animation: shimmer 1.8s infinite ease-in-out;
+
+  content: '';
+
+}
+
+
+
+/* ========================================================
+
+   Smooth Page & Content Fade-In Transition
+
+   ======================================================== */
+
+@keyframes contentFadeIn {
+
+  0% {
+
+    opacity: 0;
+
+  }
+
+  100% {
+
+    opacity: 1;
+
+  }
+
+}
+
+
+
+.animate-fade-in {
+
+  animation: contentFadeIn 0.25s ease-out;
+
+}
+

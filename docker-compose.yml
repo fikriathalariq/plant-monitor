@@ -1,0 +1,32 @@
+services:
+  # Django Backend API (berjalan di port internal 8000, di-map ke 8001 di host)
+  api_dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantmonitor_api_dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8000"
+    environment:
+      - DEBUG=True
+      # host.docker.internal digunakan agar container bisa menembak database PostgreSQL di Host Windows Anda
+      - DATABASE_HOST=host.docker.internal
+      - DATABASE_PORT=5432
+      - ENV_MODE=development
+
+  # React Frontend (berjalan di port 5173)
+  frontend_dev:
+    image: node:20-alpine
+    container_name: plantmonitor_frontend_dev
+    working_dir: /app/frontend
+    # Jalankan instalasi lalu jalankan server dev Vite
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - .:/app
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Penting untuk hot-reload di Windows

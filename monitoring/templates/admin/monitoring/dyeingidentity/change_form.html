@@ -1,0 +1,13 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    {% if original and original.dyeing_process %}
+        <li>
+            <a href="/history/report/{{ original.dyeing_process.id }}?machine={{ original.dyeing_process.machine.code }}&batch={{ original.dyeing_process.batch_number }}" target="_blank" class="historylink" style="background-color: #007bff; color: white;">
+                📈 Grafik Proses
+            </a>
+        </li>
+    {% endif %}
+{% endblock %}

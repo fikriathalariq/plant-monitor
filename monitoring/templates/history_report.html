@@ -1,0 +1,792 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Report Batch #{{ process.batch_number }} | Suritex Factory</title>
+
+    <link href="{% static 'vendor/fonts/spline-sans/spline-sans.css' %}" rel="stylesheet" />
+    <link href="{% static 'vendor/fonts/material-symbols/material-symbols-outlined.css' %}" rel="stylesheet" />
+    <script src="{% static 'vendor/chartjs/chart.min.js' %}"></script>
+
+    <script src="{% static 'vendor/tailwindcss/tailwind.js' %}"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#111827',
+                        secondary: '#64748b',
+                    },
+                    fontFamily: {
+                        sans: ['"Spline Sans"', 'sans-serif'],
+                    },
+                    screens: {
+                        'print': { 'raw': 'print' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: "Spline Sans", sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            -webkit-print-color-adjust: exact;
+        }
+
+        /* Kertas A4 */
+        .paper-sheet {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 2rem auto;
+            padding: 1.5cm;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        /* Helper Data Row */
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 4px 0;
+            font-size: 0.75rem;
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .data-label {
+            color: #64748b;
+        }
+
+        .data-value {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Print Specifics */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+
+            body {
+                background-color: white;
+                margin: 0;
+            }
+
+            .paper-sheet {
+                width: 100%;
+                margin: 0;
+                box-shadow: none;
+                padding: 1.5cm;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .avoid-break {
+                page-break-inside: avoid;
+            }
+
+            .text-xs {
+                font-size: 9pt !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div
+        class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200 p-3 shadow-sm flex justify-between items-center no-print">
+        <div class="flex items-center gap-2 px-4 max-w-[210mm] mx-auto w-full">
+
+            {# Back to list #}
+            <a href="{% url 'history_list' %}"
+                class="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900 shrink-0"
+                title="Back to list">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+
+            {# Previous Batch #}
+            {% if prev_batch %}
+            <a href="/history/report/{{ prev_batch.id }}?machine={{ prev_batch.machine.code }}&batch={{ prev_batch.batch_number }}"
+                class="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition-colors shrink-0"
+                title="Batch #{{ prev_batch.batch_number }} – {{ prev_batch.machine.name }}">
+                <span class="material-symbols-outlined text-base">chevron_left</span>
+                <span class="hidden sm:inline">Batch #{{ prev_batch.batch_number }}</span>
+                <span class="sm:hidden">Prev</span>
+            </a>
+            {% else %}
+            <span
+                class="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-100 bg-slate-50 text-slate-300 text-xs font-semibold cursor-not-allowed select-none shrink-0">
+                <span class="material-symbols-outlined text-base">chevron_left</span>
+                <span class="hidden sm:inline">Previous</span>
+                <span class="sm:hidden">Prev</span>
+            </span>
+            {% endif %}
+
+            {# Centre label #}
+            <div class="flex-1 text-center min-w-0">
+                <span class="font-bold text-slate-700 text-sm">{{ process.machine.name }}</span>
+                <span class="text-slate-400 text-xs ml-1">· Batch #{{ process.batch_number }}</span>
+            </div>
+
+            {# Next Batch #}
+            {% if next_batch %}
+            <a href="/history/report/{{ next_batch.id }}?machine={{ next_batch.machine.code }}&batch={{ next_batch.batch_number }}"
+                class="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition-colors shrink-0"
+                title="Batch #{{ next_batch.batch_number }} – {{ next_batch.machine.name }}">
+                <span class="hidden sm:inline">Batch #{{ next_batch.batch_number }}</span>
+                <span class="sm:hidden">Next</span>
+                <span class="material-symbols-outlined text-base">chevron_right</span>
+            </a>
+            {% else %}
+            <span
+                class="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-100 bg-slate-50 text-slate-300 text-xs font-semibold cursor-not-allowed select-none shrink-0">
+                <span class="hidden sm:inline">Next</span>
+                <span class="sm:hidden">Next</span>
+                <span class="material-symbols-outlined text-base">chevron_right</span>
+            </span>
+            {% endif %}
+
+            {# Print #}
+            <button onclick="window.print()"
+                class="ml-1 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded shadow flex items-center gap-2 text-sm font-medium shrink-0">
+                <span class="material-symbols-outlined text-lg">print</span>
+                <span class="hidden sm:inline">Print Report</span>
+            </button>
+
+        </div>
+    </div>
+
+
+    <div class="paper-sheet flex flex-col gap-6 mt-16 print:mt-0">
+
+        <header class="border-b-2 border-slate-900 pb-4 mb-2 flex justify-between items-end">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 flex items-center justify-center shrink-0">
+                    {% if company_profile and company_profile.logo %}
+                    <img src="{{ company_profile.logo.url }}" alt="{{ company_profile.name|default:'Logo' }}"
+                        class="h-full w-full object-contain">
+                    {% else %}
+                    <div
+                        class="h-full w-full bg-slate-900 text-white flex items-center justify-center rounded font-black text-2xl">
+                        S
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black uppercase tracking-tight text-slate-900 leading-none">
+                        {% if company_profile.name %}{{ company_profile.name }}{% else %}Suritex Factory{% endif %}
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium uppercase tracking-widest mt-1">Production Process
+                        Report</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-3xl font-bold font-mono text-slate-900">BATCH #{{ process.batch_number }}</div>
+                <div class="text-[10px] text-slate-400 mt-1 uppercase">Generated: <span id="print-date"></span></div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-2 gap-6 avoid-break">
+            <div class="bg-slate-50 p-4 rounded border border-slate-200 text-sm">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-slate-500">Machine</span>
+                    <span class="font-bold">{{ process.machine.name }}</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-slate-500">Start Time</span>
+                    <span class="font-mono font-semibold">{{ process.heating_start_time|date:"d M Y, H:i" }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500">Status</span>
+                    {% if not process.is_complete %}
+                    <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-white border border-slate-200 text-slate-700">In
+                        Progress</span>
+                    {% else %}
+                    <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-white border border-slate-200 text-slate-900">Completed</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="border border-slate-200 p-2 rounded flex flex-col justify-center text-center">
+                    <span class="text-[10px] uppercase text-slate-500 font-bold">Total Duration</span>
+                    <span class="text-lg font-bold text-slate-900">
+                        {% if process.duration_effective %}{{ process.duration_effective|floatformat:0 }}m{% else %}-{% endif %}
+                    </span>
+                </div>
+                <div class="border border-slate-200 p-2 rounded flex flex-col justify-center text-center">
+                    <span class="text-[10px] uppercase text-slate-500 font-bold">Max Temp</span>
+                    <span class="text-lg font-bold text-slate-900">
+                        {% if process.max_temp %}{{ process.max_temp|floatformat:1 }}°C{% else %}-{% endif %}
+                    </span>
+                </div>
+                <div class="border border-slate-200 p-2 rounded flex flex-col justify-center text-center">
+                    <span class="text-[10px] uppercase text-slate-500 font-bold">Heating Eff</span>
+                    <span class="text-lg font-bold text-slate-900">
+                        {% if analysis.heating_efficiency %}{{ analysis.heating_efficiency }}%{% else %}0%{% endif %}
+                    </span>
+                </div>
+                <div class="border border-slate-200 p-2 rounded flex flex-col justify-center text-center">
+                    <span class="text-[10px] uppercase text-slate-500 font-bold">Grade</span>
+                    <span class="text-lg font-bold">
+                        {% if analysis.heating_efficiency >= 80 %}A{% elif analysis.heating_efficiency >= 50 %}B{% else %}C{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-xs avoid-break">
+            <div class="border border-slate-300 rounded p-3">
+                <h3 class="font-bold uppercase text-[10px] mb-2 pb-1 border-b">Timing Events</h3>
+                <div class="flex flex-col gap-1">
+                    <div class="data-row">
+                        <span class="data-label">Heat Start</span>
+                        <span class="data-value">{% if process.heating_start_time %}{{ process.heating_start_time|date:"H:i" }}{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Steady Start</span>
+                        <span class="data-value">{% if process.steady_start_time %}{{ process.steady_start_time|date:"H:i" }}{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Cool Start</span>
+                        <span class="data-value">{% if process.cooling_start_time %}{{ process.cooling_start_time|date:"H:i" }}{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">End Time</span>
+                        <span class="data-value">{% if process.end_time %}{{ process.end_time|date:"H:i" }}{% else %}-{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border border-slate-300 rounded p-3">
+                <h3 class="font-bold uppercase text-[10px] mb-2 pb-1 border-b">Temperatures</h3>
+                <div class="flex flex-col gap-1">
+                    <div class="data-row">
+                        <span class="data-label">Start Temp</span>
+                        <span class="data-value">{% if process.start_temp %}{{ process.start_temp|floatformat:1 }}°C{% else %}-{%endif %}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Heat Gradient</span>
+                        <span class="data-value">{% if process.heating_avg_gradient %}{{ process.heating_avg_gradient|floatformat:2 }}°/m{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row mt-1 pt-1 border-t border-slate-100 border-dashed">
+                        <span class="data-label">Peak Temp</span>
+                        <span class="data-value">{% if process.max_temp %}{{ process.max_temp|floatformat:1 }}°C{% else %}-{%endif %}</span>
+                    </div>
+                    <div class="data-row mt-1 pt-1 border-t border-slate-100 border-dashed">
+                        <span class="data-label">Cool Gradient</span>
+                        <span class="data-value">{% if process.cooling_avg_gradient %}{{ process.cooling_avg_gradient|floatformat:2 }}°/m{% else %}-{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border border-slate-300 rounded p-3">
+                <h3 class="font-bold uppercase text-[10px] mb-2 pb-1 border-b">Efficiency</h3>
+                <div class="flex flex-col gap-1">
+                    <div class="data-row">
+                        <span class="data-label">Avg Heat Eff</span>
+                        <span class="data-value">{% if process.avg_heating_efficiency %}{{ process.avg_heating_efficiency|floatformat:4 }}{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Rise Time</span>
+                        <span class="data-value">{% if process.real_heating_duration %}{{ process.real_heating_duration|floatformat:1 }}m{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Effective Dur</span>
+                        <span class="data-value">{% if process.duration_effective %}{{ process.duration_effective|floatformat:1}}m{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row mt-2 pt-2 border-t border-slate-200 bg-slate-50 px-1 -mx-1">
+                        <span class="data-label text-[10px] font-bold">Rating</span>
+                        <span class="data-value uppercase text-[10px]">
+                            {% if analysis.heating_efficiency >= 80 %}Excellent
+                            {% elif analysis.heating_efficiency >= 50 %}Good
+                            {% else %}Low{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border border-slate-300 rounded p-3">
+                <h3 class="font-bold uppercase text-[10px] mb-2 pb-1 border-b">Phase Details</h3>
+                <div class="flex flex-col gap-1">
+                    <div class="data-row">
+                        <span class="data-label">Heating Dur</span>
+                        <span class="data-value">{% if process.heating_duration %}{{ process.heating_duration|floatformat:0 }}m{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Steady Dur</span>
+                        <span class="data-value">{% if process.steady_duration %}{{ process.steady_duration|floatformat:0 }}m{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Cooling Dur</span>
+                        <span class="data-value">{% if process.cooling_duration %}{{ process.cooling_duration|floatformat:0 }}m{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="data-row mt-2 pt-2 border-t border-slate-200 bg-slate-50 px-1 -mx-1">
+                        <span class="data-label text-[10px] font-bold">Ideal Heat Time</span>
+                        <span class="data-value">{% if process.ideal_heating_time %}{{ process.ideal_heating_time|floatformat:1 }}m{% else %}-{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="avoid-break border border-slate-300 rounded p-4 bg-white">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-xs uppercase text-slate-900">Process Temperature Profile</h3>
+                <button onclick="downloadChart()"
+                    class="no-print flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium rounded shadow-sm transition-colors">
+                    <span class="material-symbols-outlined text-sm">download</span>
+                    Download PNG
+                </button>
+            </div>
+            <div class="w-full h-80 relative">
+                <canvas id="processChart"></canvas>
+            </div>
+            <div class="flex justify-center gap-6 mt-3 text-[10px] uppercase font-bold tracking-widest text-slate-600">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-0.5 bg-black"></div> Temperature (°C)
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-0.5 border-t-2 border-dashed border-slate-400"></div> Pressure (Bar)
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-slate-300 rounded overflow-hidden avoid-break mt-2">
+            <div class="bg-slate-100 px-4 py-2 border-b border-slate-300">
+                <h3 class="font-bold text-xs uppercase text-slate-800">Process Logs</h3>
+            </div>
+            <table class="w-full text-left text-[10px] border-collapse">
+                <thead class="bg-white text-slate-500 font-bold uppercase border-b border-slate-200">
+                    <tr>
+                        <th class="px-3 py-2">Time</th>
+                        <th class="px-3 py-2">Temp</th>
+                        <th class="px-3 py-2">State</th>
+                        <th class="px-3 py-2 text-center">Grad</th>
+                        <th class="px-3 py-2 text-center">Eff (K)</th>
+                        <th class="px-3 py-2 text-center">Steam</th>
+                        <th class="px-3 py-2 text-center">HTO</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for row in table_data %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-3 py-1 font-mono text-slate-600">{{ row.timestamp|date:"H:i" }}</td>
+                        <td class="px-3 py-1 font-bold text-slate-900">{% if row.main_temp %}{{ row.main_temp|floatformat:1 }}{% else %}-{% endif %}</td>
+                        <td class="px-3 py-1">{{ row.state }}</td>
+                        <td class="px-3 py-1 text-center font-mono">{% if row.gradient %}{{ row.gradient|floatformat:2 }}{% else %}-{% endif%}</td>
+                        <td class="px-3 py-1 text-center font-mono text-slate-500">{% if row.efficiency %}{{ row.efficiency|floatformat:4 }}{% else %}-{% endif %}</td>
+                        <td class="px-3 py-1 text-center text-slate-500">{% if row.steam %}{{ row.steam|floatformat:1 }}{% else %}-{% endif %}</td>
+                        <td class="px-3 py-1 text-center text-slate-500">{% if row.hto %}{{ row.hto|floatformat:1 }}{% else %}-{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="p-4 text-center text-slate-500">No log data.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-auto pt-8 pb-2 avoid-break">
+            <div class="grid grid-cols-3 gap-8 text-center">
+                <div class="flex flex-col gap-10">
+                    <span class="text-[10px] font-bold uppercase text-slate-400">Operator</span>
+                    <div class="border-t border-slate-300 mx-8 pt-1 text-[10px] text-slate-400 italic">Sign & Name</div>
+                </div>
+                <div class="flex flex-col gap-10">
+                    <span class="text-[10px] font-bold uppercase text-slate-400">Supervisor</span>
+                    <div class="border-t border-slate-300 mx-8 pt-1 text-[10px] text-slate-400 italic">Sign & Name</div>
+                </div>
+                <div class="flex flex-col gap-10">
+                    <span class="text-[10px] font-bold uppercase text-slate-400">Manager</span>
+                    <div class="border-t border-slate-300 mx-8 pt-1 text-[10px] text-slate-400 italic">Sign & Name</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const d = new Date();
+        document.getElementById('print-date').innerText = d.toLocaleDateString('en-GB') + " " + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        let chartInstance; // Store chart instance globally for download
+        let chartData = {}; // Store chart data for HD rendering
+
+        const ctx = document.getElementById('processChart');
+        if (ctx) {
+            const timestamps = {{ timestamps_json| safe }};
+        const mainTemps = {{ main_temps_json| safe }};
+        const steamVals = {{ steam_vals_json| safe }};
+
+        // Store data globally for HD export
+        chartData = {
+            timestamps: timestamps,
+            mainTemps: mainTemps,
+            steamVals: steamVals
+        };
+
+        // --- 1. KONFIGURASI SUMBU SUHU (KIRI) ---
+        // Tetap 0 - 150 dengan 5 langkah (Step = 30)
+        const steps = 5;
+        const tempMax = 150;
+        const tempStepSize = 30; // 0, 30, 60, 90, 120, 150
+
+        // --- 2. KONFIGURASI SUMBU TEKANAN (KANAN) ---
+        // Mencari Max Pressure yang "Cantik" (5, 7.5, 10, 12.5, ...)
+        // Syarat: Harus dibagi 5 langkah agar sejajar dengan suhu.
+
+        const validSteamVals = steamVals.filter(val => typeof val === 'number' && val !== null);
+        let rawMaxP = validSteamVals.length > 0 ? Math.max(...validSteamVals) : 0;
+
+        let pMax = 5;    // Default minimal
+        let pStep = 1;   // Default step
+
+        // Logika kenaikan cantik (5 -> 7.5 -> 10 -> 12.5 -> 15 ...)
+        if (rawMaxP <= 5) {
+            pMax = 5; pStep = 1;
+        } else if (rawMaxP <= 7.5) {
+            pMax = 7.5; pStep = 1.5;
+        } else if (rawMaxP <= 10) {
+            pMax = 10; pStep = 2;
+        } else if (rawMaxP <= 12.5) {
+            pMax = 12.5; pStep = 2.5; // Ini akan memunculkan angka 2.5, 5.0, 7.5, 10.0, 12.5
+        } else if (rawMaxP <= 15) {
+            pMax = 15; pStep = 3;
+        } else {
+            // Jika lebih besar dari 15, kembali ke logika integer bulat
+            pStep = Math.ceil(rawMaxP / 5);
+            pMax = pStep * 5;
+        }
+
+        // --- 3. LOGIKA SUMBU X (WAKTU) ---
+        const totalPoints = timestamps.length;
+        const isLongDuration = totalPoints > 360;
+
+        // Store config globally for HD export
+        chartData.pMax = pMax;
+        chartData.pStep = pStep;
+        chartData.isLongDuration = isLongDuration;
+
+        Chart.defaults.font.family = '"Spline Sans", sans-serif';
+        Chart.defaults.color = '#334155';
+        Chart.defaults.font.size = 10;
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timestamps,
+                datasets: [
+                    {
+                        label: 'Temperature',
+                        data: mainTemps,
+                        borderColor: '#0f172a',
+                        backgroundColor: 'rgba(15, 23, 42, 0.05)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Pressure',
+                        data: steamVals,
+                        borderColor: '#64748b',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#0f172a',
+                        bodyColor: '#334155',
+                        borderColor: '#cbd5e1',
+                        borderWidth: 1,
+                        padding: 8,
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    // Format desimal pintar (kalau bulat jadi integer, kalau pecahan 1 digit)
+                                    label += Number(context.parsed.y.toFixed(1));
+                                }
+                                if (context.datasetIndex === 0) label += '°C';
+                                if (context.datasetIndex === 1) label += ' Bar';
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: true,
+                            color: '#e2e8f0',
+                            drawOnChartArea: true
+                        },
+                        ticks: {
+                            maxRotation: 0,
+                            color: '#334155',
+                            autoSkip: false,
+                            maxTicksLimit: 50,
+                            callback: function (val, index) {
+                                const rawLabel = this.getLabelForValue(val);
+                                const timePart = rawLabel.split(' ')[1] || rawLabel;
+                                const isHour = /:00/.test(timePart);
+                                const isHalf = /:30/.test(timePart);
+
+                                let show = false;
+                                if (isLongDuration) {
+                                    if (isHour) show = true;
+                                } else {
+                                    if (isHour || isHalf) show = true;
+                                }
+
+                                if (!show) return null;
+
+                                const dateObj = new Date(rawLabel);
+                                let dateStr = "";
+                                let timeStr = timePart;
+
+                                if (!isNaN(dateObj.getTime())) {
+                                    dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                                    timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                } else {
+                                    const parts = rawLabel.split(' ');
+                                    dateStr = parts[0];
+                                    timeStr = parts[1] || "";
+                                }
+                                return [dateStr, timeStr];
+                            }
+                        }
+                    },
+                    y: {
+                        position: 'left',
+                        grid: { color: '#f1f5f9' },
+                        min: 0,
+                        max: tempMax,
+                        ticks: {
+                            stepSize: tempStepSize, // 30
+                            callback: function (value) { return value + '°C'; }
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        grid: { display: false },
+                        min: 0,
+                        max: pMax,
+                        ticks: {
+                            stepSize: pStep, // 1, 1.5, 2, atau 2.5
+                            callback: function (value) {
+                                // Tampilkan desimal hanya jika perlu (misal 7.5), tapi 5 tetap 5
+                                return +value.toFixed(1) + ' Bar';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        }
+
+        // Function to download chart as HD PNG
+        function downloadChart() {
+            if (!chartInstance || !chartData.timestamps) {
+                alert('Chart not available for download');
+                return;
+            }
+
+            // Create a high-resolution canvas
+            const hdCanvas = document.createElement('canvas');
+            const scaleFactor = 3; // 3x resolution for HD quality
+            hdCanvas.width = 3600;  // HD width
+            hdCanvas.height = 1080; // HD height
+
+            const hdCtx = hdCanvas.getContext('2d');
+
+            // Set white background
+            hdCtx.fillStyle = 'white';
+            hdCtx.fillRect(0, 0, hdCanvas.width, hdCanvas.height);
+
+            // Create HD chart with scaled settings
+            const tempMax = 150;
+            const tempStepSize = 30;
+
+            const hdChart = new Chart(hdCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.timestamps,
+                    datasets: [
+                        {
+                            label: 'Temperature',
+                            data: chartData.mainTemps,
+                            borderColor: '#0f172a',
+                            backgroundColor: 'rgba(15, 23, 42, 0.05)',
+                            borderWidth: 2.5 * scaleFactor,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            pointHoverRadius: 4 * scaleFactor,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Pressure',
+                            data: chartData.steamVals,
+                            borderColor: '#64748b',
+                            borderWidth: 2 * scaleFactor,
+                            borderDash: [5 * scaleFactor, 5 * scaleFactor],
+                            tension: 0.3,
+                            pointRadius: 0,
+                            pointHoverRadius: 4 * scaleFactor,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    devicePixelRatio: 1,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: true,
+                                color: '#e2e8f0',
+                                drawOnChartArea: true,
+                                lineWidth: 1 * scaleFactor
+                            },
+                            ticks: {
+                                maxRotation: 0,
+                                color: '#334155',
+                                autoSkip: false,
+                                maxTicksLimit: 50,
+                                font: {
+                                    family: '"Spline Sans", sans-serif',
+                                    size: 10 * scaleFactor
+                                },
+                                callback: function (val, index) {
+                                    const rawLabel = this.getLabelForValue(val);
+                                    const timePart = rawLabel.split(' ')[1] || rawLabel;
+                                    const isHour = /:00/.test(timePart);
+                                    const isHalf = /:30/.test(timePart);
+
+                                    let show = false;
+                                    if (chartData.isLongDuration) {
+                                        if (isHour) show = true;
+                                    } else {
+                                        if (isHour || isHalf) show = true;
+                                    }
+
+                                    if (!show) return null;
+
+                                    const dateObj = new Date(rawLabel);
+                                    let dateStr = "";
+                                    let timeStr = timePart;
+
+                                    if (!isNaN(dateObj.getTime())) {
+                                        dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                                        timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                    } else {
+                                        const parts = rawLabel.split(' ');
+                                        dateStr = parts[0];
+                                        timeStr = parts[1] || "";
+                                    }
+                                    return [dateStr, timeStr];
+                                }
+                            }
+                        },
+                        y: {
+                            position: 'left',
+                            grid: {
+                                color: '#f1f5f9',
+                                lineWidth: 1 * scaleFactor
+                            },
+                            min: 0,
+                            max: tempMax,
+                            ticks: {
+                                stepSize: tempStepSize,
+                                font: {
+                                    family: '"Spline Sans", sans-serif',
+                                    size: 10 * scaleFactor
+                                },
+                                color: '#334155',
+                                callback: function (value) { return value + '°C'; }
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            grid: { display: false },
+                            min: 0,
+                            max: chartData.pMax,
+                            ticks: {
+                                stepSize: chartData.pStep,
+                                font: {
+                                    family: '"Spline Sans", sans-serif',
+                                    size: 10 * scaleFactor
+                                },
+                                color: '#334155',
+                                callback: function (value) {
+                                    return +value.toFixed(1) + ' Bar';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Wait for chart to render, then download
+            setTimeout(() => {
+                const url = hdCanvas.toDataURL('image/png', 1.0);
+                const link = document.createElement('a');
+                link.download = 'Process_Chart_{{ process.machine.name }}_Batch_{{ process.batch_number }}.png';
+                link.href = url;
+                link.click();
+
+                // Cleanup
+                hdChart.destroy();
+            }, 500);
+        }
+    </script>
+</body>
+
+</html>

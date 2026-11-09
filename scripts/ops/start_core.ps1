@@ -1,0 +1,4 @@
+Start-Process -FilePath "C:\Users\HP\Documents\Plant-Monitor\plant-monitor\venv\Scripts\python.exe" -ArgumentList "run_server.py" -WorkingDirectory "C:\Users\HP\Documents\Plant-Monitor\plant-monitor" -WindowStyle Minimized
+Start-Process -FilePath "C:\Users\HP\Documents\Plant-Monitor\plant-monitor\venv\Scripts\python.exe" -ArgumentList "manage.py jumo_realtime" -WorkingDirectory "C:\Users\HP\Documents\Plant-Monitor\plant-monitor" -WindowStyle Minimized
+Start-Process -FilePath "C:\Users\HP\Documents\Plant-Monitor\plant-monitor\venv\Scripts\python.exe" -ArgumentList "manage.py log_minute_history" -WorkingDirectory "C:\Users\HP\Documents\Plant-Monitor\plant-monitor" -WindowStyle Minimized
+Start-Process -FilePath "C:\Users\HP\Documents\Plant-Monitor\plant-monitor\venv\Scripts\python.exe" -ArgumentList "manage.py check_device_health" -WorkingDirectory "C:\Users\HP\Documents\Plant-Monitor\plant-monitor" -WindowStyle Minimized

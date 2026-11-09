@@ -1,0 +1,13 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% static 'admin/js/machine_admin_clipboard.js' %}" defer></script>
+<style>
+    /* Styling for the copy feedback (matches Django admin theme) */
+    #machine-copy-toast {
+        font-family: var(--font);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,711 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Suritex Factory Dashboard{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS (Local) -->
+    <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <!-- Google Fonts (Local) -->
+    <link href="{% static 'vendor/fonts/spline-sans/spline-sans.css' %}" rel="stylesheet" />
+    <link href="{% static 'vendor/fonts/material-symbols/material-symbols-outlined.css' %}" rel="stylesheet" />
+    <!-- Bootstrap Bundle (Local) -->
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <style>
+        :root {
+            /* Suritex Palette */
+            --suritex-primary: #f9f506;
+            --suritex-bg-light: #f3f4f6;
+            /* Matched to manual_machine_usage */
+            --suritex-bg-dark: #1c1c0d;
+            --suritex-surface-light: #ffffff;
+            --suritex-surface-dark: #2a2a1a;
+            --suritex-text-main: #1c1c0d;
+            --suritex-text-muted: #9e9d47;
+            --suritex-border: #e9e8ce;
+
+            --bs-body-font-family: 'Spline Sans', sans-serif;
+            --bs-body-bg: var(--suritex-bg-light);
+            --bs-body-color: var(--suritex-text-main);
+            --bs-primary: var(--suritex-primary);
+            --bs-primary-rgb: 249, 245, 6;
+            --bs-border-color: var(--suritex-border);
+        }
+
+        /* Dark Mode overrides if 'dark' class present on partials or body */
+        /* Currently we stick to light as base, but ensure dark var is available */
+
+        body {
+            font-family: var(--bs-body-font-family);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 70px;
+            /* Space for mobile nav */
+        }
+
+        @media (min-width: 768px) {
+            body {
+                flex-direction: row;
+                padding-bottom: 0;
+            }
+        }
+
+        /* --- SIDEBAR (Desktop) --- */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            background-color: var(--suritex-bg-light);
+            border-right: 1px solid var(--suritex-border);
+            display: none;
+            /* Mobile default */
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem;
+            z-index: 1020;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .sidebar {
+                display: flex;
+            }
+        }
+
+        /* Minimized sidebar state */
+        .sidebar.minimized {
+            width: 80px;
+            padding: 1.5rem 0.75rem;
+        }
+
+        .sidebar.minimized .sidebar-brand-text,
+        .sidebar.minimized .nav-link-text,
+        .sidebar.minimized .user-info {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar.minimized .sidebar-brand {
+            justify-content: center;
+        }
+
+        .sidebar.minimized .nav-link {
+            justify-content: center;
+            padding: 0.75rem;
+        }
+
+        .sidebar.minimized .btn-primary-suritex {
+            padding: 0.5rem;
+            gap: 0 !important;
+        }
+
+        .sidebar.minimized .btn-primary-suritex .material-symbols-outlined {
+            display: inline-block !important;
+        }
+
+        /* Hide logout icon when sidebar is expanded */
+        .sidebar:not(.minimized) .btn-primary-suritex .material-symbols-outlined {
+            display: none;
+        }
+
+        /* User info section in minimized state */
+        .sidebar.minimized .d-flex.align-items-center.gap-2 {
+            justify-content: center;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-placeholder {
+            width: 48px;
+            height: 48px;
+            background-color: var(--suritex-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--suritex-text-main);
+            font-weight: 500;
+            border-radius: 50rem;
+            /* pill */
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(233, 232, 206, 0.5);
+            /* border-light with opacity */
+        }
+
+        .nav-link.active {
+            background-color: rgba(249, 245, 6, 0.2);
+            /* primary with opacity */
+            color: #000;
+            font-weight: 600;
+        }
+
+        .nav-link .material-symbols-outlined {
+            font-size: 24px;
+            color: var(--suritex-text-muted);
+        }
+
+        .nav-link.active .material-symbols-outlined {
+            color: #000;
+        }
+
+        /* Sidebar toggle button */
+        .sidebar-toggle {
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            background-color: var(--suritex-primary);
+            border: 1px solid var(--suritex-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            z-index: 1021;
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #e3df05;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .sidebar-toggle .material-symbols-outlined {
+            font-size: 18px;
+            color: var(--suritex-text-main);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.minimized .sidebar-toggle .material-symbols-outlined {
+            transform: rotate(180deg);
+        }
+
+        /* Smooth text transitions */
+        .sidebar-brand-text,
+        .nav-link-text,
+        .user-info {
+            transition: opacity 0.2s ease, width 0.2s ease;
+            white-space: nowrap;
+        }
+
+
+        /* --- BOTTOM NAV (Mobile) --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--suritex-surface-light);
+            border-top: 1px solid var(--suritex-border);
+            height: 64px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1030;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            padding: 0 4px;
+        }
+
+        @media (min-width: 768px) {
+            .bottom-nav {
+                display: none;
+            }
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--suritex-text-muted);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 500;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 12px;
+            margin: 0 2px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Hover effect (for tablets with touch) */
+        .bottom-nav-item:hover {
+            background-color: rgba(249, 245, 6, 0.05);
+        }
+
+        /* ACTIVE STATE - Enhanced with elevation and color */
+        .bottom-nav-item.active {
+            background: linear-gradient(135deg, rgba(249, 245, 6, 0.15), rgba(249, 245, 6, 0.25));
+            color: var(--suritex-text-main);
+            font-weight: 700;
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(249, 245, 6, 0.3),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Top indicator bar for active item */
+        .bottom-nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 3px;
+            background: var(--suritex-primary);
+            border-radius: 0 0 3px 3px;
+        }
+
+        .bottom-nav-item .material-symbols-outlined {
+            font-size: 24px;
+            margin-bottom: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .bottom-nav-item.active .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        /* Pulse animation on active */
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 4px 12px rgba(249, 245, 6, 0.3),
+                    0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            50% {
+                box-shadow: 0 6px 16px rgba(249, 245, 6, 0.4),
+                    0 3px 6px rgba(0, 0, 0, 0.15);
+            }
+        }
+
+        .bottom-nav-item.active {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+
+        /* --- MAIN CONTENT --- */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            /* Prevent flex blowout */
+            background-color: var(--suritex-bg-light);
+        }
+
+        .top-header {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            border-bottom: 1px solid var(--suritex-border);
+            background-color: var(--suritex-bg-light);
+            position: sticky;
+            top: 0;
+            z-index: 1010;
+        }
+
+        @media (max-width: 767.98px) {
+            .top-header {
+                padding: 0 1rem;
+                height: 64px;
+            }
+        }
+
+        .page-content {
+            padding: 2rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 767.98px) {
+            .page-content {
+                padding: 1rem;
+            }
+        }
+
+        /* Utils */
+        .btn-primary-suritex {
+            background-color: var(--suritex-primary);
+            color: var(--suritex-text-main);
+            font-weight: 600;
+            border: none;
+            border-radius: 50rem;
+            padding: 0.5rem 1.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary-suritex:hover {
+            background-color: #e3df05;
+        }
+
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Material Symbols Helper */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        /* Bottom Sheet Modal */
+        .modal-dialog-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0;
+            max-width: 100%;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+        }
+
+        .modal.show .modal-dialog-bottom {
+            transform: translateY(0);
+        }
+
+        .modal-dialog-bottom .modal-content {
+            border-radius: 1.5rem 1.5rem 0 0;
+            border: none;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Remove button border styling */
+        .bottom-nav-item[type="button"] {
+            background: none;
+            border: none;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- SIDEBAR (Desktop Only) -->
+    <aside class="sidebar">
+        <!-- Toggle Button -->
+        <div class="sidebar-toggle" id="sidebarToggle">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </div>
+
+        <div>
+            <div class="sidebar-brand">
+                <div class="logo-placeholder">
+                    {% if company_profile and company_profile.logo %}
+                    <img src="{{ company_profile.logo.url }}" alt="{{ company_profile.name }}">
+                    {% else %}
+                    S
+                    {% endif %}
+                </div>
+                <div class="sidebar-brand-text">
+                    <h5 class="mb-0 fw-bold">Suritex Factory</h5>
+                    <small class="text-muted">Unit 01</small>
+                </div>
+            </div>
+
+            <nav class="nav flex-column">
+                {% if 'dashboard' in user_allowed_pages %}
+                <a href="{% url 'home_korlap' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'home_korlap' %}active{% endif %}">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="nav-link-text">Home</span>
+                </a>
+                <a href="{% url 'dashboard' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="nav-link-text">Dashboard</span>
+                </a>
+                {% endif %}
+                {% if 'manual_input' in user_allowed_pages %}
+                <a href="{% url 'manual_machine_usage' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'manual_machine_usage' %}active{% endif %}">
+                    <span class="material-symbols-outlined">touch_app</span>
+                    <span class="nav-link-text">Manual Input</span>
+                </a>
+                {% endif %}
+                {% if 'history' in user_allowed_pages %}
+                <a href="{% url 'history_list' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'history_list' or request.resolver_match.url_name == 'history_report' %}active{% endif %}">
+                    <span class="material-symbols-outlined">history</span>
+                    <span class="nav-link-text">History</span>
+                </a>
+                {% endif %}
+                {% if 'snapshot_history' in user_allowed_pages %}
+                <a href="{% url 'snapshot_history' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'snapshot_history' %}active{% endif %}">
+                    <span class="material-symbols-outlined">table_chart</span>
+                    <span class="nav-link-text">Snapshot History</span>
+                </a>
+                {% endif %}
+                <a href="{% url 'machine_performance_summary' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'machine_performance_summary' %}active{% endif %}">
+                    <span class="material-symbols-outlined">analytics</span>
+                    <span class="nav-link-text">Perf. Summary</span>
+                </a>
+                {% if 'analytics' in user_allowed_pages %}
+                <a href="{% url 'graph_menu' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'graph_menu' %}active{% endif %}">
+                    <span class="material-symbols-outlined">monitoring</span>
+                    <span class="nav-link-text">Analytics</span>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+
+        <div>
+            <form method="post" action="{% url 'logout' %}" class="mb-3">
+                {% csrf_token %}
+                <button type="submit"
+                    class="btn btn-primary-suritex w-100 d-flex align-items-center justify-content-center gap-2">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">logout</span>
+                    <span class="nav-link-text">Log Out</span>
+                </button>
+            </form>
+            <div class="d-flex align-items-center gap-2 px-2">
+                <div class="avatar-circle bg-light border">
+                    <span class="material-symbols-outlined text-muted">person</span>
+                </div>
+                <div class="user-info" style="line-height:1.2;">
+                    <div class="fw-bold small">{{ request.user.username|default:"Operator" }}</div>
+                    <small class="text-muted" style="font-size:0.75rem;">Logged In</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- WRAPPER -->
+    <div class="main-wrapper">
+        <!-- HEADER -->
+        <header class="top-header">
+            <div class="d-flex align-items-center gap-2">
+                <span class="material-symbols-outlined fs-2 d-none d-md-block">grid_view</span>
+                <div>
+                    <h2 class="h5 fw-bold mb-0">{% block header_title %}Plant Energy Monitoring{% endblock %}</h2>
+                    <small class="text-muted d-none d-sm-block">{% block header_subtitle %}{% endblock %}</small>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <button
+                    class="btn btn-sm btn-outline-secondary rounded-pill d-none d-md-flex align-items-center gap-1 fw-bold">
+                    <span class="material-symbols-outlined" style="font-size:18px;">download</span> Export
+                </button>
+                <button onclick="window.location.reload()"
+                    class="btn btn-sm btn-primary-suritex rounded-pill d-flex align-items-center gap-1">
+                    <span class="material-symbols-outlined" style="font-size:18px;">refresh</span> Refresh
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT -->
+        <main class="page-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- BOTTOM NAV (Mobile Only) -->
+    <nav class="bottom-nav">
+        {% if 'dashboard' in user_allowed_pages %}
+        <a href="{% url 'home_korlap' %}"
+            class="bottom-nav-item {% if request.resolver_match.url_name == 'home_korlap' %}active{% endif %}">
+            <span class="material-symbols-outlined">home</span>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'dashboard' %}"
+            class="bottom-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>Dashboard</span>
+        </a>
+        {% endif %}
+        {% if 'manual_input' in user_allowed_pages %}
+        <a href="{% url 'manual_machine_usage' %}"
+            class="bottom-nav-item {% if request.resolver_match.url_name == 'manual_machine_usage' %}active{% endif %}">
+            <span class="material-symbols-outlined">touch_app</span>
+            <span>Input</span>
+        </a>
+        {% endif %}
+        {% if 'history' in user_allowed_pages %}
+        <a href="{% url 'history_list' %}"
+            class="bottom-nav-item {% if request.resolver_match.url_name == 'history_list' or request.resolver_match.url_name == 'history_report' %}active{% endif %}">
+            <span class="material-symbols-outlined">history</span>
+            <span>History</span>
+        </a>
+        {% endif %}
+        {% if 'snapshot_history' in user_allowed_pages %}
+        <a href="{% url 'snapshot_history' %}"
+            class="bottom-nav-item {% if request.resolver_match.url_name == 'snapshot_history' %}active{% endif %}">
+            <span class="material-symbols-outlined">table_chart</span>
+            <span>Snapshot</span>
+        </a>
+        {% endif %}
+        {% if 'analytics' in user_allowed_pages %}
+        <a href="{% url 'graph_menu' %}"
+            class="bottom-nav-item {% if request.resolver_match.url_name == 'graph_menu' %}active{% endif %}">
+            <span class="material-symbols-outlined">monitoring</span>
+            <span>Analytics</span>
+        </a>
+        {% endif %}
+        <button type="button" class="bottom-nav-item" data-bs-toggle="modal" data-bs-target="#moreModal">
+            <span class="material-symbols-outlined">more_horiz</span>
+            <span>More</span>
+        </button>
+    </nav>
+
+    <!-- More Modal (Mobile Menu) -->
+    <div class="modal fade" id="moreModal" tabindex="-1" aria-labelledby="moreModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-bottom">
+            <div class="modal-content" style="background-color: var(--suritex-bg-light); border: none;">
+                <div class="modal-header border-0 pb-2" style="background-color: var(--suritex-surface-light);">
+                    <h5 class="modal-title fw-bold" id="moreModalLabel"
+                        style="color: var(--suritex-text-main); font-family: var(--bs-body-font-family);">Menu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3 pb-4" style="background-color: var(--suritex-bg-light);">
+                    <!-- User Info -->
+                    <div class="d-flex align-items-center gap-3 p-3 mb-3 rounded"
+                        style="background-color: var(--suritex-surface-light); border: 1px solid var(--suritex-border);">
+                        <div class="avatar-circle border"
+                            style="background-color: rgba(249, 245, 6, 0.1); border-color: var(--suritex-border) !important;">
+                            <span class="material-symbols-outlined"
+                                style="color: var(--suritex-text-muted);">person</span>
+                        </div>
+                        <div>
+                            <div class="fw-bold"
+                                style="color: var(--suritex-text-main); font-family: var(--bs-body-font-family);">{{ request.user.username|default:"Operator" }}</div>
+                            <small style="color: var(--suritex-text-muted); font-size: 0.8rem;">Logged In</small>
+                        </div>
+                    </div>
+
+                    <!-- Menu Items -->
+                    <div class="list-group list-group-flush"
+                        style="border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--suritex-border);">
+                        <a href="#"
+                            class="list-group-item list-group-item-action d-flex align-items-center gap-3 border-0"
+                            style="font-family: var(--bs-body-font-family); color: var(--suritex-text-main); background-color: var(--suritex-surface-light); transition: all 0.2s; padding: 1rem;">
+                            <span class="material-symbols-outlined"
+                                style="color: var(--suritex-text-muted); font-size: 24px;">notifications</span>
+                            <span class="fw-500">Notifications</span>
+                        </a>
+                        <a href="{% url 'machine_performance_summary' %}"
+                            class="list-group-item list-group-item-action d-flex align-items-center gap-3 border-0"
+                            style="font-family: var(--bs-body-font-family); color: var(--suritex-text-main); background-color: var(--suritex-surface-light); transition: all 0.2s; padding: 1rem; border-top: 1px solid var(--suritex-border) !important;">
+                            <span class="material-symbols-outlined"
+                                style="color: var(--suritex-text-muted); font-size: 24px;">analytics</span>
+                            <span class="fw-500">Performance Summary</span>
+                        </a>
+                        <a href="#"
+                            class="list-group-item list-group-item-action d-flex align-items-center gap-3 border-0"
+                            style="font-family: var(--bs-body-font-family); color: var(--suritex-text-main); background-color: var(--suritex-surface-light); transition: all 0.2s; padding: 1rem; border-top: 1px solid var(--suritex-border) !important;">
+                            <span class="material-symbols-outlined"
+                                style="color: var(--suritex-text-muted); font-size: 24px;">settings</span>
+                            <span class="fw-500">Settings</span>
+                        </a>
+                        <a href="#"
+                            class="list-group-item list-group-item-action d-flex align-items-center gap-3 border-0"
+                            style="font-family: var(--bs-body-font-family); color: var(--suritex-text-main); background-color: var(--suritex-surface-light); transition: all 0.2s; padding: 1rem; border-top: 1px solid var(--suritex-border) !important;">
+                            <span class="material-symbols-outlined"
+                                style="color: var(--suritex-text-muted); font-size: 24px;">help</span>
+                            <span class="fw-500">Help & Support</span>
+                        </a>
+                    </div>
+
+                    <!-- Logout Button -->
+                    <form method="post" action="{% url 'logout' %}" class="mt-4">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="btn btn-primary-suritex w-100 d-flex align-items-center justify-content-center gap-2"
+                            style="padding: 0.75rem;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">logout</span>
+                            <span>Log Out</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+   
+    <!-- Sidebar Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.querySelector('.sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+
+            // Check localStorage for saved state
+            const isMinimized = localStorage.getItem('sidebarMinimized') === 'true';
+
+            // Apply saved state on load
+            if (isMinimized) {
+                sidebar.classList.add('minimized');
+            }
+
+            // Toggle sidebar on button click
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('minimized');
+
+                    // Save state to localStorage
+                    const currentState = sidebar.classList.contains('minimized');
+                    localStorage.setItem('sidebarMinimized', currentState);
+                });
+            }
+        });
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>

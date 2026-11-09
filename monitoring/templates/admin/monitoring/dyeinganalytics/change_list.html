@@ -1,0 +1,80 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Limit the height of the changelist table and enable scrolling */
+    #changelist .results {
+        max-height: 65vh;
+        overflow: auto;
+        border-bottom: 2px solid #ddd;
+    }
+
+    /* Sticky table headers */
+    #changelist .results thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #f8f8f8;
+    }
+
+    /* Freeze Machine column (First Column) */
+    th.column-machine,
+    .field-machine {
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        background-color: #fff;
+        width: 120px !important;
+        min-width: 120px;
+        max-width: 120px;
+        border-right: 1px solid #ddd;
+    }
+
+    /* Ensure header stickiness ranks higher than body stickiness */
+    thead th.column-machine {
+        z-index: 15 !important;
+        background-color: #f8f8f8;
+    }
+
+    /* Match Django admin striped row colors to prevent transparent ghosting on scroll */
+    #changelist tbody tr.row1 .field-machine {
+        background-color: #fff;
+    }
+
+    #changelist tbody tr.row2 .field-machine {
+        background-color: #f8f8f8;
+    }
+
+    #changelist tbody tr:hover .field-machine {
+        background-color: #eee;
+    }
+
+    /* Expand keterangan & masalah columns */
+    .column-masalah,
+    .field-masalah,
+    .column-keterangan,
+    .field-keterangan {
+        min-width: 200px !important;
+        max-width: 350px !important;
+        white-space: normal !important;
+    }
+</style>
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<link rel="stylesheet" href="/static/admin/css/vendor/select2/select2.css">
+<script src="/static/admin/js/vendor/select2/select2.full.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof django !== 'undefined' && django.jQuery) {
+            django.jQuery('#changelist-filter select').select2({
+                width: '95%',
+                placeholder: 'Search/Pilih...',
+                allowClear: true
+            });
+        }
+    });
+</script>
+{% endblock %}

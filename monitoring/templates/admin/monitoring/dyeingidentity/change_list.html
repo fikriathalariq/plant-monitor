@@ -1,0 +1,115 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Limit the height of the changelist table and enable scrolling */
+    #changelist .results {
+        max-height: 65vh;
+        overflow: auto;
+        border-bottom: 2px solid #ddd;
+    }
+
+    /* Sticky table headers */
+    #changelist .results thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    /* Select2 override styles */
+    .select2-container .select2-selection--single {
+        height: auto;
+        min-height: 30px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal;
+    }
+
+    /* Expand text columns */
+    .column-masalah,
+    .field-masalah,
+    .column-keterangan,
+    .field-keterangan {
+        min-width: 300px !important;
+        max-width: 450px !important;
+        white-space: normal !important;
+    }
+
+    /* Freeze Checkbox, Machine, and Start Time columns horizontally */
+    th.action-checkbox-column,
+    td.action-checkbox {
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        background-color: #fff;
+        width: 40px !important;
+        min-width: 40px;
+        max-width: 40px;
+        border-right: 1px solid #ddd;
+    }
+
+    th.column-machine,
+    td.field-machine,
+    th.field-machine {
+        position: sticky;
+        left: 40px;
+        z-index: 5;
+        background-color: #fff;
+        width: 100px !important;
+        min-width: 100px;
+        max-width: 100px;
+        border-right: 1px solid #ddd;
+    }
+
+    /* Ensure header stickiness ranks higher than body stickiness */
+    thead th.action-checkbox-column,
+    thead th.column-machine,
+    thead th.column-process_start {
+        z-index: 15 !important;
+    }
+
+    /* Match Django admin striped row colors to prevent transparent ghosting on scroll */
+    #changelist tbody tr.row1 td.action-checkbox,
+    #changelist tbody tr.row1 td.field-machine,
+    #changelist tbody tr.row1 th.field-machine,
+    #changelist tbody tr.row1 td.field-process_start,
+    #changelist tbody tr.row1 th.field-process_start {
+        background-color: #fff;
+    }
+
+    #changelist tbody tr.row2 td.action-checkbox,
+    #changelist tbody tr.row2 td.field-machine,
+    #changelist tbody tr.row2 th.field-machine,
+    #changelist tbody tr.row2 td.field-process_start,
+    #changelist tbody tr.row2 th.field-process_start {
+        background-color: #f8f8f8;
+    }
+
+    #changelist tbody tr:hover td.action-checkbox,
+    #changelist tbody tr:hover td.field-machine,
+    #changelist tbody tr:hover th.field-machine,
+    #changelist tbody tr:hover td.field-process_start,
+    #changelist tbody tr:hover th.field-process_start {
+        background-color: #eee;
+    }
+</style>
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<link rel="stylesheet" href="/static/admin/css/vendor/select2/select2.css">
+<script src="/static/admin/js/vendor/select2/select2.full.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof django !== 'undefined' && django.jQuery) {
+            django.jQuery('#changelist-filter select').select2({
+                width: '95%',
+                placeholder: 'Search/Pilih...',
+                allowClear: true
+            });
+        }
+    });
+</script>
+{% endblock %}

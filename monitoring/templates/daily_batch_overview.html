@@ -1,0 +1,266 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}Daily Batch Overview | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .batch-card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+    }
+    .batch-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+    .machine-code {
+        font-size: 18px;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    .batch-number {
+        font-size: 14px;
+        color: #7f8c8d;
+    }
+    .chart-container {
+        position: relative;
+        height: 150px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #555;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+        margin-top: auto;
+    }
+    .metrics {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .metric-value.good { color: #27ae60; font-weight: bold; }
+    .metric-value.warning { color: #f39c12; font-weight: bold; }
+    .metric-value.bad { color: #c0392b; font-weight: bold; }
+    
+    .filter-bar {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .pagination {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+    .pagination a, .pagination span {
+        padding: 8px 12px;
+        background: #f1f1f1;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #333;
+    }
+    .pagination .current {
+        background: #3498db;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Daily Batch Overview</h1>
+    
+    <div class="filter-bar">
+        <form method="GET" action="">
+            <label for="date" style="font-weight: bold; margin-right: 10px;">Select Date:</label>
+            <input type="date" id="date" name="date" value="{{ selected_date }}" 
+                   style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+            <button type="submit" style="padding: 8px 15px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Filter</button>
+        </form>
+        <div>
+            <strong>Total Batches:</strong> {{ total_batches_today }}
+        </div>
+    </div>
+
+    {% if page_obj.object_list %}
+    <div class="grid-container">
+        {% for process in page_obj %}
+        <a href="/history/report/{{ process.id }}?machine={{ process.machine.code }}&batch={{ process.batch_number }}" class="batch-card" target="_blank">
+            <div class="card-header">
+                <span class="machine-code">{{ process.machine.code }} - {{ process.machine.name }}</span>
+                <span class="batch-number">#{{ process.batch_number }}</span>
+            </div>
+            
+            <div style="font-size: 13px; margin-bottom: 8px;">
+                <strong>Program:</strong> {{ process.display_program }}<br>
+                <strong>Time:</strong> {{ process.display_start_time }} - {{ process.display_end_time }}
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="chart-{{ process.pk }}"></canvas>
+            </div>
+            
+            <div class="card-footer">
+                <div class="metrics">
+                    <span>Efficiency: 
+                        {% if process.display_efficiency %}
+                            <span class="metric-value {% if process.display_efficiency >= 80 %}good{% elif process.display_efficiency >= 60 %}warning{% else %}bad{% endif %}">
+                                {{ process.display_efficiency }}%
+                            </span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="metrics">
+                    <span>Loss Time: 
+                        {% if process.display_loss_time %}
+                            <span class="metric-value {% if process.display_loss_time <= 0 %}good{% elif process.display_loss_time <= 30 %}warning{% else %}bad{% endif %}">
+                                {{ process.display_loss_time }} m
+                            </span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+        
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?date={{ selected_date }}&page=1">&laquo; First</a>
+            <a href="?date={{ selected_date }}&page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+
+        <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+            <a href="?date={{ selected_date }}&page={{ page_obj.next_page_number }}">Next</a>
+            <a href="?date={{ selected_date }}&page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="padding: 30px; text-align: center; background: #fff; border-radius: 8px; border: 1px solid #ddd;">
+        <p style="color: #7f8c8d; font-size: 16px;">No batch processes found for {{ selected_date }}.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="{% static 'vendor/chartjs/chart.min.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chartData = JSON.parse('{{ chart_data_json|escapejs }}');
+        
+        Object.keys(chartData).forEach(function(processPk) {
+            const data = chartData[processPk];
+            const ctx = document.getElementById('chart-' + processPk);
+            
+            if (ctx && data.timestamps.length > 0) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.timestamps,
+                        datasets: [{
+                            label: 'Temperature',
+                            data: data.temperatures,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0, // Hide points for cleaner sparkline look
+                            pointHoverRadius: 3,
+                            fill: true,
+                            tension: 0.1 // Slight curve
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false, // Disable animation for performance with many charts
+                        plugins: {
+                            legend: { display: false }, // Hide legend
+                            tooltip: {
+                                enabled: true,
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.y + ' °C';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: true, // User requested to NOT hide axes
+                                ticks: {
+                                    maxTicksLimit: 5,
+                                    font: { size: 10 }
+                                },
+                                grid: { display: false }
+                            },
+                            y: {
+                                display: true, // User requested to NOT hide axes
+                                min: 0,
+                                max: 150,
+                                ticks: {
+                                    maxTicksLimit: 5,
+                                    font: { size: 10 }
+                                },
+                                grid: {
+                                    color: '#f0f0f0'
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,750 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Process History - Suritex Factory{% endblock %}
+
+{% block header_title %}Process History{% endblock %}
+{% block header_subtitle %}Review past production batches and efficiency logs{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+<style>
+    /* Page-specific overrides using Suritex light theme */
+    .page-content {
+        background-color: var(--suritex-bg-light);
+    }
+
+    /* Search Bar */
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--suritex-text-muted);
+        font-size: 20px;
+        pointer-events: none;
+    }
+
+    .search-input {
+        padding-left: 40px;
+        background: white;
+        border: 1px solid var(--suritex-border);
+        color: var(--suritex-text-main);
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+        .search-input {
+            font-size: 0.9375rem;
+            padding: 0.625rem 0.75rem 0.625rem 40px;
+            min-height: 44px;
+        }
+    }
+
+    .search-input:focus {
+        border-color: var(--suritex-primary);
+        box-shadow: 0 0 0 3px rgba(249, 245, 6, 0.1);
+    }
+
+    .search-input::placeholder {
+        color: var(--suritex-text-muted);
+    }
+
+    /* Collapsible Filter Panel */
+    .filter-panel {
+        background: white;
+        border: 1px solid var(--suritex-border);
+        border-radius: 0.5rem;
+    }
+
+    .filter-header {
+        background: #f9fafb;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.2s;
+    }
+
+    .filter-header:hover {
+        background: #f3f4f6;
+    }
+
+    @media (max-width: 768px) {
+        .filter-header {
+            font-size: 0.9375rem;
+        }
+    }
+
+    .filter-badge {
+        background: rgba(249, 245, 6, 0.15);
+        color: #9e9d47;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+    }
+
+    .filter-form label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--suritex-text-muted);
+        letter-spacing: 0.05em;
+    }
+
+    @media (max-width: 768px) {
+        .filter-form label {
+            font-size: 0.7rem;
+            margin-bottom: 0.25rem;
+        }
+    }
+
+    .filter-form .form-control,
+    .filter-form .form-select {
+        background: white;
+        border: 1px solid var(--suritex-border);
+        color: var(--suritex-text-main);
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+
+        .filter-form .form-control,
+        .filter-form .form-select {
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    .filter-form .form-control:focus,
+    .filter-form .form-select:focus {
+        border-color: var(--suritex-primary);
+        box-shadow: 0 0 0 2px rgba(249, 245, 6, 0.1);
+    }
+
+    /* Table Container */
+    .table-card {
+        background: white;
+        border: 1px solid var(--suritex-border);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: #f9fafb;
+        color: var(--suritex-text-muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-color: var(--suritex-border);
+        padding: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .table thead th {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.7rem;
+        }
+    }
+
+    .table tbody tr {
+        border-color: var(--suritex-border);
+        transition: background 0.15s;
+    }
+
+    .table tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .table tbody td {
+        padding: 1rem;
+        color: var(--suritex-text-main);
+        font-size: 0.875rem;
+        vertical-align: middle;
+    }
+
+    @media (max-width: 768px) {
+        .table tbody td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.8125rem;
+        }
+    }
+
+    .batch-id {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: #3b82f6;
+        cursor: pointer;
+    }
+
+    .batch-id:hover {
+        text-decoration: underline;
+    }
+
+    /* Status badges */
+    .badge-complete {
+        background: #d1fae5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+
+    .badge-progress {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
+
+    .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+
+    /* Pagination */
+    .pagination-wrapper {
+        background: white;
+        border-top: 1px solid var(--suritex-border);
+        padding: 1rem 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .pagination-wrapper {
+            padding: 0.75rem 1rem;
+            font-size: 0.8125rem;
+        }
+    }
+
+    .pagination .page-link {
+        color: var(--suritex-text-main);
+        border-color: var(--suritex-border);
+        background: white;
+    }
+
+    .pagination .page-link:hover {
+        background: #f9fafb;
+        border-color: var(--suritex-primary);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--suritex-primary);
+        border-color: var(--suritex-primary);
+        color: var(--suritex-text-main);
+        font-weight: 600;
+    }
+
+    .page-jump-input {
+        width: 3rem;
+        text-align: center;
+        font-size: 0.875rem;
+        border: 1px solid var(--suritex-border);
+    }
+
+    .page-jump-input:focus {
+        border-color: var(--suritex-primary);
+        box-shadow: 0 0 0 2px rgba(249, 245, 6, 0.1);
+    }
+
+    /* Buttons */
+    .btn-suritex-primary {
+        background: var(--suritex-primary);
+        color: var(--suritex-text-main);
+        border: none;
+        font-weight: 600;
+    }
+
+    .btn-suritex-primary:hover {
+        background: #e3df05;
+        color: var(--suritex-text-main);
+    }
+
+    .btn-outline-suritex {
+        background: white;
+        color: var(--suritex-text-main);
+        border: 1px solid var(--suritex-border);
+        font-weight: 600;
+    }
+
+    .btn-outline-suritex:hover {
+        background: #f9fafb;
+        border-color: var(--suritex-primary);
+        color: var(--suritex-text-main);
+    }
+
+    /* Material Icons */
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+    }
+
+    .material-symbols-outlined.filled {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-3 py-2 py-md-3">
+    <div class="row g-2 g-md-3">
+        <!-- Collapsible Filter Panel -->
+        <div class="col-12">
+            <div class="filter-panel">
+                <div class="filter-header p-2 p-md-3" data-bs-toggle="collapse" data-bs-target="#filterCollapse"
+                    aria-expanded="true">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">filter_list</span>
+                            <span class="fw-bold text-dark">Filter Options</span>
+                            {% if current_group or current_machine or start_date or end_date %}
+                            <span class="filter-badge">
+                                {{ current_group|default:0|add:current_machine|length|add:start_date|length|add:end_date|length|stringformat:"d"|default:"0"}}
+                                Active
+                            </span>
+                            {% endif %}
+                        </div>
+                        <span class="material-symbols-outlined">expand_more</span>
+                    </div>
+                </div>
+
+                <div class="collapse show" id="filterCollapse">
+                    <div class="p-2 p-md-3 border-top" style="border-color: var(--suritex-border) !important;">
+                        <form method="get" class="filter-form">
+                            <!-- Search Bar integrated into form -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-12">
+                                    <label for="search" class="form-label">Search</label>
+                                    <div class="position-relative">
+                                        <span class="material-symbols-outlined search-icon">search</span>
+                                        <input type="text" name="search" id="search" class="form-control search-input"
+                                            placeholder="Search by Batch ID, Machine, or Group..."
+                                            value="{{ search_query|default:'' }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-12 col-md-6 col-lg-3">
+                                    <label for="group" class="form-label">Unit / Group</label>
+                                    <select name="group" id="group" class="form-select">
+                                        <option value="">All Groups</option>
+                                        {% for g in groups %}
+                                        <option value="{{ g.id }}" {% if current_group == g.id %}selected{% endif %}>
+                                            {{ g.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-12 col-md-6 col-lg-3">
+                                    <label for="machine" class="form-label">Machine</label>
+                                    <select name="machine" id="machine" class="form-select">
+                                        <option value="">All Machines</option>
+                                        {% for m in machines %}
+                                        <option value="{{ m.code }}" data-group-id="{{ m.group.id }}" {% if current_machine == m.code %}selected{% endif %}>
+                                            {{ m.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-12 col-md-6 col-lg-3">
+                                    <label for="start_date" class="form-label">Date Range</label>
+                                    <input type="date" name="start_date" id="start_date" class="form-control"
+                                        value="{{ start_date }}">
+                                </div>
+
+                                <div class="col-12 col-md-6 col-lg-3">
+                                    <label for="end_date" class="form-label">To</label>
+                                    <input type="date" name="end_date" id="end_date" class="form-control"
+                                        value="{{ end_date }}">
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 pt-1">
+                                <a href="{% url 'history_list' %}" class="btn btn-sm btn-outline-suritex">Reset</a>
+                                <button type="submit" class="btn btn-sm btn-suritex-primary">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">check</span>
+                                    <span class="d-none d-sm-inline">Apply</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Info -->
+        {% if batches %}
+        <div class="col-12">
+            <div class="text-muted">
+                Showing <strong class="text-dark">{{ batches|length }}</strong> production batch{{ batches|length|pluralize:"es" }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Data Table -->
+        <div class="col-12">
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        
+                        <thead class="text-nowrap">
+                            <tr>
+                                <!-- Kelompok Waktu -->
+                                <th>Mulai</th>
+                                <th class="text-end">Durasi Akt.</th>
+                                <th class="text-end">Durasi Ideal</th>
+                                
+                                <!-- Kelompok Mesin & Identitas -->
+                                <th>Mesin</th>
+                                <th>Batch Prog.</th>
+                                <th>Batch Kain</th>
+                                <th>Order & Buyer</th>
+                                <th>Artikel & Warna</th>
+                                <th>Program Master</th>
+                                <th>Isi & Operator</th>
+                                
+                                <!-- Kelompok Suhu & Efisiensi -->
+                                <th class="text-end">Suhu Maks</th>
+                                <th class="text-end">Time Eff.</th>
+                                <th class="text-end">Heat Eff.</th>
+                                
+                                <!-- Kelompok Utilitas -->
+                                <th class="text-end">Uap Aktual</th>
+                                <th class="text-end text-success">Uap Best (Mesin)</th>
+                                <th class="text-end text-primary">Uap Best-of-Best</th>
+                                <th class="text-end">Listrik Akt.</th>
+                                <th class="text-end text-muted">Listrik Ideal</th>
+                                
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for batch in batches %}
+                            <tr>
+                                <!-- KELOMPOK WAKTU -->
+                                <td class="text-nowrap">
+                                    {{ batch.start_time|date:"d M y, H:i" }}
+                                </td>
+                                <td class="text-end font-monospace">
+                                    {% if batch.total_duration is not None %}{{ batch.total_duration|floatformat:0 }}m{% else %}-{% endif %}
+                                </td>
+                                <td class="text-end font-monospace text-muted">
+                                    {% if batch.program_ideal_duration_mins is not None %}{{ batch.program_ideal_duration_mins|floatformat:0 }}m{% else %}-{% endif %}
+                                </td>
+
+                                <!-- KELOMPOK MESIN & IDENTITAS -->
+                                <td>
+                                    <div class="fw-semibold">{{ batch.machine.code }}</div>
+                                </td>
+                                <td><span class="batch-id">#{{ batch.batch_number }}</span></td>
+
+                                {% if batch.identity %}
+                                    <td>{{ batch.identity.batch|default:"-" }}</td>
+                                    <td>{{ batch.identity.nomor_order|default:"-" }}<br><small class="text-muted">{{ batch.identity.kode_buyer|default:"-" }}</small></td>
+                                    <td>{{ batch.identity.artikel_kain|default:"-" }}<br><small class="text-muted">{{ batch.identity.nomor_warna|default:"" }}</small></td>
+                                    <td>{{ batch.identity.program.nama|default:"-" }}</td>
+                                    <td>{{ batch.identity.isi_per_tube|default:"-" }} Tube<br><small class="text-muted">{{ batch.identity.operator|default:"-" }}</small></td>
+                                {% else %}
+                                    <td colspan="5" class="text-center text-muted fst-italic">Menunggu input tiket...</td>
+                                {% endif %}
+
+                                <!-- KELOMPOK SUHU & EFISIENSI -->
+                                <td class="text-end">
+                                    {% if batch.max_temp is not None %}
+                                        <span class="fw-bold text-danger">{{ batch.max_temp|floatformat:1 }}°C</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if batch.time_efficiency_percent is not None %}
+                                        {% if batch.time_efficiency_percent >= 90 %}
+                                            <span class="badge bg-success">{{ batch.time_efficiency_percent }}%</span>
+                                        {% elif batch.time_efficiency_percent >= 70 %}
+                                            <span class="badge bg-warning text-dark">{{ batch.time_efficiency_percent }}%</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ batch.time_efficiency_percent }}%</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end font-monospace">
+                                    {% if batch.avg_heating_efficiency is not None %}
+                                        {{ batch.avg_heating_efficiency|floatformat:2 }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- KELOMPOK UTILITAS -->
+                                <td class="text-end font-monospace fw-bold">
+                                    {% if batch.predicted_steam_kg is not None %}{{ batch.predicted_steam_kg|floatformat:1 }}{% else %}-{% endif %}
+                                </td>
+                                <td class="text-end font-monospace text-success">
+                                    {% if batch.predicted_steam_best_kg is not None %}{{ batch.predicted_steam_best_kg|floatformat:1 }}{% else %}-{% endif %}
+                                </td>
+                                <td class="text-end font-monospace text-primary">
+                                    {% if batch.predicted_steam_ideal_kg is not None %}{{ batch.predicted_steam_ideal_kg|floatformat:1 }}{% else %}-{% endif %}
+                                </td>
+                                <td class="text-end font-monospace">
+                                    {% if batch.power_consumption_kwh is not None %}{{ batch.power_consumption_kwh|floatformat:1 }}{% else %}-{% endif %}
+                                </td>
+                                <td class="text-end font-monospace text-muted">
+                                    {% if batch.ideal_power_consumption_kwh is not None %}{{ batch.ideal_power_consumption_kwh|floatformat:1 }}{% else %}-{% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                    {% if batch.is_complete %}
+                                    <span class="badge badge-complete">Completed</span>
+                                    {% else %}
+                                    <span class="badge badge-progress">In Progress</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="/history/report/{{ batch.id }}?machine={{ batch.machine.code }}&batch={{ batch.batch_number }}"
+                                        class="btn btn-sm btn-outline-suritex" target="_blank" title="Open Report">
+                                        <span class="material-symbols-outlined"
+                                            style="font-size: 16px;">visibility</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div style="font-size: 3rem; opacity: 0.3;">📭</div>
+                                    <h5 class="text-muted mt-3">No data found</h5>
+                                    <p class="text-muted small">Try adjusting your filters or date range</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div
+                    class="pagination-wrapper d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                    <div class="text-muted small">
+                        Showing <strong class="text-dark">{{ page_obj.start_index }}</strong> to
+                        <strong class="text-dark">{{ page_obj.end_index }}</strong> of
+                        <strong class="text-dark">{{ page_obj.paginator.count }}</strong> results
+                    </div>
+
+
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- Rows per page (now functional) -->
+                        <div class="d-none d-sm-flex align-items-center gap-2">
+                            <span class="text-muted small">Rows:</span>
+                            <select id="pageSizeSelect" class="form-select form-select-sm" style="width: auto;">
+                                <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                                <option value="20" {% if page_size == 20 %}selected{% endif %}>20</option>
+                                <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                            </select>
+                        </div>
+
+                        <!-- Page Navigation -->
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-sm mb-0">
+                                <!-- First Page Button -->
+                                <li class="page-item {% if page_obj.number == 1 %}disabled{% endif %}">
+                                    {% if page_obj.number != 1 %}
+                                    <a class="page-link"
+                                        href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <span class="material-symbols-outlined"
+                                            style="font-size: 18px;">keyboard_double_arrow_left</span>
+                                    </a>
+                                    {% else %}
+                                    <span class="page-link">
+                                        <span class="material-symbols-outlined"
+                                            style="font-size: 18px;">keyboard_double_arrow_left</span>
+                                    </span>
+                                    {% endif %}
+                                </li>
+
+                                <!-- Previous Button -->
+                                <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                                    {% if page_obj.has_previous %}
+                                    <a class="page-link"
+                                        href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <span class="material-symbols-outlined"
+                                            style="font-size: 18px;">chevron_left</span>
+                                    </a>
+                                    {% else %}
+                                    <span class="page-link">
+                                        <span class="material-symbols-outlined"
+                                            style="font-size: 18px;">chevron_left</span>
+                                    </span>
+                                    {% endif %}
+                                </li>
+
+                                <!-- Smart Page Numbers -->
+                                {% with current=page_obj.number total=page_obj.paginator.num_pages %}
+                                <!-- Always show first page -->
+                                {% if current > 3 %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                        href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">1</a>
+                                </li>
+                                {% if current > 4 %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                                {% endif %}
+
+                                <!-- Show pages around current page -->
+                                {% for i in page_obj.paginator.page_range %}
+                                {% if i >= current|add:'-2' and i <= current|add:'2' %} {% if i == current %} <li
+                                    class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                    {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% endif %}
+                                    {% endfor %}
+
+                                    <!-- Always show last page -->
+                                    {% if current < total|add:'-2' %} {% if current < total|add:'-3' %} <li
+                                        class="page-item disabled"><span class="page-link">...</span></li>
+                                        {% endif %}
+                                        <li class="page-item">
+                                            <a class="page-link"
+                                                href="?page={{ total }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ total }}</a>
+                                        </li>
+                                        {% endif %}
+                                        {% endwith %}
+
+                                        <!-- Next Button -->
+                                        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                                            {% if page_obj.has_next %}
+                                            <a class="page-link"
+                                                href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+                                            </a>
+                                            {% else %}
+                                            <span class="page-link">
+                                                <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+                                            </span>
+                                            {% endif %}
+                                        </li>
+
+                                        <!-- Last Page Button -->
+                                        <li
+                                            class="page-item {% if page_obj.number == page_obj.paginator.num_pages %}disabled{% endif %}">
+                                            {% if page_obj.number != page_obj.paginator.num_pages %}
+                                            <a class="page-link"
+                                                href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <span class="material-symbols-outlined"
+                                                    style="font-size: 18px;">keyboard_double_arrow_right</span>
+                                            </a>
+                                            {% else %}
+                                            <span class="page-link">
+                                                <span class="material-symbols-outlined"
+                                                    style="font-size: 18px;">keyboard_double_arrow_right</span>
+                                            </span>
+                                            {% endif %}
+                                        </li>
+                            </ul>
+                        </nav>
+
+                        <!-- Go to Page -->
+                        <div class="d-none d-sm-flex align-items-center gap-2">
+                            <span class="text-muted small">Go to:</span>
+                            <input type="number" class="form-control page-jump-input" min="1"
+                                max="{{ page_obj.paginator.num_pages }}" placeholder="#" id="pageJump">
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Machine filter based on group selection
+    document.addEventListener('DOMContentLoaded', function () {
+        const groupSelect = document.getElementById('group');
+        const machineSelect = document.getElementById('machine');
+
+        const allOptions = Array.from(machineSelect.options).map(opt => ({
+            value: opt.value,
+            text: opt.text,
+            groupId: opt.getAttribute('data-group-id'),
+            selected: opt.selected
+        }));
+
+        function filterMachines() {
+            const selectedGroupId = groupSelect.value;
+            const currentMachineValue = machineSelect.value;
+
+            machineSelect.innerHTML = '';
+
+            let hasSelected = false;
+
+            allOptions.forEach(optData => {
+                const shouldShow = (optData.value === "") ||
+                    (!selectedGroupId) ||
+                    (optData.groupId === selectedGroupId);
+
+                if (shouldShow) {
+                    const newOption = document.createElement('option');
+                    newOption.value = optData.value;
+                    newOption.text = optData.text;
+                    if (optData.groupId) {
+                        newOption.setAttribute('data-group-id', optData.groupId);
+                    }
+
+                    if (optData.selected || (currentMachineValue && optData.value === currentMachineValue)) {
+                        newOption.selected = true;
+                        hasSelected = true;
+                    }
+
+                    machineSelect.appendChild(newOption);
+                }
+            });
+
+            if (!hasSelected && machineSelect.options.length > 0) {
+                machineSelect.options[0].selected = true;
+            }
+        }
+
+        groupSelect.addEventListener('change', filterMachines);
+        filterMachines();
+    });
+
+    // Page size selector functionality
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+    if (pageSizeSelect) {
+        pageSizeSelect.addEventListener('change', function () {
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.set('page_size', this.value);
+            currentParams.set('page', '1'); // Reset to first page when changing page size
+            window.location.search = currentParams.toString();
+        });
+    }
+
+    // Page jump functionality
+    const pageJumpInput = document.getElementById('pageJump');
+    if (pageJumpInput) {
+        pageJumpInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const pageNum = parseInt(this.value);
+                const maxPage = parseInt(this.max);
+                if (pageNum >= 1 && pageNum <= maxPage) {
+                    const currentParams = new URLSearchParams(window.location.search);
+                    currentParams.set('page', pageNum);
+                    window.location.search = currentParams.toString();
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

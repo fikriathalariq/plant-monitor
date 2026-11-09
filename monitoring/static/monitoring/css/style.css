@@ -1,0 +1,1446 @@
+:root {
+    /* ===== BASE NEUTRALS ===== */
+    --color-bg-main-start: #0f172a;
+    --color-bg-main-end: #020617;
+    --color-text-main: #e5e7eb;
+    --color-text-muted: #9ca3af;
+    --color-text-soft: #9ca3af;
+    --color-text-soft-2: #6b7280;
+
+    /* Border / line */
+    --color-border-soft-20: rgba(148, 163, 184, 0.2);
+    --color-border-soft-25: rgba(148, 163, 184, 0.25);
+    --color-border-soft-30: rgba(148, 163, 184, 0.3);
+    --color-border-soft-35: rgba(148, 163, 184, 0.35);
+    --color-border-strong: rgba(55, 65, 81, 0.9);
+
+    /* ===== SIDEBAR & CARD BG ===== */
+    --color-sidebar-start: #1f2937;
+    --color-sidebar-end: #020617;
+
+    --color-card-bg-start: rgba(15, 23, 42, 0.98);
+    --color-card-bg-end: rgba(15, 23, 42, 0.96);
+
+    --color-card-alt-bg-start: rgba(15, 23, 42, 0.9);
+    --color-card-alt-bg-mid: rgba(15, 23, 42, 0.7);
+
+    --color-machine-tile-start: rgba(30, 64, 175, 0.7);
+    --color-machine-tile-end: rgba(15, 23, 42, 0.95);
+
+    --color-row-hover: rgba(30, 64, 175, 0.6);
+
+    /* ===== ACCENT GREENS ===== */
+    --color-green: #22c55e;
+    --color-green-soft: #4ade80;
+    --color-green-soft-2: #86efac;
+    --color-green-shadow: rgba(16, 185, 129, 0.3);
+
+    --color-badge-green-bg: rgba(34, 197, 94, 0.1);
+    --color-badge-green-bg-2: rgba(34, 197, 94, 0.15);
+
+    /* ===== ACCENT BLUES ===== */
+    --color-blue: #0ea5e9;
+    --color-blue-soft: #bfdbfe;
+    --color-badge-blue-bg: rgba(59, 130, 246, 0.18);
+
+    /* ===== YELLOW / WARNING ===== */
+    --color-yellow: #facc15;
+    --color-yellow-bg: rgba(234, 179, 8, 0.18);
+    --color-yellow-bg-soft: rgba(234, 179, 8, 0.15);
+
+    /* ===== RED / CRITICAL ===== */
+    --color-red-soft: #fecaca;
+    --color-red-badge-bg: rgba(248, 113, 113, 0.18);
+    --color-red-badge-bg-soft: rgba(248, 113, 113, 0.15);
+
+    /* ===== INFO / NEUTRAL BADGES ===== */
+    --color-neutral-badge-bg: rgba(148, 163, 184, 0.2);
+    --color-neutral-dark-bg: rgba(55, 65, 81, 0.75);
+    --color-info-badge-bg: rgba(59, 130, 246, 0.18);
+
+    /* ===== SPECIAL GRADIENTS ===== */
+    --color-machine-grad-hot: #e53e3e;
+    --color-machine-grad-cool: #3182ce;
+    --color-machine-grad-neutral: #718096;
+
+    /* ===== LOGIN PALETTE (HALAMAN LOGIN) ===== */
+    --login-bg-start: #0f172a;
+    --login-bg-end: #000814;
+
+    --login-card-bg: rgba(15, 23, 42, 0.9);
+    --login-card-border: rgba(148, 163, 184, 0.25);
+
+    --login-logo-bg: rgba(255, 255, 255, 0.05);
+    --login-logo-shadow: rgba(0, 255, 150, 0.25);
+    --login-logo-drop: rgba(0, 255, 150, 0.3);
+
+    --login-input-border: #4b5563;
+    --login-input-bg: rgba(15, 23, 42, 0.9);
+    --login-input-focus-border: #22c55e;
+    --login-input-focus-shadow: rgba(34, 197, 94, 0.6);
+
+    --login-error-text: #fecaca;
+    --login-error-bg: rgba(248, 113, 113, 0.15);
+    --login-error-border: rgba(248, 113, 113, 0.4);
+
+    --login-footer-text: #6b7280;
+
+    --login-toggle-eye: #94a3b8;
+}
+
+/* --- Reset ringan --- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, var(--color-bg-main-start), var(--color-bg-main-end));
+    color: var(--color-text-main);
+    min-height: 100vh;
+}
+
+/* --- Layout utama --- */
+.layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    background: radial-gradient(circle at top left, var(--color-sidebar-start), var(--color-sidebar-end));
+    border-right: 1px solid var(--color-border-soft-20);
+    width: 260px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    padding: 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow: hidden;
+    /* Hide main sidebar overflow, specific parts scroll */
+    z-index: 50;
+}
+
+.brand-text p {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.brand-logo {
+    font-size: 2rem;
+}
+
+.brand-text h1 {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    flex: 1;
+    /* Take remaining space */
+    overflow-y: auto;
+    /* Allow scrolling menu items */
+    margin-right: -0.5rem;
+    /* Tweak scrollbar spacing */
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+/* .sidebar-nav::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.2);
+    border-radius: 4px;
+} */
+
+.nav-item {
+    font-size: 0.92rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.6rem;
+    color: #e5e7eb;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    opacity: 0.9;
+    transition: background 0.15s ease, transform 0.08s ease, opacity 0.15s ease;
+}
+
+.nav-item:hover {
+    background: rgba(148, 163, 184, 0.18);
+    transform: translateX(2px);
+    opacity: 1;
+}
+
+.nav-item.active {
+    background: linear-gradient(120deg, #22c55e, #0ea5e9);
+    color: #0b1220;
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    margin-top: 0;
+    /* Already pushed by flex-grow of nav */
+    flex-shrink: 0;
+    /* Do not shrink */
+    padding-top: 1rem;
+    border-top: 1px dashed rgba(148, 163, 184, 0.5);
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.sidebar-user strong {
+    color: #f9fafb;
+}
+
+.badge-shift {
+    background: rgba(34, 197, 94, 0.15);
+    color: #bbf7d0;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+}
+
+/* --- Main --- */
+.main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* --- Topbar --- */
+.topbar {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    backdrop-filter: blur(18px);
+    background: linear-gradient(120deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.88));
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.topbar-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.topbar-subtitle {
+    font-size: 0.88rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* --- Badge umum --- */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.badge-status-online {
+    background: var(--color-badge-green-bg);
+    color: var(--color-green-soft);
+    padding-inline: 0.75rem;
+}
+
+.badge-good {
+    background: var(--color-badge-green-bg-2);
+    color: var(--color-green-soft-2);
+}
+
+.badge-neutral {
+    background: var(--color-neutral-badge-bg);
+    color: var(--color-text-main);
+}
+
+.badge-warning {
+    background: var(--color-yellow-bg);
+    color: var(--color-yellow);
+}
+
+.badge-critical {
+    background: var(--color-red-badge-bg);
+    color: var(--color-red-soft);
+}
+
+.badge-info {
+    background: rgba(59, 130, 246, 0.18);
+    color: #bfdbfe;
+}
+
+.badge-open {
+    background: rgba(248, 113, 113, 0.15);
+    color: #fecaca;
+}
+
+.badge-ack {
+    background: rgba(234, 179, 8, 0.15);
+    color: #facc15;
+}
+
+.badge-closed {
+    background: rgba(55, 65, 81, 0.75);
+    color: #e5e7eb;
+}
+
+/* --- Button --- */
+.btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.9rem;
+    background: transparent;
+    color: #e5e7eb;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+}
+
+.btn-ghost {
+    border-color: rgba(148, 163, 184, 0.4);
+    background: rgba(15, 23, 42, 0.7);
+}
+
+.btn-ghost:hover {
+    background: rgba(30, 64, 175, 0.6);
+    border-color: rgba(129, 140, 248, 0.7);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(130deg, var(--color-green), var(--color-blue));
+    color: #020617;
+    font-weight: 600;
+    box-shadow: 0 8px 24px var(--color-green-shadow);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 12px 32px rgba(56, 189, 248, 0.4);
+    transform: translateY(-1px);
+}
+
+/* --- Content --- */
+.content {
+    padding: 1.5rem 1.75rem 2rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* --- Grid utilitas --- */
+/* Grid auto untuk panel group mesin (PRC, PRT, WEAVING, dll) */
+.grid-auto {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.grid {
+    display: grid;
+}
+
+.grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gap-lg {
+    gap: 1rem;
+}
+
+.m-top-lg {
+    margin-top: 1.5rem;
+}
+
+/* --- Card umum --- */
+.card {
+    background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+    border-radius: 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    padding: 1rem 1.05rem 1.1rem 1.05rem;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.card-subtitle {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-top: 0.1rem;
+}
+
+.card-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9ca3af;
+}
+
+/* --- KPI card --- */
+.card-kpi {
+    position: relative;
+    overflow: hidden;
+}
+
+.card-kpi::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(34, 197, 94, 0.22), transparent 60%);
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+.card-kpi .kpi-value {
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin-top: 0.35rem;
+}
+
+.card-kpi .kpi-desc {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-top: 0.2rem;
+}
+
+.kpi-trend {
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.kpi-trend-up {
+    color: #4ade80;
+}
+
+.kpi-trend-down {
+    color: #fb7185;
+}
+
+/* --- Chart placeholder --- */
+.card-chart .chart-placeholder {
+    margin-top: 0.5rem;
+    border-radius: 0.85rem;
+    border: 1px dashed rgba(148, 163, 184, 0.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1.7rem 1rem;
+    gap: 0.3rem;
+    background: radial-gradient(circle, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.7));
+    font-size: 0.82rem;
+    color: #9ca3af;
+}
+
+.chart-note {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+/* --- Machine list --- */
+.machine-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.25rem;
+}
+
+/* =========================
+   MENU GRAFIK & DATA
+   ========================= */
+
+/* --- Base Theme Colors (Sesuaikan jika perlu) --- */
+:root {
+    --card-bg: #1e293b;
+    /* Latar belakang kartu gelap */
+    --input-bg: #0f172a;
+    /* Latar input lebih gelap */
+    --border-color: #334155;
+    /* Warna border slate-700 */
+    --text-primary: #f1f5f9;
+    /* Teks putih terang */
+    --text-muted: #94a3b8;
+    /* Teks abu-abu */
+    --primary-blue: #3b82f6;
+}
+
+/* --- Card Styles --- */
+.control-panel-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+}
+
+.header-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+}
+
+.text-blue {
+    color: var(--primary-blue);
+}
+
+.text-green {
+    color: #22c55e;
+}
+
+/* --- FILTER LAYOUT SYSTEM (NEW) --- */
+.filter-layout {
+    display: grid;
+    /* Desktop: Kolom Kiri 280px (Mesin), Sisanya Kanan (Input) */
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    /* Gap 0 karena kita pakai padding internal */
+}
+
+/* SECTION 1: Machine Box (Left Side) */
+.machine-section {
+    padding: 1.5rem;
+    border-right: 1px solid var(--border-color);
+    background-color: rgba(0, 0, 0, 0.1);
+    /* Sedikit lebih gelap */
+}
+
+.multi-machine-box {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 6px;
+    background: var(--input-bg);
+    height: 160px;
+    /* Fix height agar rapi */
+    overflow-y: auto;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.checkbox-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Custom Scrollbar untuk Box Mesin */
+.multi-machine-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.multi-machine-box::-webkit-scrollbar-thumb {
+    background-color: #475569;
+    border-radius: 3px;
+}
+
+/* SECTION 2: Inputs (Right Side) */
+.inputs-section {
+    padding: 1.5rem;
+}
+
+.input-grid {
+    display: grid;
+    /* Grid otomatis: Min 200px per input, sisanya bagi rata */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    align-items: end;
+    /* Tombol sejajar bawah */
+}
+
+/* --- Input Styling --- */
+.control-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.dark-input {
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.6rem 0.8rem;
+    border-radius: 6px;
+}
+
+.dark-input:focus {
+    background-color: var(--input-bg);
+    border-color: var(--primary-blue);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Fix Date Picker Icon Color */
+input[type="datetime-local"] {
+    color-scheme: dark;
+}
+
+/* --- Button Styling --- */
+.btn-glow {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-glow:hover {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+}
+
+/* --- Graph Area --- */
+.graph-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    min-height: 450px;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    padding: 1rem;
+}
+
+/* --- RESPONSIVE MEDIA QUERIES --- */
+@media (max-width: 992px) {
+    .filter-layout {
+        /* Tablet/Mobile: Stack ke bawah (1 kolom) */
+        grid-template-columns: 1fr;
+    }
+
+    .machine-section {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .multi-machine-box {
+        height: auto;
+        max-height: 150px;
+    }
+}
+
+
+/* Badge status */
+
+/* =========================
+   STATUS BADGE & CARD COLOR
+   ========================= */
+
+/* Badge status - Updated to match dashboard design */
+.badge.status-running {
+    background-color: #10b981;
+    color: white;
+}
+
+.badge.status-heat {
+    background-color: #ef4444;
+    color: white;
+}
+
+.badge.status-cool {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.badge.status-steady {
+    background-color: #8b5cf6;
+    color: white;
+}
+
+.badge.status-stop {
+    background-color: #71717a;
+    color: white;
+}
+
+.badge.status-off {
+    background-color: #a1a1aa;
+    color: white;
+}
+
+.badge.status-offline {
+    background-color: #d4d4d8;
+    color: #3f3f46;
+}
+
+.badge.status-warning {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.badge.status-default {
+    background-color: #9ca3af;
+    color: white;
+}
+
+/* --- KPI VALUE + ANIMASI --- */
+.kpi-value span {
+    transition: background-color 0.5s ease, color 0.5s ease;
+    border-radius: 0.5rem;
+    padding: 0.15rem 0.4rem;
+}
+
+/* layout angka + unit + icon */
+.kpi-value-inline {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+.kpi-unit {
+    font-size: 1rem;
+    color: var(--text-muted, #6b7280);
+}
+
+/* Naik: hijau lembut */
+.kpi-up {
+    background-color: rgba(16, 185, 129, 0.18);
+    color: #047857;
+}
+
+/* Turun: merah lembut */
+.kpi-down {
+    background-color: rgba(248, 113, 113, 0.18);
+    color: #b91c1c;
+}
+
+/* Icon panah kecil */
+.kpi-change-icon {
+    font-size: 0.9rem;
+    opacity: 0;
+    transform: translateY(2px);
+    transition: opacity 0.5 ease, transform 0.5s ease;
+}
+
+.kpi-change-icon-up {
+    color: #16a34a;
+}
+
+.kpi-change-icon-down {
+    color: #f97373;
+}
+
+.kpi-change-icon-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* BADGE KPI DYNAMIC COLORS */
+.badge-steam-green {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid #10b98133;
+}
+
+.badge-steam-yellow {
+    background: rgba(234, 179, 8, 0.2);
+    color: #ca8a04;
+    border: 1px solid #ca8a0433;
+}
+
+.badge-steam-red {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid #ef444433;
+}
+
+/* Card machine-tile berdasarkan status */
+/* NOTE: dashboard.html uses ::after pseudo-element for bottom borders with gradients */
+/* These background styles apply to pages using the old tile system */
+
+.machine-tile.tile-running {
+    background: radial-gradient(circle at top left, #064e3b 0, #020617 60%);
+    border-color: #16a34a;
+}
+
+.machine-tile.tile-heat {
+    background: radial-gradient(circle at top left, #7f1d1d 0, #020617 60%);
+    border-color: #ef4444;
+}
+
+.machine-tile.tile-cool {
+    background: radial-gradient(circle at top left, #164e63 0, #0f172a 60%);
+    border-color: #06b6d4;
+}
+
+.machine-tile.tile-steady {
+    background: radial-gradient(circle at top left, #1e3a8a 0, #0f172a 60%);
+    border-color: #3b82f6;
+}
+
+.machine-tile.tile-stop {
+    background: radial-gradient(circle at top left, #3f3f46 0, #020617 60%);
+    border-color: #71717a;
+}
+
+.machine-tile.tile-off {
+    background: radial-gradient(circle at top left, #52525b 0, #0f172a 60%);
+    border-color: #a1a1aa;
+}
+
+.machine-tile.tile-offline {
+    background: radial-gradient(circle at top left, #020617 0, #0f172a 60%);
+    border-color: #4b5563;
+    opacity: 0.9;
+}
+
+.machine-tile.tile-warning {
+    background: radial-gradient(circle at top left, #78350f 0, #111827 60%);
+    border-color: #f59e0b;
+}
+
+
+
+
+/* Grid status semua mesin */
+
+.machine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.6rem;
+    max-height: 360px;
+    /* supaya tidak kepanjangan */
+    overflow-y: auto;
+    /* bisa di-scroll */
+    padding-right: 0.2rem;
+}
+
+.machine-tile {
+    background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.7), rgba(15, 23, 42, 0.95));
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.78rem;
+}
+
+.machine-temp-main {
+    margin-top: 0.35rem;
+    margin-bottom: 0.15rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.machine-temp-value {
+    font-size: 1.7rem;
+    /* angka besar, mirip kartu OEE */
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
+}
+
+.machine-temp-unit {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    margin-top: 0.2rem;
+}
+
+.gradient-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-left: 4px;
+}
+
+/* Gradien naik (pemanasan) → merah */
+.grad-hot {
+    background: #e53e3e;
+}
+
+/* Gradien turun (cooling) → biru */
+.grad-cool {
+    background: #3182ce;
+}
+
+/* Netral / tidak ada data */
+.grad-neutral {
+    background: #718096;
+}
+
+.machine-tile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem;
+}
+
+.machine-tile-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.machine-tile-meta {
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+/* Input di card actions */
+.form-input {
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    color: #e5e7eb;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.78rem;
+    outline: none;
+    min-width: 180px;
+}
+
+.form-input::placeholder {
+    color: #6b7280;
+}
+
+.form-input:focus {
+    border-color: #22c55e;
+}
+
+
+.machine-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0.4rem;
+    border-radius: 0.7rem;
+    background: radial-gradient(circle at left, rgba(30, 64, 175, 0.7), rgba(15, 23, 42, 0.9));
+}
+
+.machine-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.machine-meta {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    margin-top: 0.12rem;
+}
+
+/* --- Sidebar Logo --- */
+
+.sidebar-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.75rem;
+    object-fit: contain;
+    background: #0f172a;
+    padding: 4px;
+}
+
+
+/* --- Table --- */
+.table-wrapper {
+    margin-top: 0.3rem;
+    border-radius: 0.8rem;
+    border: 1px solid rgba(55, 65, 81, 0.9);
+    overflow: hidden;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.table thead {
+    background: rgba(15, 23, 42, 0.98);
+}
+
+.table th,
+.table td {
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(55, 65, 81, 0.9);
+}
+
+.table th {
+    font-weight: 600;
+    color: #9ca3af;
+    white-space: nowrap;
+}
+
+.table tbody tr:nth-child(even) {
+    background: rgba(15, 23, 42, 0.95);
+}
+
+.table tbody tr:hover {
+    background: rgba(30, 64, 175, 0.6);
+}
+
+/* --- Form elements --- */
+.form-select {
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    color: #e5e7eb;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.78rem;
+    outline: none;
+}
+
+.form-select:focus {
+    border-color: #22c55e;
+}
+
+/* --- Card actions --- */
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* =========================================
+   8. LOGIN PAGE (YOUR FAVORITE)
+   ========================================= */
+/* Saya salin persis dari yang kamu kirim, agar 100% sesuai selera */
+
+body.login-body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #1f2937;
+    padding: 1rem;
+}
+
+.login-container {
+    width: 100%;
+    padding: 1.5rem;
+}
+
+.login-card {
+    background: #ffffff;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f3f4f6;
+}
+
+.login-brand {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.login-logo {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.login-logo-img {
+    max-height: 60px;
+    width: auto;
+}
+
+.login-title {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+
+.login-footer-note {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 2rem;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    background-color: #f9fafb;
+}
+
+.form-group input:focus {
+    border-color: #2563eb;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.password-wrapper {
+    position: relative;
+    margin-bottom: 0;
+}
+
+.password-wrapper input {
+    padding-right: 2.5rem;
+}
+
+.toggle-pass {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(2px);
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 5px;
+}
+
+.toggle-pass:hover {
+    color: #4b5563;
+}
+
+.login-error {
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+    color: #991b1b;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+/* -- MANUAL MACHINE USAGE --*/
+
+/* === MESIN AKTIF (MANUAL) – STYLING KHUSUS === */
+/* Berlaku hanya untuk label yang punya class .usage-tile
+   (di halaman manual_machine_usage.html) */
+
+/* Grid manual: beri jarak vertikal sedikit saja */
+.machine-grid .usage-tile {
+    margin-bottom: 0.75rem;
+}
+
+/* Kartu mesin manual (OFF / default) */
+.usage-tile {
+    display: block;
+    background: radial-gradient(circle at top left,
+            rgba(30, 64, 175, 0.55),
+            rgba(15, 23, 42, 0.98));
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 0.9rem;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.9);
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
+}
+
+/* Hover efek ringan */
+.usage-tile:hover {
+    border-color: rgba(56, 189, 248, 0.85);
+    box-shadow:
+        0 18px 40px rgba(15, 23, 42, 0.95),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+}
+
+/* STATE: ON (checkbox ter-centang) */
+.usage-tile:has(input:checked) {
+    background: linear-gradient(135deg,
+            rgba(34, 197, 94, 0.16),
+            rgba(14, 165, 233, 0.22));
+    border-color: rgba(34, 197, 94, 0.95);
+}
+
+/* Fallback browser lama yang belum support :has */
+.usage-tile input:checked {
+    accent-color: #22c55e;
+}
+
+/* Checkbox jadi toggle kecil (tetap ringan) */
+.usage-tile input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-right: 0.6rem;
+    border-radius: 0.45rem;
+    border: 1px solid rgba(148, 163, 184, 0.9);
+    background: radial-gradient(circle at 30% 30%,
+            rgba(15, 23, 42, 0.95),
+            rgba(15, 23, 42, 1));
+    cursor: pointer;
+    position: relative;
+    outline: none;
+    box-shadow: inset 0 0 4px rgba(15, 23, 42, 0.9);
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+/* “Knob” di dalam checkbox */
+.usage-tile input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: solid white;
+    border-radius: 0.3rem;
+    border-width: 0 2px 2px 0;
+    background: #e5e7eb;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.75);
+    transform: rotate(45deg) scale(0);
+    transition: transform 0.18s ease, background 0.18s ease;
+}
+
+/* ON: hijau–biru mengikuti brand */
+.usage-tile input[type="checkbox"]:checked {
+    background: linear-gradient(135deg, #22c55e, #0ea5e9);
+    border-color: transparent;
+    box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 1),
+        0 0 16px rgba(56, 189, 248, 0.7);
+}
+
+.usage-tile input[type="checkbox"]:checked::after {
+    transform: rotate(180deg) scale(1);
+    /* Munculkan centang */
+}
+
+/* Fokus keyboard */
+.usage-tile input[type="checkbox"]:focus-visible {
+    box-shadow:
+        0 0 0 2px rgba(15, 23, 42, 1),
+        0 0 0 4px rgba(59, 130, 246, 0.9);
+}
+
+/* Tipografi dalam kartu manual */
+.usage-tile .machine-tile-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f9fafb;
+    line-height: 1.2;
+}
+
+.usage-tile .machine-tile-meta {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-top: 0.2rem;
+}
+
+/* Saat ON, tone teks sedikit lebih “segar” hijau */
+.usage-tile:has(input:checked) .machine-tile-name {
+    color: #bbf7d0;
+}
+
+.usage-tile:has(input:checked) .machine-tile-meta {
+    color: #86efac;
+}
+
+/* Responsif: kartu sedikit lebih rapat di mobile */
+@media (max-width: 640px) {
+    .usage-tile {
+        padding: 0.7rem 0.85rem;
+    }
+}
+
+.manual-usage-form .manual-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.manual-machine-tile {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.8rem;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: radial-gradient(circle at top left,
+            rgba(30, 64, 175, 0.7),
+            rgba(15, 23, 42, 0.95));
+    cursor: pointer;
+}
+
+.manual-machine-tile input[type="checkbox"] {
+    margin-top: 0.25rem;
+}
+
+.manual-machine-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.manual-machine-meta {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    margin-top: 0.15rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.dot-on {
+    background: #22c55e;
+}
+
+.dot-off {
+    background: #6b7280;
+}
+
+.status-label {
+    font-size: 0.75rem;
+}
+
+
+/* --- Footer --- */
+.footer {
+    margin-top: auto;
+    padding: 0.85rem 1.75rem 1rem 1.75rem;
+    font-size: 0.78rem;
+    color: #9ca3af;
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+/* --- Responsif --- */
+@media (max-width: 1024px) {
+    .layout {
+        grid-template-columns: 220px minmax(0, 1fr);
+    }
+
+    .grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sidebar {
+        display: none;
+        /* simple: sembunyikan sidebar di mobile, bisa kamu ganti jadi offcanvas nanti */
+    }
+
+    .topbar {
+        position: static;
+    }
+
+    .grid-4 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .grid-2 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .content {
+        padding: 1rem;
+    }
+}

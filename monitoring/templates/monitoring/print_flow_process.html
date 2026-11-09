@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak Standard Flow Process - {{ kain.nama_kain }}</title>
+    <style>
+        /* Base Reset */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #000;
+            background-color: #f4f4f4;
+            font-size: 10px;
+        }
+
+        .print-container {
+            width: 297mm; /* A4 landscape width */
+            min-height: 210mm; /* A4 landscape height */
+            background-color: #fff;
+            margin: 10mm auto;
+            padding: 10mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        /* Typography & Utilities */
+        .text-center { text-align: center !important; }
+        .text-left { text-align: left !important; }
+        .text-right { text-align: right !important; }
+        .bold { font-weight: bold; }
+        .bg-gray { background-color: #e9ecef !important; -webkit-print-color-adjust: exact; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        
+        table.master-table td, table.master-table th,
+        table.flow-table td, table.flow-table th {
+            border: 1px solid #000;
+            padding: 3px 4px;
+            vertical-align: middle;
+            word-wrap: break-word;
+            overflow: hidden;
+        }
+        
+        .no-test-bar {
+            background-color: #e9ecef;
+            -webkit-print-color-adjust: exact;
+            color: #000;
+            font-weight: bold;
+            padding: 3px 10px;
+            font-size: 11px;
+            border: 1px solid #000;
+            border-top: none;
+            border-bottom: none;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        /* Print Specific CSS */
+        @media print {
+            body {
+                background-color: #fff;
+            }
+            .print-container {
+                margin: 0;
+                padding: 5mm;
+                width: 100%;
+                min-height: auto;
+                box-shadow: none;
+                border: none;
+            }
+            .no-print {
+                display: none !important;
+            }
+            @page {
+                size: A4 landscape;
+                margin: 5mm;
+            }
+        }
+        
+        .print-btn-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .print-btn {
+            padding: 10px 20px;
+            font-size: 15px;
+            background-color: #417690;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+        .print-btn:hover { background-color: #2c5d77; }
+    </style>
+</head>
+<body>
+
+    <div class="print-btn-container no-print">
+        <button class="print-btn" onclick="window.print()">🖨️ Cetak ke PDF</button>
+    </div>
+
+    <div class="print-container">
+
+        <!-- HEADER SECTION (Master Kain) -->
+        <table class="master-table">
+            <!-- Title Rows -->
+            <tr>
+                <td rowspan="2" class="bold text-center" style="width:12%; font-size: 11px;">COVERING FACTOR</td>
+                <td class="bold" style="width:6%;">LUSI</td>
+                <td colspan="4" class="text-left">EPI: {{ kain.epi|default:"-" }} &nbsp;|&nbsp; Ne: {{ kain.ne_warp|default:"-" }}</td>
+                <td rowspan="2" class="bold text-center bg-gray" style="width:8%; font-size: 15px;">CFW<br>{{ kain.cfw|floatformat:1|default:"-" }}</td>
+                <td colspan="8" class="bold text-center bg-gray" style="font-size: 14px;">{{ kain.nama_kain|upper }}</td>
+            </tr>
+            <tr>
+                <td class="bold">PAKAN</td>
+                <td colspan="4" class="text-left">PPI: {{ kain.ppi|default:"-" }} &nbsp;|&nbsp; Ne: {{ kain.ne_weft|default:"-" }}</td>
+                <td colspan="8" class="bold text-center" style="font-size: 11px; color:#555;">TGL BUAT: {{ master.tanggal_pembuatan_form|date:"d M Y" }} &nbsp;|&nbsp; TGL GENERATE: {% now "d M Y H:i" %}</td>
+            </tr>
+            
+            <!-- Benang Headers -->
+            <tr class="bg-gray bold text-center">
+                <td colspan="2">JENIS BENANG</td>
+                <td>DEN</td>
+                <td>FIL</td>
+                <td>NO LOT</td>
+                <td>TPM</td>
+                <td>TWIST</td>
+                <td>REPEAT</td>
+                <td>TWIST SHR</td>
+                <td colspan="2">VACUM HEAT SETTING</td>
+                <td colspan="4">YARN WEIGHT (GROSS)</td>
+            </tr>
+            
+            <!-- Lusi Rows -->
+            {% for lusi in lusi_list %}
+            <tr class="text-center">
+                <td class="text-left bold">Lusi {{ lusi.urutan }}</td>
+                <td class="text-left">{{ lusi.jenis_benang|default:"-" }}</td>
+                <td>{{ lusi.denier|default:"-" }}</td>
+                <td>{{ lusi.filamen|default:"-" }}</td>
+                <td>{{ lusi.no_lot|default:"-" }}</td>
+                <td>{{ lusi.tpm|default:"-" }}</td>
+                <td>{{ lusi.twist|default:"-" }}</td>
+                <td>{{ lusi.repeat|default:"-" }}</td>
+                <td>{{ lusi.twist_shr|default:"-" }}</td>
+                <td>{{ lusi.vhs_suhu|default:"-" }} °C</td>
+                <td>{{ lusi.vhs_waktu|default:"-" }} min</td>
+                <td>{{ lusi.yarn_weight_gross|default:"-" }}</td>
+                <td>G/M</td>
+                {% if forloop.first %}
+                <td colspan="2" rowspan="{{ lusi_list.count|add:pakan_list.count|default:1 }}" style="vertical-align: middle;">
+                    <div class="bold text-center">TOTAL G/M</div>
+                    <div style="font-size: 15px; font-weight:bold; margin-top: 5px;">{{ kain.total_gross_gm|default:"-" }}</div>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            
+            <!-- Pakan Rows -->
+            {% for pakan in pakan_list %}
+            <tr class="text-center">
+                <td class="text-left bold">Pakan {{ pakan.urutan }}</td>
+                <td class="text-left">{{ pakan.jenis_benang|default:"-" }}</td>
+                <td>{{ pakan.denier|default:"-" }}</td>
+                <td>{{ pakan.filamen|default:"-" }}</td>
+                <td>{{ pakan.no_lot|default:"-" }}</td>
+                <td>{{ pakan.tpm|default:"-" }}</td>
+                <td>{{ pakan.twist|default:"-" }}</td>
+                <td>{{ pakan.repeat|default:"-" }}</td>
+                <td>{{ pakan.twist_shr|default:"-" }}</td>
+                <td>{{ pakan.vhs_suhu|default:"-" }} °C</td>
+                <td>{{ pakan.vhs_waktu|default:"-" }} min</td>
+                <td>{{ pakan.yarn_weight_gross|default:"-" }}</td>
+                <td>G/M</td>
+            </tr>
+            {% endfor %}
+
+            <!-- Bottom Master Specs -->
+            <tr class="text-center">
+                <td colspan="2" class="text-left bg-gray bold">Konst di mesin</td>
+                <td colspan="2">{{ kain.konst_mesin|default:"-" }} Inch</td>
+                <td class="bg-gray bold">T'Ends</td>
+                <td colspan="2">{{ kain.t_ends|default:"-" }} HI</td>
+                <td class="bg-gray bold">Pick Mc</td>
+                <td colspan="2">{{ kain.pick_mc|default:"-" }} T</td>
+                <td class="bg-gray bold">No. Sisir</td>
+                <td>{{ kain.no_sisir|default:"-" }}</td>
+                <td class="bg-gray bold">Cucukan</td>
+                <td class="bg-gray bold">Nama Anyaman</td>
+                <td class="bg-gray bold">PCS/LGT YD</td>
+            </tr>
+            <tr class="text-center">
+                <td colspan="2" class="text-left bg-gray bold">Lebar sisir efektif</td>
+                <td colspan="2">{{ kain.lebar_sisir_efektif|default:"-" }} Cm</td>
+                <td class="bg-gray bold">Lbr Grey</td>
+                <td colspan="2">{{ kain.lebar_greige|default:"-" }} Cm</td>
+                <td class="bg-gray bold">Pick grey</td>
+                <td colspan="2">{{ kain.pick_greige|default:"-" }} T</td>
+                <td class="bg-gray bold">Masuk ssr</td>
+                <td>-</td>
+                <td rowspan="2" class="bold">{{ kain.cucukan|default:"-" }}</td>
+                <td rowspan="2" class="bold" style="font-size: 12px;">{{ kain.nama_anyaman.nama_anyaman|default:"-" }}</td>
+                <td rowspan="2" class="bold text-center" style="color:red; font-size: 17px;">{{ kain.pcs_length_yd|default:"-" }}</td>
+            </tr>
+            <tr class="text-center">
+                <td colspan="2" class="text-left bg-gray bold">Susut Anyaman</td>
+                <td colspan="2">{{ kain.susut_anyaman|default:"-" }} %</td>
+                <td class="bg-gray bold">Waste Lusi</td>
+                <td colspan="2">{{ kain.waste_lusi|default:"-" }} %</td>
+                <td class="bg-gray bold">Waste Pakan</td>
+                <td colspan="2">{{ kain.waste_pakan|default:"-" }} %</td>
+                <td class="bg-gray bold">+Pick rolling</td>
+                <td>{{ kain.pick_rolling|default:"-" }}</td>
+            </tr>
+            
+            <!-- Yarn Weight Netto Section -->
+            <tr>
+                <!-- Keterangan spans down across Netto rows -->
+                <td colspan="9" rowspan="{{ lusi_list.count|add:pakan_list.count|add:1|default:1 }}" class="text-left" style="vertical-align: top; border-bottom: none;">
+                    <u>KETERANGAN:</u><br>{{ kain.keterangan|default:""|linebreaksbr }}
+                </td>
+                <td colspan="3" class="bold bg-gray text-center">YARN WEIGHT (NETTO)</td>
+                <td colspan="3" class="bold bg-gray text-center">TOTAL G/M</td>
+            </tr>
+            {% for lusi in lusi_list %}
+            <tr class="text-center">
+                <td colspan="2" class="text-left bold">Lusi {{ lusi.urutan }}</td>
+                <td>{{ lusi.yarn_weight_netto|default:"-" }}</td>
+                {% if forloop.first %}
+                <td colspan="3" rowspan="{{ lusi_list.count|add:pakan_list.count|default:1 }}" style="vertical-align: middle; font-size: 15px; font-weight:bold;">
+                    {{ kain.total_netto_gm|default:"-" }}
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            {% for pakan in pakan_list %}
+            <tr class="text-center">
+                <td colspan="2" class="text-left bold">Pakan {{ pakan.urutan }}</td>
+                <td>{{ pakan.yarn_weight_netto|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- The NO TEST R&D Bar -->
+        <div class="no-test-bar">
+            NO TEST R&amp;D =
+        </div>
+
+        <!-- FLOW PROCESS 2-COLUMN TABLE -->
+        <table class="flow-table">
+            <thead>
+                <tr class="bg-gray bold text-center" style="font-size: 11px;">
+                    {% for header in process_headers %}
+                        <td colspan="2">{{ header|upper }}</td>
+                    {% endfor %}
+                    <td style="width: 12%;">HASIL AKHIR</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% if vertical_rows %}
+                    {% for row in vertical_rows %}
+                    <tr class="text-center">
+                        {% for col in row %}
+                            {% if col.is_merged %}
+                                <td colspan="2" class="text-center bold bg-gray" style="font-size: 9px; width: 12%;">{{ col.label|upper }}</td>
+                            {% elif col.label %}
+                                <td class="text-left bold bg-gray" style="font-size: 9px; width: 6%; border-right: none;">{{ col.label|upper }}</td>
+                                <td style="width: 6%; border-left: 1px solid #000; font-size: 8.5px; line-height: 1.25;">{{ col.value|linebreaksbr }}</td>
+                            {% else %}
+                                <td class="bg-gray" style="border-right: none;"></td>
+                                <td style="border-left: none;"></td>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <!-- Hasil Akhir Column Spans all rows of vertical table -->
+                        {% if forloop.counter == 1 %}
+                        <td rowspan="{{ vertical_rows|length }}" style="vertical-align: top; padding: 0;">
+                            <div style="display: flex; flex-direction: column; height: 100%;">
+                                <div style="border-bottom: 1px solid #000; padding: 5px; text-align: left; font-weight: bold; background-color:#e9ecef;">PROSES</div>
+                                <div style="border-bottom: 1px solid #000; padding: 5px; display: flex; justify-content: space-between;">
+                                    <span class="bold">LEBAR</span> <span class="bold">{{ master.hasil_lebar|default:"-" }}</span> <span style="font-size: 8px;">(CM)</span>
+                                </div>
+                                <div style="border-bottom: 1px solid #000; padding: 5px; display: flex; justify-content: space-between;">
+                                    <span class="bold">PICK</span> <span class="bold">{{ master.hasil_pick|default:"-" }}</span> <span style="font-size: 8px;">(T)</span>
+                                </div>
+                                <div style="border-bottom: 1px solid #000; padding: 5px; display: flex; justify-content: space-between;">
+                                    <span class="bold">GRAMASI</span> <span class="bold">{{ master.hasil_gramasi|default:"-" }}</span> <span style="font-size: 8px;">(GR/M2)</span>
+                                </div>
+                                <div style="border-bottom: 1px solid #000; padding: 5px; display: flex; justify-content: space-between;">
+                                    <span class="bold">SUSUT</span> <span class="bold">{{ master.hasil_susut|default:"-" }}</span> <span style="font-size: 8px;">(%)</span>
+                                </div>
+                                <div style="border-bottom: 1px solid #000; padding: 5px; display: flex; justify-content: space-between;">
+                                    <span class="bold">% WR</span> <span class="bold">{{ master.hasil_persen_wr|default:"-" }}</span> <span style="font-size: 8px;">(%)</span>
+                                </div>
+                                <div style="padding: 5px; text-align: center; color: #777; font-size: 8px; flex-grow:1;">
+                                    <br><br><br>ACC KABAG RND PROC
+                                </div>
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="{{ process_headers|length|add:2 }}" class="text-center" style="padding: 20px; color:#666;">
+                            Belum ada proses yang ditambahkan.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        
+    </div>
+
+</body>
+</html>

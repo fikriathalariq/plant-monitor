@@ -1,0 +1,305 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block content %}
+<div id="content-main">
+
+    {# Filter Form #}
+    <form method="get" id="filter-form"
+        style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #ddd;">
+        <input type="hidden" name="filter_applied" value="1">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: #417690;">Dashboard Filter</h3>
+            <div>
+                <button type="submit"
+                    style="padding: 8px 20px; background: #417690; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Apply
+                    Filters</button>
+                <a href="?"
+                    style="margin-left: 10px; padding: 8px 15px; background: #e0e0e0; color: #333; border-radius: 4px; text-decoration: none; border: 1px solid #ccc;">Reset</a>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 5px;">Time Range</label>
+                <select name="hours"
+                    style="padding: 5px; border-radius: 4px; border: 1px solid #ccc; min-width: 150px;">
+                    <option value="1" {% if hours == 1 %}selected{% endif %}>Last 1 hour</option>
+                    <option value="6" {% if hours == 6 %}selected{% endif %}>Last 6 hours</option>
+                    <option value="24" {% if hours == 24 %}selected{% endif %}>Last 24 hours</option>
+                    <option value="168" {% if hours == 168 %}selected{% endif %}>Last 7 days</option>
+                </select>
+            </div>
+
+            <div style="position: relative;">
+                <label style="display: block; font-weight: bold; margin-bottom: 5px;">Machines</label>
+                <details id="machine-details">
+                    <summary id="machine-summary"
+                        style="cursor: pointer; padding: 6px 10px; background: white; border: 1px solid #ccc; border-radius: 4px; min-width: 200px; user-select: none;">
+                        Selected (<span id="selected-count">{{ selected_machines|length }}</span>)
+                    </summary>
+
+                    <div
+                        style="margin-top: 5px; max-height: 300px; width: 250px; overflow-y: auto; border: 1px solid #bbb; padding: 10px; background: white; position: absolute; z-index: 1000; box-shadow: 0 4px 8px rgba(0,0,0,0.15); border-radius: 4px;">
+
+                        <input type="text" id="machine-search" placeholder="Search machine..."
+                            onkeyup="filterMachines()"
+                            style="width: 90%; margin-bottom: 10px; padding: 5px; box-sizing: border-box;">
+
+                        <label
+                            style="display: block; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; font-weight: bold;">
+                            <input type="checkbox" id="select-all-checkbox" onclick="toggleAll(this)"> Select All
+                        </label>
+
+                        <div id="machine-list">
+                            {% for machine in all_machines %}
+                            <label class="machine-label" style="display: block; margin-bottom: 5px; cursor: pointer;">
+                                <input type="checkbox" name="machines" value="{{ machine.code }}"
+                                    class="machine-checkbox" onclick="updateCount()" {% if machine.code in selected_machines %}checked{% endif %}>
+                                <span>{{ machine.code }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </form>
+
+    {# Pivot Table (Sama seperti kode Anda, hanya style sedikit dirapikan) #}
+    <div
+        style="overflow: auto; border: 1px solid #ddd; height: calc(100vh - 250px); min-height: 400px; position: relative; background: white;">
+        <table style="width: 100%; border-collapse: separate; border-spacing: 0; white-space: nowrap; font-size: 12px;">
+            <thead style="background: #417690; color: white; position: sticky; top: 0; z-index: 20;">
+                <tr>
+                    <th rowspan="2"
+                        style="padding: 5px; border: 1px solid #35637e; min-width: 40px; background: #417690; position: sticky; left: 0; z-index: 21;">
+                        </th>
+                    <th rowspan="2"
+                        style="padding: 10px; border: 1px solid #35637e; min-width: 120px; background: #417690; position: sticky; left: 40px; z-index: 21;">
+                        Timestamp</th>
+                    {% for code in selected_machines %}
+                    <th colspan="2"
+                        style="padding: 10px; border: 1px solid #35637e; text-align: center; background: #417690;">{{ code }}</th>
+                    {% endfor %}
+                    <th rowspan="2"
+                        style="padding: 10px; border: 1px solid #35637e; min-width: 120px; background: #417690;">Total
+                        Steam<br>(kg)</th>
+                    <th rowspan="2"
+                        style="padding: 10px; border: 1px solid #35637e; min-width: 120px; background: #417690;">Total
+                        HTO<br>(kCal)</th>
+                </tr>
+                <tr>
+                    {% for code in selected_machines %}
+                    <th
+                        style="padding: 5px; border: 1px solid #35637e; background: #5b9bd5; color: white; font-size: 11px;">
+                        Status</th>
+                    <th
+                        style="padding: 5px; border: 1px solid #35637e; background: #5b9bd5; color: white; font-size: 11px;">
+                        Detail</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in pivot_rows %}
+                <tr class="hover-row data-row">
+                    <td
+                        style="padding: 6px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; background: #fdfdfd; position: sticky; left: 0; z-index: 10;">
+                        <input type="checkbox" class="row-highlight-checkbox" style="cursor: pointer;">
+                    </td>
+                    <td
+                        style="padding: 6px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; font-weight: bold; background: #fdfdfd; position: sticky; left: 40px; z-index: 10;">
+                        {{ row.timestamp|date:"Y-m-d H:i" }}
+                    </td>
+                    {% for cell in row.cells %}
+                    <td class="{% if cell.status == 'Running' %}bg-running{% elif cell.status == 'Stop' %}bg-stop{% endif %}"
+                        style="padding: 6px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center;">
+                        {{ cell.status }}
+                    </td>
+                    <td class="{% if cell.detail == 'HEAT' %}bg-heat{% elif cell.detail == 'STEADY' %}bg-steady{% elif cell.detail == 'COOL' %}bg-cool{% elif 'Running' in cell.detail %}bg-running{% elif 'Stop' in cell.detail %}bg-stop{% elif cell.detail == 'OFF' %}bg-off{% endif %}"
+                        style="padding: 6px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center;">
+                        {{ cell.detail }}
+                    </td>
+                    {% endfor %}
+                    <td
+                        style="padding: 6px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: right; font-weight: bold; background: #f0f8ff;">
+                        {{ row.steam_total|floatformat:1 }}
+                    </td>
+                    <td
+                        style="padding: 6px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: right; font-weight: bold; background: #fff8dc;">
+                        {{ row.hto_total|floatformat:1 }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="1000" style="padding: 40px; text-align: center; color: #999; font-style: italic;">
+                        {% if selected_machines %}
+                        No snapshot data found for the selected time range.
+                        {% else %}
+                        Please select at least one machine to view data.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot style="background: #2c5f7a; color: white; position: sticky; bottom: 0; z-index: 20;">
+                <tr>
+                    <td colspan="2"
+                        style="padding: 10px; border: 1px solid #35637e; color: white; text-align: center; font-weight: bold; font-size: 14px; position: sticky; left: 0; z-index: 21; background: #2c5f7a;">
+                        TOTAL
+                    </td>
+                    {% for code, count in machine_data %}
+                    <td colspan="2"
+                        style="padding: 10px; border: 1px solid #35637e; text-align: center; font-weight: bold; font-size: 14px; background: #417690; color: white;">
+                        {{ count }} menit
+                    </td>
+                    {% endfor %}
+                    <td
+                        style="padding: 10px; border: 1px solid #35637e; color: white; text-align: right; font-weight: bold; font-size: 14px; background: #417690;">
+                        {{ grand_steam_total|floatformat:2 }} kg
+                    </td>
+                    <td
+                        style="padding: 10px; border: 1px solid #35637e; color: white; text-align: right; font-weight: bold; font-size: 14px; background: #417690;">
+                        {{ grand_hto_total|floatformat:2 }} kCal
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<style>
+    /* Status Colors (Sama seperti kode Anda) */
+    .bg-heat {
+        background-color: #ffcc80 !important;
+        color: #bf360c !important;
+    }
+
+    .bg-steady {
+        background-color: #90caf9 !important;
+        color: #0d47a1 !important;
+    }
+
+    .bg-running {
+        background-color: #a5d6a7 !important;
+        color: #1b5e20 !important;
+    }
+
+    .bg-cool {
+        background-color: #80deea !important;
+        color: #006064 !important;
+    }
+
+    .bg-stop {
+        background-color: #ef9a9a !important;
+        color: #b71c1c !important;
+    }
+
+    .bg-off {
+        background-color: #eeeeee !important;
+        color: #999999 !important;
+    }
+
+    .hover-row:hover td {
+        opacity: 0.9;
+    }
+
+    /* Row highlight when checkbox is checked */
+    .row-highlighted {
+        background-color: yellow !important;
+        border-left: 4px solid #ffa500 !important;
+    }
+
+    .row-highlighted td {
+        background-color: #fffacd !important;
+        font-weight: 600 !important;
+    }
+
+    /* Paksa semua teks header tabel jadi putih */
+    table thead th,
+    table thead th *,
+    table thead tr th {
+        color: #ffffff !important;
+        text-align: center;
+    }
+</style>
+
+<script>
+    // Row highlighting toggle
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.row-highlight-checkbox').forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                const row = this.closest('tr');
+                if (this.checked) {
+                    row.classList.add('row-highlighted');
+                } else {
+                    row.classList.remove('row-highlighted');
+                }
+            });
+        });
+    });
+
+    // 1. Toggle Select All
+    function toggleAll(source) {
+        // Hanya ambil checkbox yang saat ini 'visible' (kalau ada search filter)
+        // Atau ambil semua jika ingin select all termasuk yang tersembunyi
+        let checkboxes = document.querySelectorAll('.machine-checkbox');
+        for (let i = 0; i < checkboxes.length; i++) {
+            // Cek apakah parent-nya visible (jika sedang difilter search)
+            if (checkboxes[i].closest('label').style.display !== 'none') {
+                checkboxes[i].checked = source.checked;
+            }
+        }
+        updateCount();
+    }
+
+    // 2. Update Counter Text secara Real-time
+    function updateCount() {
+        let checkboxes = document.querySelectorAll('.machine-checkbox:checked');
+        document.getElementById('selected-count').innerText = checkboxes.length;
+
+        // Update state "Select All" checkbox
+        let allCheckboxes = document.querySelectorAll('.machine-checkbox');
+        let selectAllBox = document.getElementById('select-all-checkbox');
+        if (checkboxes.length === allCheckboxes.length && allCheckboxes.length > 0) {
+            selectAllBox.checked = true;
+            selectAllBox.indeterminate = false;
+        } else if (checkboxes.length === 0) {
+            selectAllBox.checked = false;
+            selectAllBox.indeterminate = false;
+        } else {
+            selectAllBox.checked = false;
+            selectAllBox.indeterminate = true; // Efek visual 'setengah terpilih'
+        }
+    }
+
+    // 3. Search Filter dalam Dropdown
+    function filterMachines() {
+        let input = document.getElementById('machine-search');
+        let filter = input.value.toUpperCase();
+        let labels = document.getElementsByClassName('machine-label');
+
+        for (let i = 0; i < labels.length; i++) {
+            let span = labels[i].getElementsByTagName("span")[0];
+            let txtValue = span.textContent || span.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                labels[i].style.display = "";
+            } else {
+                labels[i].style.display = "none";
+            }
+        }
+    }
+
+    // Tutup dropdown jika klik di luar
+    window.onclick = function (event) {
+        if (!event.target.closest('#machine-details')) {
+            document.getElementById('machine-details').removeAttribute('open');
+        }
+    }
+
+    // Init state saat load
+    document.addEventListener("DOMContentLoaded", function () {
+        updateCount();
+    });
+</script>
+{% endblock %}

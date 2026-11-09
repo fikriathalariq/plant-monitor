@@ -1,0 +1,949 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manual Input Machine{% endblock %}
+
+{% block topbar %}{% endblock %}
+
+{% block extra_head %}
+<!-- Google Fonts & Icons (Bootstrap is now in base) -->
+<link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+    rel="stylesheet">
+
+
+<style>
+    /* --- Suritex Theme (Matched to base.html) --- */
+    :root {
+        --suritex-primary: #f9f506;
+        --suritex-bg-light: #f3f4f6;
+        --suritex-surface-light: #ffffff;
+        --suritex-text-main: #1c1c0d;
+        --suritex-text-muted: #9e9d47;
+        --suritex-border: #e9e8ce;
+
+        /* Aliases for consistency */
+        --color-primary: var(--suritex-primary);
+        --color-bg: var(--suritex-bg-light);
+        --color-surface: var(--suritex-surface-light);
+        --color-text-main: var(--suritex-text-main);
+        --color-text-muted: var(--suritex-text-muted);
+        --color-border: var(--suritex-border);
+    }
+
+    body {
+        background-color: var(--color-bg);
+        font-family: 'Spline Sans', 'Inter', sans-serif;
+    }
+
+    .premium-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        padding-bottom: 220px !important;
+        /* Space for mobile footer */
+    }
+
+    @media (min-width: 768px) {
+        .premium-wrapper {
+            padding-bottom: 180px !important;
+            /* More space for desktop floating footer */
+        }
+    }
+
+    /* --- Card Styles --- */
+    .group-section-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-text-muted);
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .badge-count {
+        background-color: #d1fae5;
+        /* active green light */
+        color: #047857;
+        /* active green dark */
+        font-size: 0.75rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+    }
+
+    .machine-card {
+        background-color: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.875rem;
+        padding: 0.875rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        min-height: 72px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Currently active machine - Suritex yellow */
+    .machine-card.currently-active {
+        background: linear-gradient(135deg, #fefce8 0%, #ffffff 100%);
+        border-color: var(--suritex-primary);
+        box-shadow: 0 2px 8px rgba(249, 245, 6, 0.25), 0 0 0 1px rgba(249, 245, 6, 0.1);
+    }
+
+    .machine-card.currently-active .icon-box {
+        background: var(--suritex-primary);
+        color: var(--suritex-text-main);
+        box-shadow: 0 2px 10px rgba(249, 245, 6, 0.4);
+    }
+
+    .machine-card:hover {
+        border-color: var(--suritex-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(249, 245, 6, 0.2);
+    }
+
+    .icon-box {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        border-radius: 0.625rem;
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        transition: all 0.25s;
+    }
+
+    .machine-card:hover .icon-box {
+        background: rgba(249, 245, 6, 0.15);
+        color: var(--suritex-text-main);
+    }
+
+    .machine-info {
+        flex: 1;
+        margin-left: 0.875rem;
+        margin-right: 0.75rem;
+        /* Space before toggle */
+        min-width: 0;
+        max-width: calc(100% - 20px);
+        /* Reserve space for icon (42px) + toggle (44px) + margins */
+        overflow: hidden;
+    }
+
+    .machine-name {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        line-height: 1.3;
+        color: #1e293b;
+        display: block;
+        white-space: normal;
+        /* Allow wrapping */
+        overflow: hidden;
+        word-wrap: break-word;
+        max-height: 2.6em;
+        /* Max 2 lines */
+    }
+
+    .machine-status {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #64748b;
+        margin-top: 0.125rem;
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .machine-status.active {
+        color: var(--suritex-text-main);
+        font-weight: 700;
+    }
+
+    /* --- Custom Compact Toggle Switch (Override Bootstrap) --- */
+    .machine-card .form-check.form-switch {
+        padding-left: 0 !important;
+        min-height: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+    }
+
+    .machine-card .form-switch .form-check-input {
+        width: 44px !important;
+        height: 24px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        cursor: pointer;
+        border: 2px solid #d1d5db;
+        background-color: #e5e7eb;
+        background-image: none !important;
+        position: relative;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        float: none !important;
+    }
+
+    .machine-card .form-switch .form-check-input::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        background: white;
+        border-radius: 50%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .machine-card .form-switch .form-check-input:checked {
+        background-color: var(--suritex-primary);
+        border-color: var(--suritex-primary);
+    }
+
+    .machine-card .form-switch .form-check-input:checked::after {
+        transform: translateX(20px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .machine-card .form-switch .form-check-input:focus {
+        box-shadow: 0 0 0 3px rgba(249, 245, 6, 0.2);
+        border-color: var(--suritex-primary);
+        outline: none;
+    }
+
+    /* --- AUTO Preview Cards --- */
+    .auto-preview-card {
+        border-style: dashed !important;
+        border-color: #fbbf24 !important;
+        background-color: #fffbeb !important;
+    }
+
+    .auto-preview-card.currently-active {
+        background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%) !important;
+        border-color: #f59e0b !important;
+    }
+
+    /* --- Floating Footer (Compact) --- */
+    .floating-footer {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 1050;
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-width: 280px;
+        max-width: 320px;
+        animation: slideUp 0.3s ease-out;
+        transition: all 0.3s ease;
+    }
+
+    .floating-footer.collapsed {
+        min-width: auto;
+        max-width: none;
+        width: auto;
+    }
+
+    .footer-stats {
+        overflow: hidden;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
+        max-height: 500px;
+        opacity: 1;
+    }
+
+    .floating-footer.collapsed .footer-stats {
+        max-height: 0;
+        opacity: 0;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Toggle Stats Button */
+    .toggle-stats-btn {
+        background: transparent;
+        border: none;
+        color: var(--suritex-text-muted);
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin: 0 auto 0.75rem auto;
+        transition: all 0.2s ease;
+        border-radius: 1rem;
+    }
+
+    .toggle-stats-btn:hover {
+        background: rgba(249, 245, 6, 0.1);
+        color: var(--suritex-text-main);
+    }
+
+    .toggle-stats-btn .material-symbols-outlined {
+        font-size: 18px;
+        transition: transform 0.3s ease;
+    }
+
+    .floating-footer.collapsed .toggle-stats-btn .material-symbols-outlined {
+        transform: rotate(180deg);
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .footer-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .stats-row-header {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-text-muted);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-align: left;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-text-muted);
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--color-text-main);
+        line-height: 1;
+    }
+
+    .stat-unit {
+        font-size: 0.7rem;
+        color: var(--color-text-muted);
+        font-weight: 500;
+    }
+
+    .projected-row {
+        background-color: #fef3c7;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin: -0.25rem 0;
+    }
+
+    .projected-row .stat-value {
+        color: #92400e;
+    }
+
+    .difference-row .stat-value {
+        font-size: 1rem;
+    }
+
+    .difference-row .stat-value.positive {
+        color: #f59e0b;
+        /* Amber - increase */
+    }
+
+    .difference-row .stat-value.negative {
+        color: #10b981;
+        /* Green - decrease/savings */
+    }
+
+    .difference-row .stat-value.neutral {
+        color: var(--color-text-muted);
+    }
+
+    /* --- Modern Button Styles (Suritex Yellow) --- */
+    button[type="submit"].btn {
+        background: var(--suritex-primary) !important;
+        color: var(--suritex-text-main) !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(249, 245, 6, 0.3);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 600;
+    }
+
+    button[type="submit"].btn:hover {
+        background: #e3df05 !important;
+        box-shadow: 0 6px 16px rgba(249, 245, 6, 0.4);
+        transform: translateY(-1px);
+    }
+
+    button[type="submit"].btn:active {
+        transform: translateY(0);
+    }
+
+    #resetBtn {
+        background: transparent !important;
+        color: #ef4444 !important;
+        border: 2px solid #fecaca !important;
+        transition: all 0.2s ease;
+    }
+
+    #resetBtn:hover {
+        background: #fef2f2 !important;
+        border-color: #ef4444 !important;
+    }
+
+    /* Mobile: Compact floating footer above bottom nav */
+    @media (max-width: 767px) {
+        .floating-footer {
+            position: fixed;
+            bottom: 70px;
+            /* Above bottom nav */
+            left: 0;
+            right: 0;
+            margin: 0 0.5rem;
+            max-width: none;
+            min-width: 0;
+            border-radius: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            /* Much smaller padding */
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer-stats {
+            gap: 0.375rem;
+            /* Tighter spacing */
+        }
+
+        .stats-row {
+            gap: 0.5rem;
+            /* Reduced gap */
+        }
+
+        .stats-row-header {
+            font-size: 0.6rem;
+            /* Smaller headers */
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+            margin-bottom: 0.125rem;
+        }
+
+        .stat-value {
+            font-size: 0.95rem;
+            /* Smaller values */
+        }
+
+        .stat-unit {
+            font-size: 0.65rem;
+        }
+
+        .projected-row {
+            padding: 0.5rem;
+            /* Less padding */
+            margin: 0;
+        }
+
+        .toggle-stats-btn {
+            font-size: 0.7rem;
+            padding: 0.125rem 0.375rem;
+            margin: -0.25rem auto 0.375rem auto;
+        }
+
+        .toggle-stats-btn .material-symbols-outlined {
+            font-size: 16px;
+        }
+
+        /* Smaller, more compact cards on mobile */
+        .machine-card {
+            padding: 0.75rem;
+            min-height: 64px;
+        }
+
+        .icon-box {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+        }
+
+        .machine-name {
+            font-size: 0.875rem;
+        }
+
+        .machine-status {
+            font-size: 0.6875rem;
+        }
+    }
+
+
+    /* --- AUTO Preview Card Styling --- */
+    .auto-preview-card {
+        border: 2px dashed #fbbf24 !important;
+        /* Dashed border untuk indicate preview */
+        background-color: #fffbeb;
+        /* Light yellow tint */
+    }
+
+    .auto-preview-card .icon-box {
+        background-color: #fef3c7;
+        color: #f59e0b;
+    }
+
+    .auto-preview-card:hover {
+        border-color: #f59e0b !important;
+        background-color: #fef3c7;
+    }
+
+    .auto-preview-card.currently-active {
+        background-color: #fef3c7;
+        border-color: #f59e0b !important;
+    }
+
+    /* AUTO Preview Card Styling (Non-Invasive) */
+    .auto-preview-card {
+        border: 2px dashed #fbbf24 !important;
+        background-color: #fffbeb;
+    }
+
+    .auto-preview-card .icon-box {
+        background-color: #fef3c7;
+        color: #f59e0b;
+    }
+
+    .auto-preview-card:hover {
+        border-color: #f59e0b !important;
+        background-color: #fef3c7;
+    }
+
+    .auto-preview-card.currently-active {
+        background-color: #fef3c7;
+        border-color: #f59e0b !important;
+    }
+
+    /* Helper for Material Symbols */
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-size: 24px;
+    }
+</style>
+{% endblock %}
+
+{% block header_title %}Active Input{% endblock %}
+{% block header_subtitle %}Set manual status{% endblock %}
+
+{% block content %}
+<div class="premium-wrapper p-3 p-md-4">
+    <form method="post" id="machineForm">
+        {% csrf_token %}
+
+        <!-- Header Actions (Mobile visible mostly) -->
+        <div class="d-flex justify-content-between align-items-center mb-4 d-md-none">
+            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-light border rounded-circle p-2">
+                <span class="material-symbols-outlined text-dark" style="font-size: 20px;">arrow_back</span>
+            </a>
+            <h2 class="h5 mb-0 fw-bold text-dark">Active Machine Input</h2>
+            <button type="button" id="resetBtn" class="btn btn-sm text-danger fw-bold">Reset</button>
+        </div>
+
+        {% for g in groups %}
+        <div class="mb-4">
+            <div class="group-section-title px-1">
+                <span>{{ g.name }}</span>
+            </div>
+
+            <div class="row g-3">
+                {% for m in g.machine_set.all %}
+                {% if m.is_active %}
+                {% if m.operation_mode == "MANUAL" %}
+                {# MANUAL Machine Card #}
+                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                    <label class="machine-card {% if m.is_manual_on %}currently-active{% endif %}"
+                        for="machine-{{ m.id }}" data-machine-id="{{ m.id }}">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <div class="icon-box">
+                                <span class="material-symbols-outlined">
+                                    {% if "Conveyor" in m.name %}conveyor_belt
+                                    {% elif "Mixer" in m.name %}blender
+                                    {% elif "Pack" in m.name %}inventory_2
+                                    {% elif "Chiller" in m.name %}ac_unit
+                                    {% elif "Fan" in m.name %}wind_power
+                                    {% else %}settings_b_roll
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="machine-info">
+                                <span class="machine-name">{{ m.name|default:m.code }}</span>
+                                <span class="machine-status {% if m.is_manual_on %}active{% endif %}">
+                                    {% if m.is_manual_on %}Running{% else %}Offline{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch ms-3 m-0">
+                            <input class="form-check-input machine-toggle" type="checkbox" role="switch"
+                                id="machine-{{ m.id }}" name="machines_on" value="{{ m.id }}"
+                                data-machine-id="{{ m.id }}" data-steam="{{ m.average_steam_usage }}"
+                                data-hto="{{ m.avg_hto_calories }}" {% if m.is_manual_on %}checked{% endif %}>
+                        </div>
+                    </label>
+                </div>
+                {% else %}
+                {# AUTO Machine Card (Preview Only) #}
+                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                    <label
+                        class="machine-card auto-preview-card {% if m.last_thermal_status == 'HEAT' %}currently-active{% endif %}"
+                        for="auto-{{ m.id }}">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <div class="icon-box">
+                                <span class="material-symbols-outlined">precision_manufacturing</span>
+                            </div>
+                            <div class="machine-info">
+                                <span class="machine-name">{{ m.name|default:m.code }}</span>
+                                <span class="machine-status {% if m.last_thermal_status == 'HEAT' %}active{% endif %}">
+                                    AUTO - {{ m.last_thermal_status }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch ms-3 m-0">
+                            <input class="form-check-input auto-preview-toggle" type="checkbox" role="switch"
+                                id="auto-{{ m.id }}" data-steam="{{ m.average_steam_usage }}"
+                                data-hto="{{ m.avg_hto_calories }}" {% if m.last_thermal_status == 'HEAT' %}checked{% endif %}>
+                        </div>
+                    </label>
+                </div>
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5 text-muted">
+            <span class="material-symbols-outlined fs-1 mb-2">block</span>
+            <p>No machines configured.</p>
+        </div>
+        {% endfor %}
+
+        <!-- Spacer for fixed footer -->
+        <div class="content-spacer"></div>
+
+        <!-- Floating Action Footer -->
+        <div class="floating-footer collapsed">
+            <!-- Toggle Button -->
+            <button type="button" class="toggle-stats-btn" id="toggleStats" title="Show/Hide Statistics">
+                <span class="material-symbols-outlined">expand_less</span>
+                <span class="toggle-text">Show Stats</span>
+            </button>
+
+            <div class="footer-stats">
+                <!-- Current Usage -->
+                <div>
+                    <div class="stats-row-header">📊 Current Usage</div>
+                    <div class="stats-row">
+                        <div>
+                            <div class="stat-label">Steam</div>
+                            <div>
+                                <span class="stat-value" id="current-steam">{{ total_steam|floatformat:0 }}</span>
+                                <span class="stat-unit">kg/h</span>
+                            </div>
+                        </div>
+                        <div style="border-left: 1px solid var(--color-border);">
+                            <div class="stat-label">HTO</div>
+                            <div>
+                                <span class="stat-value" id="current-hto">{{ total_hto|floatformat:0 }}</span>
+                                <span class="stat-unit">kcal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projected Usage -->
+                <div class="projected-row">
+                    <div class="stats-row-header" style="color: #92400e;">🔮 Projected Usage</div>
+                    <div class="stats-row">
+                        <div>
+                            <div class="stat-label" style="color: #92400e;">Steam</div>
+                            <div>
+                                <span class="stat-value" id="projected-steam">{{ total_steam|floatformat:0 }}</span>
+                                <span class="stat-unit">kg/h</span>
+                            </div>
+                        </div>
+                        <div style="border-left: 1px solid #fde68a;">
+                            <div class="stat-label" style="color: #92400e;">HTO</div>
+                            <div>
+                                <span class="stat-value" id="projected-hto">{{ total_hto|floatformat:0 }}</span>
+                                <span class="stat-unit">kcal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Difference -->
+                <div class="difference-row">
+                    <div class="stats-row-header">📈 Difference</div>
+                    <div class="stats-row">
+                        <div>
+                            <div class="stat-label">Steam</div>
+                            <div>
+                                <span class="stat-value neutral" id="diff-steam">0</span>
+                                <span class="stat-unit">kg/h</span>
+                            </div>
+                        </div>
+                        <div style="border-left: 1px solid var(--color-border);">
+                            <div class="stat-label">HTO</div>
+                            <div>
+                                <span class="stat-value neutral" id="diff-hto">0</span>
+                                <span class="stat-unit">kcal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2"
+                style="background-color: var(--color-primary); color: white; border: none; border-radius: 0.5rem; transition: background-color 0.2s;">
+                <span class="material-symbols-outlined" style="font-size: 20px;">save</span>
+                Save Status
+            </button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Store initial totals from server
+    const initialSteam = {{ total_steam }};
+    const initialHto = {{ total_hto }};
+
+    // Update preview calculations
+    function updatePreview() {
+        let projectedSteam = initialSteam;
+        let projectedHto = initialHto;
+
+        // Get all machine toggles
+        const toggles = document.querySelectorAll('.machine-toggle');
+
+        toggles.forEach(toggle => {
+            const steam = parseFloat(toggle.dataset.steam) || 0;
+            const hto = parseFloat(toggle.dataset.hto) || 0;
+            const wasInitiallyOn = toggle.defaultChecked;
+            const isCurrentlyOn = toggle.checked;
+
+            // Calculate difference from initial state
+            if (wasInitiallyOn && !isCurrentlyOn) {
+                // Was on, now off - subtract
+                projectedSteam -= steam;
+                projectedHto -= hto;
+            } else if (!wasInitiallyOn && isCurrentlyOn) {
+                // Was off, now on - add
+                projectedSteam += steam;
+                projectedHto += hto;
+            }
+            // If state unchanged, no change to projected
+        });
+
+        // Calculate differences
+        const diffSteam = projectedSteam - initialSteam;
+        const diffHto = projectedHto - initialHto;
+
+        // Update projected values
+        document.getElementById('projected-steam').textContent = Math.round(projectedSteam);
+        document.getElementById('projected-hto').textContent = Math.round(projectedHto);
+
+        // Update difference values with formatting
+        const diffSteamEl = document.getElementById('diff-steam');
+        const diffHtoEl = document.getElementById('diff-hto');
+
+        // Format with +/- sign
+        diffSteamEl.textContent = (diffSteam >= 0 ? '+' : '') + Math.round(diffSteam);
+        diffHtoEl.textContent = (diffHto >= 0 ? '+' : '') + Math.round(diffHto);
+
+        // Update color classes
+        updateDiffClass(diffSteamEl, diffSteam);
+        updateDiffClass(diffHtoEl, diffHto);
+    }
+
+    function updateDiffClass(element, value) {
+        element.classList.remove('positive', 'negative', 'neutral');
+
+        if (Math.abs(value) < 0.5) {
+            element.classList.add('neutral');
+        } else if (value > 0) {
+            element.classList.add('positive'); // Increase (amber)
+        } else {
+            element.classList.add('negative'); // Decrease (green)
+        }
+    }
+
+    // Toggle footer statistics visibility
+    document.getElementById('toggleStats').addEventListener('click', function () {
+        const footer = document.querySelector('.floating-footer');
+        const toggleText = this.querySelector('.toggle-text');
+
+        footer.classList.toggle('collapsed');
+
+        if (footer.classList.contains('collapsed')) {
+            toggleText.textContent = 'Show Stats';
+        } else {
+            toggleText.textContent = 'Hide Stats';
+        }
+    });
+
+    // Handle Reset Button
+    const resetBtn = document.getElementById('resetBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+            // Reset all toggles to their initial state (defaultChecked)
+            const toggles = document.querySelectorAll('.machine-toggle');
+            toggles.forEach(toggle => {
+                toggle.checked = toggle.defaultChecked;
+
+                // Update card UI
+                const card = toggle.closest('.machine-card');
+                const statusText = card.querySelector('.machine-status');
+                if (toggle.checked) {
+                    statusText.textContent = 'Running';
+                    statusText.classList.add('active');
+                } else {
+                    statusText.textContent = 'Offline';
+                    statusText.classList.remove('active');
+                }
+            });
+
+            // Update preview to reflect reset state
+            updatePreview();
+        });
+    }
+
+    // Update UI status text when toggled
+    document.querySelectorAll('.machine-toggle').forEach(switchInput => {
+        switchInput.addEventListener('change', function () {
+            const card = this.closest('.machine-card');
+            const statusText = card.querySelector('.machine-status');
+            if (this.checked) {
+                statusText.textContent = 'Running';
+                statusText.classList.add('active');
+            } else {
+                statusText.textContent = 'Offline';
+                statusText.classList.remove('active');
+            }
+
+            // Update preview
+            updatePreview();
+        });
+    });
+
+    // AUTO Preview Handler (Separate from MANUAL logic)
+    document.querySelectorAll('.auto-preview-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function () {
+            // Just trigger preview update, don't modify MANUAL logic
+            updatePreview();
+
+            // Visual feedback for AUTO cards
+            const card = this.closest('.machine-card');
+            const statusText = card.querySelector('.machine-status');
+            if (this.checked) {
+                statusText.classList.add('active');
+            } else {
+                statusText.classList.remove('active');
+            }
+        });
+    });
+
+    // Extend updatePreview to include AUTO toggles (non-invasive)
+    const originalUpdatePreview = updatePreview;
+    updatePreview = function () {
+        // Call original function first (calculates MANUAL changes)
+        let result = originalUpdatePreview();
+
+        // Get current projected values from MANUAL calculation
+        const manualSteam = parseInt(document.getElementById('projected-steam').textContent) || 0;
+        const manualHto = parseInt(document.getElementById('projected-hto').textContent) || 0;
+
+        // Now calculate AUTO diff from initial state (same logic as MANUAL)
+        let autoDiffSteam = 0;
+        let autoDiffHto = 0;
+
+        document.querySelectorAll('.auto-preview-toggle').forEach(toggle => {
+            const steam = parseFloat(toggle.dataset.steam) || 0;
+            const hto = parseFloat(toggle.dataset.hto) || 0;
+            const wasInitiallyOn = toggle.defaultChecked; // Initial state (HEAT)
+            const isCurrentlyOn = toggle.checked; // Current toggle state
+
+            // Calculate difference from initial state
+            if (wasInitiallyOn && !isCurrentlyOn) {
+                // Was on (HEAT), now off - subtract
+                autoDiffSteam -= steam;
+                autoDiffHto -= hto;
+            } else if (!wasInitiallyOn && isCurrentlyOn) {
+                // Was off, now on - add
+                autoDiffSteam += steam;
+                autoDiffHto += hto;
+            }
+            // If state unchanged, no change to projected
+        });
+
+        // Apply AUTO diff to MANUAL projected values
+        const finalSteam = manualSteam + autoDiffSteam;
+        const finalHto = manualHto + autoDiffHto;
+
+        // Update with combined totals
+        document.getElementById('projected-steam').textContent = Math.round(finalSteam);
+        document.getElementById('projected-hto').textContent = Math.round(finalHto);
+
+        // Recalculate difference from initial
+        const diffSteam = finalSteam - initialSteam;
+        const diffHto = finalHto - initialHto;
+
+        const diffSteamEl = document.getElementById('diff-steam');
+        const diffHtoEl = document.getElementById('diff-hto');
+
+        diffSteamEl.textContent = (diffSteam >= 0 ? '+' : '') + Math.round(diffSteam);
+        diffHtoEl.textContent = (diffHto >= 0 ? '+' : '') + Math.round(diffHto);
+
+        // Update diff color classes
+        updateDiffClass(diffSteamEl, diffSteam);
+        updateDiffClass(diffHtoEl, diffHto);
+
+        return result;
+    };
+
+    // Initialize preview on load
+    document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+{% endblock %}

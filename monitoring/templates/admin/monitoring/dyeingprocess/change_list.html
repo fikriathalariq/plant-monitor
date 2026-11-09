@@ -1,0 +1,47 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        /* Membatasi tinggi tabel agar scrollbar horizontal mudah diakses tanpa harus scroll ke paling bawah halaman */
+        #changelist .results {
+            max-height: 65vh; /* 65% dari tinggi layar komputer, bisa disesuaikan */
+            overflow: auto;
+            border-bottom: 2px solid #ddd;
+        }
+
+        /* Membuat header tabel (kepala kolom) tetap terlihat / nempel di atas saat di-scroll ke bawah */
+        #changelist .results thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        /* Select2 override styles */
+        .select2-container .select2-selection--single {
+            height: auto;
+            min-height: 30px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: normal;
+        }
+    </style>
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/static/admin/css/vendor/select2/select2.css">
+    <!-- Import select2 if not globally available, usually Django admin loads it implicitly with select2 form inputs, but let's be sure -->
+    <script src="/static/admin/js/vendor/select2/select2.full.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof django !== 'undefined' && django.jQuery) {
+                django.jQuery('#changelist-filter select').select2({
+                    width: '95%',
+                    placeholder: 'Search/Pilih...',
+                    allowClear: true
+                });
+            }
+        });
+    </script>
+{% endblock %}

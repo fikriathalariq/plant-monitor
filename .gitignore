@@ -1,0 +1,60 @@
+# Secrets & Kredensial Lingkungan
+.env
+.env.*
+!.env.example
+
+# Python Runtime & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+
+# Django Static & Uploads
+staticfiles/
+media/
+db.sqlite3
+
+# Database Dumps, Telemetri Pabrik & Logs (KRITIS: Cegah blokir GitHub 100MB & kebocoran data)
+*.sql
+*.sql.gz
+*.dump
+*.log
+*.csv
+bot_requests*.txt
+step_*_output.txt
+old_*.txt
+scratch*.txt
+debug.json
+db_dump*.json
+*_report.json
+*_comparison.json
+
+# Binaries, OS & File Typo Windows
+*.exe
+null
+true
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.agents/
+
+# Deployment Runtime State & Local Archives
+.active_slot.txt
+.snapshots/
+scratch/
+archive/
+
+# Frontend Build & Blue-Green Slot Artifacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/dist_*/
+
+# Testing & Code Coverage Artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/

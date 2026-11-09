@@ -1,0 +1,4003 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Grafik Historis • Plant Monitor{% endblock %}
+{% block header_title %}Analisis Grafik Historis{% endblock %}
+{% block header_subtitle %}Visualisasi data sensor mesin berdasarkan rentang waktu spesifik.{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+<style>
+    /* ===== COMPACT GRAPH MENU STYLING ===== */
+    /* NO sidebar/header overrides - use base.html defaults */
+
+    /* Compact Card Styling */
+    .graph-control-card {
+        background: #ffffff;
+        border: 1px solid var(--suritex-border);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+    }
+
+    .card-header-modern {
+        background: linear-gradient(135deg, rgba(249, 245, 6, 0.04), rgba(249, 245, 6, 0.08));
+        border-bottom: 1px solid var(--suritex-border);
+        padding: 0.75rem 1rem;
+    }
+
+    .header-icon-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .header-icon-title i {
+        font-size: 1.125rem;
+    }
+
+    .card-title {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--suritex-text-main);
+        margin: 0;
+    }
+
+    /* Compact Filter Layout */
+    .filter-section {
+        padding: 1rem;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    @media (min-width: 992px) {
+        .filter-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+
+    .control-label {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--suritex-text-main);
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .control-label i {
+        color: var(--suritex-text-muted);
+        font-size: 0.875rem;
+    }
+
+    /* Compact Input Styling */
+    .form-control-modern,
+    .dark-input {
+        background-color: #ffffff !important;
+        border: 1px solid var(--suritex-border) !important;
+        border-radius: 6px;
+        padding: 0.5rem 0.625rem;
+        font-size: 0.8125rem;
+        color: var(--suritex-text-main) !important;
+        transition: all 0.2s;
+    }
+
+    .form-control-modern:focus,
+    .dark-input:focus {
+        background-color: #ffffff !important;
+        border-color: var(--suritex-primary) !important;
+        box-shadow: 0 0 0 2px rgba(249, 245, 6, 0.12) !important;
+        outline: none;
+    }
+
+    /* Compact Machine Selection Box */
+    .machine-selection-box {
+        background: #f9fafb;
+        border: 1px solid var(--suritex-border);
+        border-radius: 8px;
+        padding: 0.625rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .machine-checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.5rem;
+        border-radius: 5px;
+        transition: all 0.15s;
+        cursor: pointer;
+        margin-bottom: 0.25rem;
+    }
+
+    .machine-checkbox-item:hover {
+        background-color: rgba(249, 245, 6, 0.08);
+    }
+
+    .machine-checkbox-item input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        border-radius: 3px;
+        cursor: pointer;
+        accent-color: var(--suritex-primary);
+    }
+
+    .machine-checkbox-item span {
+        font-weight: 500;
+        font-size: 0.8125rem;
+        color: var(--suritex-text-main);
+    }
+
+    /* Compact Button Styling */
+    .btn-primary-modern {
+        background: var(--suritex-primary);
+        color: var(--suritex-text-main);
+        border: none;
+        border-radius: 7px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        transition: all 0.2s;
+        box-shadow: 0 1px 3px rgba(249, 245, 6, 0.2);
+    }
+
+    .btn-primary-modern:hover {
+        background: #e3df05;
+        box-shadow: 0 2px 5px rgba(249, 245, 6, 0.3);
+    }
+
+    .btn-outline-modern {
+        background: #ffffff;
+        color: var(--suritex-text-main);
+        border: 1px solid var(--suritex-border);
+        border-radius: 6px;
+        padding: 0.375rem 0.625rem;
+        font-weight: 500;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: all 0.2s;
+    }
+
+    .btn-outline-modern:hover {
+        background: var(--suritex-bg-light);
+        border-color: var(--suritex-primary);
+    }
+
+    .btn-select-all {
+        font-size: 0.6875rem;
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .btn-select-all:hover {
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    /* Compact Chart Container */
+    .chart-container-modern {
+        position: relative;
+        height: 520px;
+        padding: 0.875rem;
+        background: #fafafa;
+    }
+
+    @media (max-width: 767.98px) {
+        .chart-container-modern {
+            height: 280px;
+            padding: 0.625rem;
+        }
+    }
+
+    /* Compact Table Styling */
+    .table-modern {
+        font-size: 0.8125rem;
+    }
+
+    .table-modern thead th {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        color: var(--suritex-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.625rem 0.875rem;
+        background: #f9fafb;
+        border-bottom: 1px solid var(--suritex-border);
+    }
+
+    .table-modern tbody td {
+        padding: 0.5rem 0.875rem;
+        color: var(--suritex-text-main);
+    }
+
+    .table-modern tbody tr:hover {
+        background-color: rgba(249, 245, 6, 0.04);
+    }
+
+    .table-active {
+        background-color: rgba(249, 245, 6, 0.12) !important;
+        border-left: 3px solid var(--suritex-primary);
+    }
+
+    /* Filter Info Banner */
+    .filter-info-banner {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border: 1px solid #fbbf24;
+        border-radius: 7px;
+        padding: 0.5rem 0.875rem;
+        margin-bottom: 0.625rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .filter-info-banner i {
+        color: #d97706;
+        font-size: 0.9375rem;
+    }
+
+    .filter-info-text {
+        color: #92400e;
+        font-weight: 500;
+    }
+
+    /* Scrollbar */
+    .machine-selection-box::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .machine-selection-box::-webkit-scrollbar-track {
+        background: #f3f4f6;
+        border-radius: 2px;
+    }
+
+    .machine-selection-box::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 2px;
+    }
+
+    /* Icon Colors */
+    .text-blue {
+        color: #3b82f6 !important;
+    }
+
+    .text-green {
+        color: #22c55e !important;
+    }
+
+    .text-warning {
+        color: #f59e0b !important;
+    }
+
+    /* Fix datetime picker */
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        filter: invert(0);
+        cursor: pointer;
+    }
+
+    /* Secondary Axis Controls Styling */
+    #secondaryAxisControls {
+        background: rgba(249, 245, 6, 0.03);
+        border: 1px dashed var(--suritex-border);
+        border-radius: 6px;
+        padding: 0.75rem;
+    }
+
+    /* Mobile spacing */
+    @media (max-width: 767.98px) {
+        .filter-section {
+            padding: 0.75rem;
+        }
+
+        .card-header-modern {
+            padding: 0.625rem 0.75rem;
+        }
+
+        .filter-grid {
+            gap: 0.625rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Snapshot Modal Styles */
+    .modal-overlay-custom {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        display: flex;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 9999 !important;
+        padding: 1rem !important;
+        backdrop-filter: blur(4px) !important;
+        animation: fadeIn 0.2s ease-out !important;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .modal-content-custom {
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+        max-width: 1200px !important;
+        width: 100% !important;
+        max-height: 90vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        animation: slideUp 0.3s ease-out !important;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header-custom {
+        padding: 1.5rem !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+
+    .btn-close-modal {
+        border: none !important;
+        background: #f1f5f9 !important;
+        color: #64748b !important;
+        font-size: 1.5rem !important;
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 6px !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s !important;
+    }
+
+    .btn-close-modal:hover {
+        background: #ef4444 !important;
+        color: white !important;
+    }
+
+    .modal-summary {
+        padding: 1rem 1.5rem !important;
+        background: #f8fafc !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+        gap: 1rem !important;
+    }
+
+    .summary-card-wide {
+        grid-column: span 2 !important;
+    }
+
+    .state-breakdown {
+        display: flex !important;
+        gap: 1rem !important;
+        margin-top: 0.5rem !important;
+        flex-wrap: wrap !important;
+    }
+
+    .state-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.375rem !important;
+        font-size: 0.8125rem !important;
+    }
+
+    .state-dot {
+        width: 8px !important;
+        height: 8px !important;
+        border-radius: 50% !important;
+        flex-shrink: 0 !important;
+    }
+
+    .state-name {
+        color: #64748b !important;
+        font-weight: 500 !important;
+    }
+
+    .state-count {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+    }
+
+    .summary-card {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        padding: 0.75rem !important;
+        background: white !important;
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    .summary-card i {
+        font-size: 1.5rem !important;
+        color: #3b82f6 !important;
+    }
+
+    .summary-label {
+        font-size: 0.75rem !important;
+        color: #64748b !important;
+        font-weight: 500 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .summary-value {
+        font-size: 1.125rem !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        margin-top: 0.25rem !important;
+    }
+
+    .modal-body-custom {
+        padding: 1.5rem !important;
+        overflow-y: auto !important;
+        flex: 1 !important;
+    }
+
+    .machine-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .machine-card {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.2s;
+    }
+
+    .machine-card:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .machine-card.machine-inactive {
+        opacity: 0.6;
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+
+    .machine-card.machine-inactive:hover {
+        border-color: #94a3b8;
+        transform: translateY(0);
+    }
+
+    .inactive-label {
+        font-size: 0.6875rem !important;
+        color: #64748b !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        text-align: center !important;
+        margin-top: 0.5rem !important;
+        letter-spacing: 0.5px !important;
+    }
+
+
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge-running {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-stopped {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .thermal-badge {
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.6875rem;
+        font-weight: 600;
+    }
+
+    .thermal-heat {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .thermal-steady {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .thermal-cool {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .modal-footer-custom {
+        padding: 1rem 1.5rem !important;
+        border-top: 2px solid #e2e8f0 !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+    }
+
+    .modal-loading,
+    .modal-error {
+        text-align: center !important;
+        padding: 3rem !important;
+    }
+
+    .spinner {
+        border: 3px solid #f3f4f6 !important;
+        border-top: 3px solid #3b82f6 !important;
+        border-radius: 50% !important;
+        width: 40px !important;
+        height: 40px !important;
+        animation: spin 0.8s linear infinite !important;
+        margin: 0 auto 1rem !important;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .modal-error i {
+        font-size: 3rem !important;
+        color: #ef4444 !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .status-change-indicator {
+        background: #f8fafc !important;
+        border-left: 3px solid !important;
+        padding: 0.75rem !important;
+        border-radius: 6px !important;
+        margin-top: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+        display: flex !important;
+        gap: 0.5rem !important;
+        align-items: flex-start !important;
+    }
+
+    .status-change-indicator.changed {
+        border-left-color: #f59e0b !important;
+        background: #fffbeb !important;
+    }
+
+    .status-change-indicator.stable {
+        border-left-color: #10b981 !important;
+        background: #f0fdf4 !important;
+    }
+
+    .change-icon {
+        font-size: 1.125rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    .status-change-indicator.changed .change-icon {
+        color: #f59e0b !important;
+    }
+
+    .status-change-indicator.stable .change-icon {
+        color: #10b981 !important;
+    }
+
+    .change-details {
+        flex: 1 !important;
+    }
+
+    .change-label {
+        font-size: 0.6875rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        color: #64748b !important;
+        letter-spacing: 0.5px !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    .change-value {
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        color: #0f172a !important;
+        line-height: 1.4 !important;
+    }
+
+    /* === DESKTOP CARD STYLES (NEW STRUCTURE) === */
+    .card-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        padding-bottom: 0.875rem;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 0.875rem;
+    }
+
+    .machine-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .machine-code {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.3;
+        margin-bottom: 0.25rem;
+    }
+
+    .machine-name {
+        font-size: 0.8125rem;
+        color: #64748b;
+        line-height: 1.3;
+    }
+
+    .badges-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .card-bottom-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .detail-label {
+        font-size: 0.8125rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .detail-value {
+        font-size: 0.875rem;
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .usage-inline {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 0.875rem 1rem;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+    }
+
+    .usage-label {
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .usage-value-inline {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .usage-unit {
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 500;
+        margin-left: 0.375rem;
+    }
+
+    .inactive-badge {
+        font-size: 0.75rem;
+        color: #ef4444;
+        font-weight: 600;
+        text-align: center;
+        padding: 0.5rem;
+        background: #fee2e2;
+        border-radius: 6px;
+        margin-top: 0.5rem;
+    }
+
+    .status-change-compact {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0.75rem 1rem;
+        background: #fef3c7;
+        border: 1px solid #fde68a;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        color: #92400e;
+        margin-top: 0.875rem;
+    }
+
+    .status-change-compact i {
+        font-size: 1.125rem;
+        color: #f59e0b;
+        flex-shrink: 0;
+    }
+
+    .status-change-compact span {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    /* === DESKTOP-SPECIFIC CARD STYLES - MINIMALIST === */
+
+    /* Header Section */
+    .machine-header-desktop {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.875rem;
+        padding-bottom: 0.875rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .machine-name-desktop {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.3;
+        margin-bottom: 0.25rem;
+    }
+
+    .machine-code-desktop {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .badges-desktop {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    /* Usage Row - Simple inline */
+    .usage-row-desktop {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 6px;
+        margin-bottom: 0.75rem;
+    }
+
+    .usage-label-desktop {
+        font-size: 0.8125rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .usage-value-desktop {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .usage-unit-desktop {
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 500;
+        margin-left: 0.25rem;
+    }
+
+    .inactive-badge-desktop {
+        padding: 0.5rem;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        color: #dc2626;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Status Change - Compact */
+    .status-change-desktop {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0.75rem;
+        background: #fef3c7;
+        border-left: 3px solid #f59e0b;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        color: #92400e;
+        font-weight: 500;
+    }
+
+    .status-change-desktop i {
+        font-size: 1rem;
+        color: #f59e0b;
+        flex-shrink: 0;
+    }
+
+    .status-change-desktop span {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+
+        /* Modal Container - Full screen on mobile */
+        .modal-content-custom {
+            max-width: 100% !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* Header - More compact */
+        .modal-header-custom {
+            padding: 0.875rem 1rem !important;
+        }
+
+        .modal-header-custom h3 {
+            font-size: 1rem !important;
+        }
+
+        .btn-close-modal {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 1.25rem !important;
+        }
+
+        /* Summary Section - Stack vertically */
+        .modal-summary {
+            padding: 0.75rem 1rem !important;
+            grid-template-columns: 1fr !important;
+            gap: 0.625rem !important;
+        }
+
+        .summary-card-wide {
+            grid-column: span 1 !important;
+        }
+
+        .summary-card {
+            padding: 0.625rem !important;
+            gap: 0.5rem !important;
+        }
+
+        .summary-card i {
+            font-size: 1.125rem !important;
+        }
+
+        .summary-label {
+            font-size: 0.6875rem !important;
+        }
+
+        .summary-value {
+            font-size: 0.9375rem !important;
+        }
+
+        /* State Breakdown - Smaller */
+        .state-breakdown {
+            gap: 0.625rem !important;
+            margin-top: 0.375rem !important;
+        }
+
+        .state-item {
+            font-size: 0.6875rem !important;
+            gap: 0.25rem !important;
+        }
+
+        .state-dot {
+            width: 6px !important;
+            height: 6px !important;
+        }
+
+        /* Body - Less padding */
+        .modal-body-custom {
+            padding: 1rem !important;
+        }
+
+        /* Machine Grid - Single column */
+        .machine-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem !important;
+        }
+
+        /* Machine Cards - Compact */
+        .machine-card {
+            padding: 0.75rem !important;
+            border-width: 1px !important;
+        }
+
+        .machine-card:hover {
+            transform: translateY(0) !important;
+        }
+
+        .machine-header {
+            font-size: 0.875rem !important;
+        }
+
+        .machine-code {
+            font-size: 0.875rem !important;
+        }
+
+        .badge {
+            font-size: 0.625rem !important;
+            padding: 0.125rem 0.375rem !important;
+        }
+
+        .machine-details {
+            gap: 0.5rem !important;
+            margin-top: 0.5rem !important;
+        }
+
+        .detail-item {
+            font-size: 0.75rem !important;
+        }
+
+        .detail-label {
+            font-size: 0.6875rem !important;
+        }
+
+        .detail-value {
+            font-size: 0.75rem !important;
+        }
+
+        /* Usage bars */
+        .usage-bar {
+            height: 4px !important;
+        }
+
+        /* Inactive label */
+        .inactive-label {
+            font-size: 0.625rem !important;
+            margin-top: 0.375rem !important;
+        }
+
+        /* Changes section */
+        .change-item {
+            font-size: 0.6875rem !important;
+            padding: 0.375rem !important;
+        }
+
+        .change-time {
+            font-size: 0.625rem !important;
+        }
+
+        .change-value {
+            font-size: 0.6875rem !important;
+        }
+
+        /* === MOBILE SIMPLIFICATION === */
+        /* Hide Mode and Group fields on mobile */
+        .detail-row.hide-mobile {
+            display: none !important;
+        }
+
+        /* Ultra-compact elegant card style */
+        .machine-card {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.625rem !important;
+            padding: 0.75rem !important;
+            border-width: 1.5px !important;
+        }
+
+        /* Top Row: Machine Info + Badges */
+        .card-top-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: flex-start !important;
+            gap: 0.5rem !important;
+            padding-bottom: 0.625rem !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+
+        .machine-info {
+            flex: 1 !important;
+            min-width: 0 !important;
+        }
+
+        .machine-code {
+            font-size: 0.875rem !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            line-height: 1.2 !important;
+        }
+
+        .machine-name {
+            font-size: 0.6875rem !important;
+            color: #64748b !important;
+            margin-top: 0.125rem !important;
+            line-height: 1.2 !important;
+        }
+
+        .badges-group {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.25rem !important;
+            align-items: flex-end !important;
+        }
+
+        .status-badge {
+            font-size: 0.5625rem !important;
+            padding: 0.125rem 0.375rem !important;
+            white-space: nowrap !important;
+            line-height: 1.3 !important;
+        }
+
+        .thermal-badge {
+            font-size: 0.5625rem !important;
+            padding: 0.125rem 0.375rem !important;
+            line-height: 1.3 !important;
+        }
+
+        /* Bottom Row: Usage inline */
+        .card-bottom-row {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.375rem !important;
+        }
+
+        .usage-inline {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: baseline !important;
+            background: #f8fafc !important;
+            padding: 0.5rem !important;
+            border-radius: 4px !important;
+        }
+
+        .usage-label {
+            font-size: 0.6875rem !important;
+            color: #64748b !important;
+            font-weight: 600 !important;
+        }
+
+        .usage-value-inline {
+            font-size: 0.9375rem !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+        }
+
+        .usage-unit {
+            font-size: 0.6875rem !important;
+            color: #64748b !important;
+            font-weight: 500 !important;
+            margin-left: 0.25rem !important;
+        }
+
+        .inactive-badge {
+            font-size: 0.625rem !important;
+            color: #64748b !important;
+            font-weight: 600 !important;
+            text-align: center !important;
+            padding: 0.25rem !important;
+            background: #f1f5f9 !important;
+            border-radius: 4px !important;
+        }
+
+        /* Status change - single line compact */
+        .status-change-compact {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.375rem !important;
+            padding: 0.5rem !important;
+            background: #fef3c7 !important;
+            border-radius: 4px !important;
+            font-size: 0.6875rem !important;
+            color: #92400e !important;
+            margin-top: 0.25rem !important;
+        }
+
+        .status-change-compact i {
+            font-size: 0.875rem !important;
+            color: #f59e0b !important;
+        }
+
+        .status-change-compact span {
+            flex: 1 !important;
+            line-height: 1.3 !important;
+        }
+    }
+</style>
+
+<!-- CONTROL PANEL -->
+<div class="graph-control-card">
+    <div class="card-header-modern">
+        <div class="header-icon-title">
+            <i class="bi bi-sliders text-blue"></i>
+            <h5 class="card-title">Parameter Grafik</h5>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <!-- Machine Selection -->
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="control-label mb-0">
+                    <i class="bi bi-hdd-rack"></i> Pilih Mesin
+                </label>
+                <a href="#" class="btn-select-all" id="selectAllMachines">Pilih Semua</a>
+            </div>
+            <div class="machine-selection-box" id="machineBox" style="display: block;">
+                {% for m in machines %}
+                <!-- {{ forloop.counter }}. [{{ m.group.code }}] {{ m.name }} -->
+                <label class="machine-checkbox-item" data-order="{{ forloop.counter }}">
+                    <input type="checkbox" class="machine-check form-check-input" value="{{ m.code }}"
+                        data-group="{{ m.group.name }}">
+                    <span>{{ m.name }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Filter Grid -->
+        <div class="filter-grid">
+            <div class="control-group">
+                <label class="control-label">
+                    <i class="bi bi-calendar-range"></i> Dari
+                </label>
+                <input id="startTime" type="datetime-local" class="form-control dark-input">
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    <i class="bi bi-calendar-check"></i> Sampai
+                </label>
+                <input id="endTime" type="datetime-local" class="form-control dark-input">
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    <i class="bi bi-arrow-bar-left"></i> Min Y-Kiri
+                </label>
+                <input id="yMin" type="number" class="form-control form-control-modern" placeholder="Auto">
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    <i class="bi bi-arrow-bar-left"></i> Max Y-Kiri
+                </label>
+                <input id="yMax" type="number" class="form-control form-control-modern" placeholder="Auto">
+            </div>
+        </div>
+
+        <!-- Secondary Y-Axis Controls (only shown when needed) -->
+        <div class="filter-grid mt-2" id="secondaryAxisControls" style="display:none;">
+            <div class="col-span-2 mb-1" style="grid-column: 1 / -1;">
+                <small class="text-muted"
+                    style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <i class="bi bi-gear"></i> Sumbu Y Sekunder (Kanan)
+                </small>
+            </div>
+            <div class="control-group">
+                <label class="control-label">
+                    <i class="bi bi-arrow-bar-right"></i> Min Y-Kanan
+                </label>
+                <input id="y1Min" type="number" class="form-control form-control-modern" placeholder="Auto">
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    <i class="bi bi-arrow-bar-right"></i> Max Y-Kanan
+                </label>
+                <input id="y1Max" type="number" class="form-control form-control-modern" placeholder="Auto">
+            </div>
+
+            <!-- Swap Axes Button -->
+            <div class="control-group">
+                <label class="control-label" style="opacity: 0; user-select: none;">&#8203;</label>
+                <button id="btnSwapAxes" class="btn btn-outline-modern w-100" style="display: none;"
+                    title="Tukar posisi sumbu kiri-kanan">
+                    <i class="bi bi-arrow-left-right"></i> Tukar Sumbu
+                </button>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="text-center mt-2">
+            <button id="loadBtn" class="btn btn-primary-modern">
+                <span id="btnText"><i class="bi bi-search"></i> Tampilkan</span>
+                <span id="btnLoader" style="display:none;" class="spinner-border spinner-border-sm"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- GRAPH CARD -->
+<div class="graph-control-card">
+    <div class="card-header-modern d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="header-icon-title">
+            <i class="bi bi-graph-up text-green"></i>
+            <h5 class="card-title">Visualisasi Data</h5>
+        </div>
+        <div class="d-flex gap-2">
+            <button id="btnResetZoom" class="btn btn-outline-modern" style="display:none;">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset Zoom
+            </button>
+            <button id="btnExportPNG" class="btn btn-outline-modern">
+                <i class="bi bi-image"></i> PNG
+            </button>
+            <button id="btnPrint" class="btn btn-outline-modern">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            <button id="btnExportPDF" class="btn btn-outline-modern">
+                <i class="bi bi-filetype-pdf"></i> PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="chart-container-modern">
+        <canvas id="machineChart"></canvas>
+    </div>
+</div>
+
+<!-- ANALYSIS PANEL -->
+<div class="graph-control-card">
+    <div class="card-header-modern d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="header-icon-title">
+            <i class="bi bi-calculator text-warning"></i>
+            <h5 class="card-title">Estimasi Energi & Statistik</h5>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <label class="mb-0 text-muted fw-semibold" style="font-size: 0.75rem;">Tarif (Rp/kWh):</label>
+            <input type="number" id="tariffInput" class="form-control form-control-modern" value="1500"
+                style="width: 100px;">
+        </div>
+    </div>
+
+    <div class="p-2">
+        <div class="table-responsive">
+            <table class="table table-modern" id="analysisTable">
+                <thead>
+                    <tr>
+                        <th>Mesin</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Rata-rata</th>
+                        <th>Load Factor</th>
+                        <th>Total Energi</th>
+                        <th>Estimasi Biaya</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- JS populate -->
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-2 px-2">
+            <small class="text-muted d-block mb-1" style="font-size: 0.6875rem;">
+                <i class="bi bi-info-circle"></i> Perhitungan energi menggunakan metode integral trapesium.
+            </small>
+            <small class="text-muted d-block" style="font-size: 0.6875rem;">
+                <i class="bi bi-cash-coin"></i> Kolom Energi & Biaya hanya untuk satuan 'kW'.
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- STEAM ANALYTICS PANEL -->
+<div class="graph-control-card">
+    <div class="card-header-modern d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="header-icon-title">
+            <i class="bi bi-speedometer text-blue"></i>
+            <h5 class="card-title">Analytics: Total Steam Usage</h5>
+        </div>
+        <div class="d-flex gap-2">
+            <button id="btnResetZoomSteam" class="btn btn-outline-modern" style="display:none;">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset Zoom
+            </button>
+            <button id="btnExportPNGSteam" class="btn btn-outline-modern">
+                <i class="bi bi-image"></i> PNG
+            </button>
+            <button id="btnExportPDFSteam" class="btn btn-outline-modern">
+                <i class="bi bi-filetype-pdf"></i> PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="chart-container-modern">
+        <canvas id="steamChart"></canvas>
+    </div>
+
+    <!-- Info banner -->
+    <div class="p-2">
+        <small class="text-muted d-block" style="font-size: 0.6875rem;">
+            <i class="bi bi-info-circle"></i> Grafik menampilkan total steam usage (kg/h) dan jumlah mesin yang
+            menggunakan steam.
+        </small>
+    </div>
+</div>
+
+<!-- HTO KALORI ANALYTICS PANEL -->
+<div class="graph-control-card">
+    <div class="card-header-modern d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="header-icon-title">
+            <i class="bi bi-fire text-warning"></i>
+            <h5 class="card-title">Analytics: Total HTO Kalori</h5>
+        </div>
+        <div class="d-flex gap-2">
+            <button id="btnResetZoomHTO" class="btn btn-outline-modern" style="display:none;">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset Zoom
+            </button>
+            <button id="btnExportPNGHTO" class="btn btn-outline-modern">
+                <i class="bi bi-image"></i> PNG
+            </button>
+            <button id="btnExportPDFHTO" class="btn btn-outline-modern">
+                <i class="bi bi-filetype-pdf"></i> PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="chart-container-modern">
+        <canvas id="htoChart"></canvas>
+    </div>
+
+    <!-- Info banner -->
+    <div class="p-2">
+        <small class="text-muted d-block" style="font-size: 0.6875rem;">
+            <i class="bi bi-info-circle"></i> Grafik menampilkan total kalori HTO (kCal/h) dan jumlah mesin yang
+            menggunakan HTO.
+        </small>
+    </div>
+</div>
+
+<!-- SNAPSHOT DETAIL MODAL -->
+<div id="snapshotModal" class="modal-overlay-custom" style="display:none;" onclick="closeSnapshotModal(event)">
+    <div class="modal-content-custom" onclick="event.stopPropagation()">
+        <div class="modal-header-custom">
+            <div>
+                <h4 id="modalTitle" style="margin:0; color:#0f172a;">Snapshot Detail</h4>
+                <p id="modalTimestamp" style="margin:0; font-size:0.875rem; color:#64748b;"></p>
+            </div>
+            <button class="btn-close-modal" onclick="closeSnapshotModal(event)">&times;</button>
+        </div>
+
+        <div class="modal-summary">
+            <div class="summary-card">
+                <i class="bi bi-clock-fill"></i>
+                <div>
+                    <div class="summary-label">Waktu</div>
+                    <div class="summary-value" id="summaryTimeValue">--:--</div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <i class="bi bi-speedometer2"></i>
+                <div>
+                    <div class="summary-label">Total Usage</div>
+                    <div class="summary-value" id="summaryTotalValue">-- kg/h</div>
+                </div>
+            </div>
+            <div class="summary-card summary-card-wide">
+                <i class="bi bi-check-circle-fill" style="color: #10b981;"></i>
+                <div style="flex: 1;">
+                    <div class="summary-label">Mesin Aktif (<span id="summaryActiveTotal">0</span>)</div>
+                    <div class="state-breakdown">
+                        <div class="state-item">
+                            <span class="state-dot" style="background: #10b981;"></span>
+                            <span class="state-name">Running:</span>
+                            <span class="state-count" id="stateRunning">0</span>
+                        </div>
+                        <div class="state-item">
+                            <span class="state-dot" style="background: #ef4444;"></span>
+                            <span class="state-name">Heat:</span>
+                            <span class="state-count" id="stateHeat">0</span>
+                        </div>
+                        <div class="state-item">
+                            <span class="state-dot" style="background: #8b5cf6;"></span>
+                            <span class="state-name">Steady:</span>
+                            <span class="state-count" id="stateSteady">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="summary-card summary-card-wide">
+                <i class="bi bi-pause-circle-fill" style="color: #64748b;"></i>
+                <div style="flex: 1;">
+                    <div class="summary-label">Mesin Tidak Aktif (<span id="summaryInactiveTotal">0</span>)</div>
+                    <div class="state-breakdown">
+                        <div class="state-item">
+                            <span class="state-dot" style="background: #a1a1aa;"></span>
+                            <span class="state-name">Off:</span>
+                            <span class="state-count" id="stateOff">0</span>
+                        </div>
+                        <div class="state-item">
+                            <span class="state-dot" style="background: #3b82f6;"></span>
+                            <span class="state-name">Cool:</span>
+                            <span class="state-count" id="stateCool">0</span>
+                        </div>
+                        <div class="state-item">
+                            <span class="state-dot" style="background: #71717a;"></span>
+                            <span class="state-name">Stop:</span>
+                            <span class="state-count" id="stateStop">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-body-custom">
+            <div id="machineListGrid" class="machine-grid">
+                <!-- Machine cards will be inserted here -->
+            </div>
+            <div id="modalLoading" class="modal-loading" style="display:none;">
+                <div class="spinner"></div>
+                <p>Loading snapshot data...</p>
+            </div>
+            <div id="modalError" class="modal-error" style="display:none;">
+                <i class="bi bi-exclamation-circle"></i>
+                <p id="errorMessage">Error loading data</p>
+            </div>
+        </div>
+
+        <div class="modal-footer-custom">
+            <button class="btn btn-secondary" onclick="closeSnapshotModal(event)">
+                <i class="bi bi-x-circle"></i> Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- DATA TABLE -->
+<div class="graph-control-card">
+    <div class="card-header-modern d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="header-icon-title">
+            <i class="bi bi-table text-blue"></i>
+            <h5 class="card-title">Data Tabel</h5>
+            <span id="rowCountInfo" class="ms-2 text-muted" style="font-size: 0.75rem; font-weight: normal;"></span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <button id="btnToggleLimit" class="btn btn-outline-modern" style="display:none;">
+                <i class="bi bi-list-ul"></i> <span id="toggleLimitText">Show All</span>
+            </button>
+            <button id="btnClearFilter" class="btn btn-outline-modern">
+                <i class="bi bi-x-circle"></i> Hapus Filter
+            </button>
+            <button id="btnExportCSV" class="btn btn-outline-modern">
+                <i class="bi bi-filetype-csv"></i> CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Info Banner -->
+    <div id="tableFilterInfo" class="px-2 pt-2" style="display:none;">
+        <div class="filter-info-banner">
+            <i class="bi bi-funnel-fill"></i>
+            <span class="filter-info-text">
+                Filter: <strong id="filterTsLabel"></strong>
+            </span>
+        </div>
+    </div>
+
+    <div class="p-2">
+        <div class="table-responsive">
+            <table class="table table-modern" id="dataTable">
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'vendor/chartjs/chart.min.js' %}"></script>
+<script src="{% static 'vendor/chartjs/chartjs-plugin-zoom.min.js' %}"></script>
+<script src="{% static 'vendor/chartjs/jspdf.umd.min.js' %}"></script>
+<script src="{% static 'vendor/chartjs/jspdf.plugin.autotable.min.js' %}"></script>
+<script>
+    // Sort machines on page load: by group first, then by code, with MC_Boiler group ABSOLUTELY at the end
+    document.addEventListener('DOMContentLoaded', function () {
+        const machineBox = document.getElementById('machineBox');
+        if (!machineBox) return;
+
+        // Get all machine checkbox items
+        const machineItems = Array.from(machineBox.querySelectorAll('.machine-checkbox-item'));
+
+        // Separate MC_Boiler machines from others
+        const boilerMachines = [];
+        const otherMachines = [];
+
+        machineItems.forEach(item => {
+            const input = item.querySelector('input');
+            const group = input.getAttribute('data-group') || '';
+
+            if (group === 'MC_Boiler') {
+                boilerMachines.push(item);
+            } else {
+                otherMachines.push(item);
+            }
+        });
+
+        // Sort other machines: by group name, then by machine code
+        otherMachines.sort((a, b) => {
+            const inputA = a.querySelector('input');
+            const inputB = b.querySelector('input');
+            const codeA = inputA.value;
+            const codeB = inputB.value;
+            const groupA = inputA.getAttribute('data-group') || '';
+            const groupB = inputB.getAttribute('data-group') || '';
+
+            // First sort by group name
+            if (groupA !== groupB) {
+                return groupA.localeCompare(groupB);
+            }
+
+            // Same group, sort by machine code
+            return codeA.localeCompare(codeB);
+        });
+
+        // Sort boiler machines by code
+        boilerMachines.sort((a, b) => {
+            const codeA = a.querySelector('input').value;
+            const codeB = b.querySelector('input').value;
+            return codeA.localeCompare(codeB);
+        });
+
+        // Clear and re-append: other machines first, then boiler machines at the end
+        machineBox.innerHTML = '';
+        otherMachines.forEach(item => machineBox.appendChild(item));
+        boilerMachines.forEach(item => machineBox.appendChild(item));
+    });
+
+    let chart;
+    let graphApiData = null;
+    let activeTsFilter = null;
+
+    // ================== HELPER ==================
+    function toLocalDatetimeInput(date) {
+        const pad = (n) => String(n).padStart(2, "0");
+        return (
+            date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) +
+            "T" + pad(date.getHours()) + ":" + pad(date.getMinutes())
+        );
+    }
+
+    function convertToLocalLabel(tsString) {
+        const [date, time] = tsString.split(" ");
+        const [y, m, d] = date.split("-");
+        const [hh, mm] = time.split(":");
+        // Parse as local time, not UTC (server data is already in local timezone)
+        const dt = new Date(y, m - 1, d, hh, mm);
+        const pad = (n) => String(n).padStart(2, "0");
+        return pad(dt.getHours()) + ":" + pad(dt.getMinutes());
+    }
+
+    function convertToLocalDateTimeLabel(tsString) {
+        const [date, time] = tsString.split(" ");
+        const [y, m, d] = date.split("-");
+        const [hh, mm] = time.split(":");
+        // Parse as local time, not UTC (server data is already in local timezone)
+        const dt = new Date(y, m - 1, d, hh, mm);
+        const pad = (n) => String(n).padStart(2, "0");
+        const year = dt.getFullYear();
+        const month = pad(dt.getMonth() + 1);
+        const day = pad(dt.getDate());
+        const hour = pad(dt.getHours());
+        const minute = pad(dt.getMinutes());
+        return `${year}-${month}-${day} ${hour}:${minute}`;
+    }
+
+    // default 1 jam terakhir
+    window.addEventListener("load", () => {
+        const end = new Date();
+        const start = new Date(end.getTime() - 60 * 60 * 1000);
+        document.getElementById("startTime").value = toLocalDatetimeInput(start);
+        document.getElementById("endTime").value = toLocalDatetimeInput(end);
+    });
+
+    // Select All Machines
+    document.getElementById("selectAllMachines").addEventListener("click", (e) => {
+        e.preventDefault();
+        const checkboxes = document.querySelectorAll(".machine-check");
+        const allChecked = [...checkboxes].every(cb => cb.checked);
+        checkboxes.forEach(cb => cb.checked = !allChecked);
+        e.target.textContent = allChecked ? "Pilih Semua" : "Hapus Semua";
+    });
+
+    // =============== TABLE RENDERING ===============
+    let showAllRows = false;
+    const DEFAULT_ROW_LIMIT = 50;
+
+    function renderTable(data, filterTs = null) {
+        if (!data || !data.timestamps || !data.machines) {
+            document.getElementById("tableHead").innerHTML = "";
+            document.getElementById("tableBody").innerHTML = "";
+            document.getElementById("tableFilterInfo").style.display = "none";
+            document.getElementById("rowCountInfo").textContent = "";
+            document.getElementById("btnToggleLimit").style.display = "none";
+            return;
+        }
+
+        const tableHead = document.getElementById("tableHead");
+        const tableBody = document.getElementById("tableBody");
+
+        let headerHtml = `<tr><th rowspan="2">Timestamp</th>`;
+        data.machines.forEach(code => {
+            headerHtml += `<th colspan="4" style="text-align:center; border-bottom:1px solid #dee2e6;">${code}</th>`;
+        });
+        headerHtml += `</tr><tr>`;
+        data.machines.forEach(() => {
+            headerHtml += `<th>Raw</th><th>Filtered</th><th>Grad</th><th>State</th>`;
+        });
+        headerHtml += `</tr>`;
+        tableHead.innerHTML = headerHtml;
+
+        let bodyHtml = "";
+        const timestamps = filterTs ? [filterTs] : data.timestamps;
+        const totalRows = timestamps.length;
+
+        // Determine row limit
+        const rowsToShow = (showAllRows || filterTs) ? totalRows : Math.min(DEFAULT_ROW_LIMIT, totalRows);
+        const displayTimestamps = timestamps.slice(0, rowsToShow);
+
+        displayTimestamps.forEach(ts => {
+            const tsLocal = convertToLocalDateTimeLabel(ts);
+            let row = `<tr><td>${tsLocal}</td>`;
+            data.machines.forEach(code => {
+                const entry = data.table[ts] && data.table[ts][code];
+                if (entry) {
+                    const temp = entry.temp !== null ? entry.temp.toFixed(1) : "-";
+                    const filtered = entry.filtered !== null ? entry.filtered.toFixed(1) : "-";
+                    const gradient = entry.gradient !== null ? entry.gradient.toFixed(3) : "-";
+                    const state = entry.state || "-";
+                    let stateClass = "";
+                    if (state === "HEAT") stateClass = "text-danger";
+                    else if (state === "COOL") stateClass = "text-primary";
+                    else if (state === "STEADY") stateClass = "text-success";
+                    row += `<td>${temp}</td><td>${filtered}</td><td>${gradient}</td><td class="${stateClass}"><strong>${state}</strong></td>`;
+                } else {
+                    row += `<td>-</td><td>-</td><td>-</td><td>-</td>`;
+                }
+            });
+            row += "</tr>";
+            bodyHtml += row;
+        });
+
+        tableBody.innerHTML = bodyHtml;
+
+        // Update row count info
+        const rowCountInfo = document.getElementById("rowCountInfo");
+        const btnToggleLimit = document.getElementById("btnToggleLimit");
+        const toggleLimitText = document.getElementById("toggleLimitText");
+
+        if (totalRows > DEFAULT_ROW_LIMIT && !filterTs) {
+            btnToggleLimit.style.display = "inline-flex";
+            if (showAllRows) {
+                rowCountInfo.textContent = `(${totalRows} baris)`;
+                toggleLimitText.textContent = "Tampilkan Terbatas";
+            } else {
+                rowCountInfo.textContent = `(${rowsToShow} dari ${totalRows} baris)`;
+                toggleLimitText.textContent = "Tampilkan Semua";
+            }
+        } else {
+            rowCountInfo.textContent = totalRows > 0 ? `(${totalRows} baris)` : "";
+            btnToggleLimit.style.display = "none";
+        }
+
+        const infoBox = document.getElementById("tableFilterInfo");
+        const labelSpan = document.getElementById("filterTsLabel");
+
+        if (filterTs) {
+            infoBox.style.display = "block";
+            labelSpan.textContent = convertToLocalDateTimeLabel(filterTs);
+            const firstRow = tableBody.querySelector("tr");
+            if (firstRow) {
+                firstRow.classList.add("table-active");
+                firstRow.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        } else {
+            infoBox.style.display = "none";
+            labelSpan.textContent = "";
+        }
+    }
+
+    function clearTableFilter() {
+        activeTsFilter = null;
+        if (graphApiData) {
+            renderTable(graphApiData, null);
+        }
+    }
+
+    document.getElementById("btnClearFilter").addEventListener("click", () => {
+        clearTableFilter();
+    });
+
+    document.getElementById("btnToggleLimit").addEventListener("click", () => {
+        showAllRows = !showAllRows;
+        if (graphApiData) {
+            renderTable(graphApiData, activeTsFilter);
+        }
+    });
+
+    // =============== LOAD & DRAW GRAPH + TABLE ===============
+    document.getElementById("loadBtn").addEventListener("click", async () => {
+        const selected = [...document.querySelectorAll(".machine-check:checked")].map(cb => cb.value);
+
+        if (selected.length === 0) {
+            alert("Pilih minimal satu mesin!");
+            return;
+        }
+
+        const startInput = document.getElementById("startTime").value;
+        const endInput = document.getElementById("endTime").value;
+
+        if (!startInput || !endInput) {
+            alert("Harap isi rentang waktu dengan lengkap.");
+            return;
+        }
+
+        const yMin = parseFloat(document.getElementById("yMin").value);
+        const yMax = parseFloat(document.getElementById("yMax").value);
+        const y1Min = parseFloat(document.getElementById("y1Min").value);
+        const y1Max = parseFloat(document.getElementById("y1Max").value);
+
+        const startStr = startInput.replace("T", " ");
+        const endStr = endInput.replace("T", " ");
+
+        const btn = document.getElementById("loadBtn");
+        const btnText = document.getElementById("btnText");
+        const btnLoader = document.getElementById("btnLoader");
+
+        btn.disabled = true;
+        btnText.style.display = "none";
+        btnLoader.style.display = "inline-block";
+
+        try {
+            const url = `/grafik/multi/?machines=${selected.join(",")}&start=${startStr}&end=${endStr}`;
+            const resp = await fetch(url);
+
+            if (!resp.ok) {
+                console.error("Resp error:", resp.status);
+                alert("Gagal mengambil data dari server.");
+                return;
+            }
+
+            const data = await resp.json();
+            graphApiData = data;
+            activeTsFilter = null;
+            showAllRows = false; // Reset to limited view on new data load
+
+            // Store original timestamps for multi-line labels
+            const originalTimestamps = data.timestamps;
+            const labels = data.timestamps.map(t => convertToLocalLabel(t));
+
+            const units = {};
+            if (data.meta) {
+                data.machines.forEach(code => {
+                    if (data.meta[code]) {
+                        units[code] = data.meta[code].unit;
+                    }
+                });
+            } else if (data.units) {
+                Object.assign(units, data.units);
+            }
+
+            const unitSymbols = data.machines.map(code => units[code] || "");
+            const uniqueUnits = [...new Set(unitSymbols)].filter(u => u !== "");
+            const primaryUnit = uniqueUnits[0] || "";
+            const secondaryUnit = uniqueUnits[1] || null;
+
+            // Show/hide secondary axis controls
+            const secondaryAxisControls = document.getElementById("secondaryAxisControls");
+            if (secondaryUnit) {
+                secondaryAxisControls.style.display = "grid";
+            } else {
+                secondaryAxisControls.style.display = "none";
+            }
+
+            // PRINT-FRIENDLY: Grayscale colors + different line styles for B&W clarity
+            // Each machine gets unique combination of: color, line style, width, and point shape
+            const lineStyles = [
+                {
+                    color: '#0f172a',           // Very dark gray (almost black)
+                    borderDash: [],             // Solid line
+                    borderWidth: 2.5,
+                    pointStyle: 'circle',
+                    backgroundColor: 'rgba(15, 23, 42, 0.05)'
+                },
+                {
+                    color: '#1e293b',           // Dark gray
+                    borderDash: [8, 4],         // Dashed line
+                    borderWidth: 2.5,
+                    pointStyle: 'rect',
+                    backgroundColor: 'rgba(30, 41, 59, 0.05)'
+                },
+                {
+                    color: '#334155',           // Medium-dark gray
+                    borderDash: [2, 3],         // Dotted line
+                    borderWidth: 2,
+                    pointStyle: 'triangle',
+                    backgroundColor: 'rgba(51, 65, 85, 0.05)'
+                },
+                {
+                    color: '#475569',           // Medium gray
+                    borderDash: [10, 3, 2, 3],  // Dash-dot line
+                    borderWidth: 2.5,
+                    pointStyle: 'rectRot',
+                    backgroundColor: 'rgba(71, 85, 105, 0.05)'
+                },
+                {
+                    color: '#64748b',           // Light-medium gray
+                    borderDash: [15, 5],        // Long dashed
+                    borderWidth: 2,
+                    pointStyle: 'star',
+                    backgroundColor: 'rgba(100, 116, 139, 0.05)'
+                },
+                {
+                    color: '#000000',           // Pure black
+                    borderDash: [5, 5, 1, 5],   // Complex dash pattern
+                    borderWidth: 3,
+                    pointStyle: 'crossRot',
+                    backgroundColor: 'rgba(0, 0, 0, 0.03)'
+                }
+            ];
+
+            const datasets = data.machines.map((code, idx) => {
+                const series = data.timestamps.map(ts => {
+                    const entry = data.table[ts] && data.table[ts][code];
+                    if (entry && entry.temp !== undefined) {
+                        return entry.temp;
+                    }
+                    return null;
+                });
+
+                const unitSymbol = units[code] || "";
+                let axisId = "y";
+                if (secondaryUnit && unitSymbol === secondaryUnit) {
+                    axisId = "y1";
+                }
+
+                const labelText = unitSymbol ? `${code} (${unitSymbol})` : code;
+                const style = lineStyles[idx % lineStyles.length];
+
+                return {
+                    label: labelText,
+                    data: series,
+                    borderColor: style.color,
+                    backgroundColor: style.backgroundColor,
+                    borderDash: style.borderDash,
+                    borderWidth: style.borderWidth,
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBorderWidth: 2,
+                    pointStyle: style.pointStyle,
+                    tension: 0.3,
+                    spanGaps: true,
+                    yAxisID: axisId,
+                };
+            });
+
+            let yLabelLeft = "Nilai";
+            let yLabelRight = "";
+            if (primaryUnit) yLabelLeft = `Nilai (${primaryUnit})`;
+            if (secondaryUnit) yLabelRight = `Nilai (${secondaryUnit})`;
+
+            // Calculate smart interval for max 12 ticks
+            const totalDataPoints = originalTimestamps.length;
+            const maxTicks = 12;
+
+            // Calculate interval in minutes (each data point is 1 minute apart in most cases)
+            const totalMinutes = totalDataPoints; // Assuming 1-minute intervals
+            const intervalMinutes = Math.ceil(totalMinutes / maxTicks);
+
+            // Round to nice intervals: 5, 10, 15, 30, 60, 120, 180, 240 minutes
+            let displayInterval;
+            if (intervalMinutes <= 5) displayInterval = 5;
+            else if (intervalMinutes <= 10) displayInterval = 10;
+            else if (intervalMinutes <= 15) displayInterval = 15;
+            else if (intervalMinutes <= 30) displayInterval = 30;
+            else if (intervalMinutes <= 60) displayInterval = 60;
+            else if (intervalMinutes <= 120) displayInterval = 120;
+            else if (intervalMinutes <= 180) displayInterval = 180;
+            else displayInterval = 240;
+
+            const scales = {
+                x: {
+                    title: { display: true, text: "Waktu", color: "#374151", font: { size: 11 } },
+                    grid: {
+                        display: true,
+                        color: "#94a3b8",
+                        drawOnChartArea: true,
+                        lineWidth: 1
+                    },
+                    border: {
+                        display: true,
+                        color: "#64748b"
+                    },
+                    ticks: {
+                        color: "#1e293b",
+                        maxTicksLimit: 50,
+                        maxRotation: 0,
+                        autoSkip: false,
+                        font: { size: 9 },
+                        callback: function (val, index) {
+                            const rawLabel = this.getLabelForValue(val);
+                            const origTs = originalTimestamps[val];
+
+                            if (!origTs) return null;
+
+                            // Parse timestamp: "YYYY-MM-DD HH:MM"
+                            const [date, time] = origTs.split(" ");
+                            const [y, m, d] = date.split("-");
+                            const [hh, mm] = time.split(":");
+                            const dt = new Date(y, m - 1, d, hh, mm);
+
+                            const minutes = dt.getHours() * 60 + dt.getMinutes();
+
+                            // Show tick if it matches the interval
+                            if (minutes % displayInterval === 0) {
+                                const pad = (n) => String(n).padStart(2, "0");
+                                const dateStr = `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}`;
+                                const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+
+                                // Return array for multi-line label [date, time]
+                                return [dateStr, timeStr];
+                            }
+                            return null;
+                        }
+                    },
+                },
+                y: {
+                    type: "linear",
+                    position: "left",
+                    title: { display: true, text: yLabelLeft, color: "#374151", font: { size: 11 } },
+                    min: isNaN(yMin) ? undefined : yMin,
+                    max: isNaN(yMax) ? undefined : yMax,
+                    grid: {
+                        color: "#94a3b8",
+                        lineWidth: 1
+                    },
+                    border: {
+                        display: true,
+                        color: "#64748b",
+                        width: 2
+                    },
+                    ticks: {
+                        color: "#1e293b",
+                        font: { size: 10 }
+                    },
+                },
+            };
+
+            if (secondaryUnit) {
+                scales.y1 = {
+                    type: "linear",
+                    position: "right",
+                    title: { display: true, text: yLabelRight, color: "#374151", font: { size: 11 } },
+                    min: isNaN(y1Min) ? undefined : y1Min,
+                    max: isNaN(y1Max) ? undefined : y1Max,
+                    grid: { drawOnChartArea: false },
+                    border: {
+                        display: true,
+                        color: "#64748b",
+                        width: 2
+                    },
+                    ticks: {
+                        color: "#1e293b",
+                        font: { size: 10 }
+                    },
+                };
+            }
+
+            // Custom plugin to draw minor ticks and minor grid lines
+            const minorTicksPlugin = {
+                id: 'minorTicks',
+                afterDraw: (chart) => {
+                    const { ctx, chartArea, scales } = chart;
+                    const minorTickLength = 4;
+                    const minorTickWidth = 1;
+                    const minorTickColor = '#94a3b8';
+                    const minorGridColor = '#cbd5e1';  // Medium-light gray for subtle grid
+                    const minorGridWidth = 0.5;         // Thin line
+
+                    ctx.save();
+
+                    // FIRST: Draw minor grid lines (horizontal) - subtle background
+                    ctx.lineWidth = minorGridWidth;
+                    ctx.strokeStyle = minorGridColor;
+                    ctx.setLineDash([2, 2]);  // Dotted pattern for subtlety
+
+                    if (scales.y) {
+                        const yAxis = scales.y;
+                        const ticks = yAxis.ticks;
+
+                        for (let i = 0; i < ticks.length - 1; i++) {
+                            const currentValue = ticks[i].value;
+                            const nextValue = ticks[i + 1].value;
+                            const step = (nextValue - currentValue) / 6;
+
+                            for (let j = 1; j <= 5; j++) {
+                                const minorValue = currentValue + (step * j);
+                                const yPos = yAxis.getPixelForValue(minorValue);
+
+                                // Draw horizontal grid line
+                                ctx.beginPath();
+                                ctx.moveTo(chartArea.left, yPos);
+                                ctx.lineTo(chartArea.right, yPos);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+
+                    // Draw minor grid lines (vertical) for X axis
+                    if (scales.x) {
+                        const xAxis = scales.x;
+                        const ticks = xAxis.ticks;
+
+                        for (let i = 0; i < ticks.length - 1; i++) {
+                            const currentIdx = ticks[i].value;
+                            const nextIdx = ticks[i + 1].value;
+                            const step = (nextIdx - currentIdx) / 6;
+
+                            for (let j = 1; j <= 5; j++) {
+                                const minorIdx = currentIdx + (step * j);
+                                const xPos = xAxis.getPixelForValue(minorIdx);
+
+                                // Draw vertical grid line
+                                ctx.beginPath();
+                                ctx.moveTo(xPos, chartArea.top);
+                                ctx.lineTo(xPos, chartArea.bottom);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+
+                    // SECOND: Draw minor tick marks on borders - more visible
+                    ctx.setLineDash([]);  // Reset to solid
+                    ctx.lineWidth = minorTickWidth;
+                    ctx.strokeStyle = minorTickColor;
+
+                    // Draw minor ticks for Y axis (left)
+                    if (scales.y) {
+                        const yAxis = scales.y;
+                        const ticks = yAxis.ticks;
+
+                        for (let i = 0; i < ticks.length - 1; i++) {
+                            const currentValue = ticks[i].value;
+                            const nextValue = ticks[i + 1].value;
+                            const step = (nextValue - currentValue) / 6;
+
+                            for (let j = 1; j <= 5; j++) {
+                                const minorValue = currentValue + (step * j);
+                                const yPos = yAxis.getPixelForValue(minorValue);
+
+                                ctx.beginPath();
+                                ctx.moveTo(chartArea.left - minorTickLength, yPos);
+                                ctx.lineTo(chartArea.left, yPos);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+
+                    // Draw minor ticks for Y1 axis (right)
+                    if (scales.y1) {
+                        const y1Axis = scales.y1;
+                        const ticks = y1Axis.ticks;
+
+                        for (let i = 0; i < ticks.length - 1; i++) {
+                            const currentValue = ticks[i].value;
+                            const nextValue = ticks[i + 1].value;
+                            const step = (nextValue - currentValue) / 6;
+
+                            for (let j = 1; j <= 5; j++) {
+                                const minorValue = currentValue + (step * j);
+                                const yPos = y1Axis.getPixelForValue(minorValue);
+
+                                ctx.beginPath();
+                                ctx.moveTo(chartArea.right, yPos);
+                                ctx.lineTo(chartArea.right + minorTickLength, yPos);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+
+                    // Draw minor ticks for X axis
+                    if (scales.x) {
+                        const xAxis = scales.x;
+                        const ticks = xAxis.ticks;
+
+                        for (let i = 0; i < ticks.length - 1; i++) {
+                            const currentIdx = ticks[i].value;
+                            const nextIdx = ticks[i + 1].value;
+                            const step = (nextIdx - currentIdx) / 6;
+
+                            for (let j = 1; j <= 5; j++) {
+                                const minorIdx = currentIdx + (step * j);
+                                const xPos = xAxis.getPixelForValue(minorIdx);
+
+                                ctx.beginPath();
+                                ctx.moveTo(xPos, chartArea.bottom);
+                                ctx.lineTo(xPos, chartArea.bottom + minorTickLength);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+
+                    ctx.restore();
+                }
+            };
+
+            // Show swap button only when both axes exist
+            const btnSwapAxes = document.getElementById("btnSwapAxes");
+            if (scales.y1) {
+                btnSwapAxes.style.display = "block";
+            } else {
+                btnSwapAxes.style.display = "none";
+            }
+
+            if (chart) chart.destroy();
+
+            const ctx = document.getElementById("machineChart").getContext("2d");
+            chart = new Chart(ctx, {
+                type: "line",
+                data: { labels, datasets },
+                plugins: [minorTicksPlugin],  // Register minor ticks plugin
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    plugins: {
+                        minorTicks: {},  // Enable minor ticks plugin
+                        legend: {
+                            labels: {
+                                color: "#1f2937",
+                                font: { family: "'Spline Sans', sans-serif", size: 11, weight: 600 },
+                                padding: 10,
+                                usePointStyle: true,
+                                pointStyle: 'line',
+                                boxWidth: 40,
+                                boxHeight: 3,
+                                generateLabels: function (chart) {
+                                    const datasets = chart.data.datasets;
+                                    return datasets.map((dataset, i) => ({
+                                        text: dataset.label,
+                                        fillStyle: dataset.borderColor,
+                                        strokeStyle: dataset.borderColor,
+                                        lineWidth: dataset.borderWidth,
+                                        lineDash: dataset.borderDash,
+                                        hidden: !chart.isDatasetVisible(i),
+                                        datasetIndex: i
+                                    }));
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: "rgba(255,255,255,0.95)",
+                            titleColor: "#1f2937",
+                            bodyColor: "#4b5563",
+                            borderColor: "#e5e7eb",
+                            borderWidth: 1,
+                            padding: 10,
+                            cornerRadius: 6,
+                            titleFont: { family: "'Spline Sans', sans-serif", size: 11, weight: 600 },
+                            bodyFont: { family: "'Spline Sans', sans-serif", size: 10 }
+                        },
+                        zoom: {
+                            zoom: {
+                                wheel: {
+                                    enabled: true,
+                                    speed: 0.1,
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                drag: {
+                                    enabled: true,
+                                    modifierKey: 'shift',
+                                    backgroundColor: 'rgba(249, 245, 6, 0.2)',
+                                    borderColor: 'rgb(249, 245, 6)',
+                                    borderWidth: 2,
+                                },
+                                mode: 'xy',
+                                onZoomComplete: ({ chart }) => {
+                                    // Show reset button when zoom happens
+                                    document.getElementById("btnResetZoom").style.display = "inline-flex";
+                                }
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'xy',
+                                modifierKey: 'ctrl',
+                                threshold: 10,
+                                onPanComplete: ({ chart }) => {
+                                    // Show reset button when pan happens
+                                    document.getElementById("btnResetZoom").style.display = "inline-flex";
+                                }
+                            },
+                            limits: {
+                                x: { min: 'original', max: 'original' },
+                                y: { min: 'original', max: 'original' },
+                            },
+                        },
+                    },
+                    onClick: (evt, elements) => {
+                        if (!graphApiData || !elements.length) {
+                            clearTableFilter();
+                            return;
+                        }
+                        const el = elements[0];
+                        const idx = el.index;
+                        const ts = graphApiData.timestamps[idx];
+                        activeTsFilter = ts;
+                        renderTable(graphApiData, ts);
+                    },
+                    scales: scales,
+                },
+            });
+
+            // Store chart data for HD export
+            chartExportData = {
+                labels: labels,
+                datasets: datasets,
+                scales: scales,
+                legendConfig: {
+                    color: "#1f2937",
+                    usePointStyle: true,
+                    pointStyle: 'line',
+                    generateLabels: function (chart) {
+                        const datasets = chart.data.datasets;
+                        return datasets.map((dataset, i) => ({
+                            text: dataset.label,
+                            fillStyle: dataset.borderColor,
+                            strokeStyle: dataset.borderColor,
+                            lineWidth: dataset.borderWidth,
+                            lineDash: dataset.borderDash,
+                            hidden: !chart.isDatasetVisible(i),
+                            datasetIndex: i
+                        }));
+                    }
+                }
+            };
+
+            renderTable(graphApiData, null);
+            calculateAndRenderAnalysis(graphApiData);
+
+        } catch (err) {
+            console.error("Error load grafik:", err);
+            alert("Terjadi kesalahan saat memuat data grafik.");
+        } finally {
+            btn.disabled = false;
+            btnText.style.display = "inline";
+            btnLoader.style.display = "none";
+        }
+    });
+
+    // Reset Zoom Button
+    document.getElementById("btnResetZoom").addEventListener("click", () => {
+        if (chart) {
+            chart.resetZoom();
+            document.getElementById("btnResetZoom").style.display = "none";
+        }
+    });
+
+    // Swap Axes Button - Tukar posisi sumbu kiri-kanan
+    document.getElementById("btnSwapAxes").addEventListener("click", () => {
+        if (!chart || !chartExportData) return;
+
+        // Check if both axes exist
+        const hasY = chart.options.scales.y;
+        const hasY1 = chart.options.scales.y1;
+
+        if (!hasY || !hasY1) {
+            alert("Kedua sumbu harus ada untuk menukar posisi.");
+            return;
+        }
+
+        // Save current axis configurations
+        const tempY = JSON.parse(JSON.stringify(chart.options.scales.y));
+        const tempY1 = JSON.parse(JSON.stringify(chart.options.scales.y1));
+
+        // Swap positions in chart scales
+        chart.options.scales.y = {
+            ...tempY1,
+            position: 'left',
+            grid: {
+                ...tempY.grid  // Use left grid (with drawOnChartArea)
+            }
+        };
+
+        chart.options.scales.y1 = {
+            ...tempY,
+            position: 'right',
+            grid: { drawOnChartArea: false }  // Right doesn't draw grid
+        };
+
+        // Also update chartExportData for future exports
+        chartExportData.scales.y = JSON.parse(JSON.stringify(chart.options.scales.y));
+        chartExportData.scales.y1 = JSON.parse(JSON.stringify(chart.options.scales.y1));
+
+        // Swap dataset yAxisID associations
+        chart.data.datasets.forEach(ds => {
+            if (ds.yAxisID === 'y') {
+                ds.yAxisID = 'y1';
+            } else if (ds.yAxisID === 'y1') {
+                ds.yAxisID = 'y';
+            }
+        });
+
+        // Also update chartExportData datasets
+        chartExportData.datasets.forEach(ds => {
+            if (ds.yAxisID === 'y') {
+                ds.yAxisID = 'y1';
+            } else if (ds.yAxisID === 'y1') {
+                ds.yAxisID = 'y';
+            }
+        });
+
+        // Update chart
+        chart.update();
+    });
+
+    document.getElementById("tariffInput").addEventListener("change", () => {
+        if (graphApiData) {
+            calculateAndRenderAnalysis(graphApiData);
+        }
+    });
+
+    function calculateAndRenderAnalysis(data) {
+        const tariff = parseFloat(document.getElementById("tariffInput").value) || 0;
+        const tbody = document.querySelector("#analysisTable tbody");
+        tbody.innerHTML = "";
+
+        if (!data || !data.timestamps || data.timestamps.length < 2) {
+            tbody.innerHTML = "<tr><td colspan='7' class='text-center'>Data tidak cukup</td></tr>";
+            return;
+        }
+
+        const dates = data.timestamps.map(ts => {
+            const [dPart, tPart] = ts.split(" ");
+            const [y, m, d] = dPart.split("-").map(Number);
+            const [hh, mm] = tPart.split(":").map(Number);
+            return new Date(y, m - 1, d, hh, mm);
+        });
+
+        data.machines.forEach(code => {
+            const meta = data.meta[code] || {};
+            const unit = meta.unit || "";
+            const nomPower = meta.nominal_power || null;
+
+            let values = [];
+            let cleanPoints = [];
+
+            for (let i = 0; i < data.timestamps.length; i++) {
+                const tsKey = data.timestamps[i];
+                const entry = data.table[tsKey] && data.table[tsKey][code];
+                const val = entry && entry.temp !== undefined ? entry.temp : null;
+                if (val !== null) {
+                    values.push(val);
+                    cleanPoints.push({ date: dates[i], val: val });
+                }
+            }
+
+            if (values.length === 0) {
+                tbody.innerHTML += `<tr><td>${code}</td><td colspan="6" class="text-muted">Tidak ada data</td></tr>`;
+                return;
+            }
+
+            const minVal = Math.min(...values);
+            const maxVal = Math.max(...values);
+            const sumVal = values.reduce((a, b) => a + b, 0);
+            const avgVal = sumVal / values.length;
+
+            let lfStr = "-";
+            if (nomPower && nomPower > 0) {
+                const lf = (avgVal / nomPower) * 100;
+                lfStr = `${lf.toFixed(1)}%`;
+            }
+
+            let totalEnergy = 0;
+            const isPower = unit.toLowerCase().includes("kw");
+
+            if (isPower && cleanPoints.length > 1) {
+                for (let i = 1; i < cleanPoints.length; i++) {
+                    const p1 = cleanPoints[i - 1];
+                    const p2 = cleanPoints[i];
+                    const diffMs = p2.date - p1.date;
+                    const diffHours = diffMs / (1000 * 3600);
+                    const avgP = (p1.val + p2.val) / 2;
+                    totalEnergy += avgP * diffHours;
+                }
+            }
+
+            let energyStr = "-";
+            let costStr = "-";
+
+            if (isPower) {
+                energyStr = totalEnergy.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " kWh";
+                const totalCost = totalEnergy * tariff;
+                costStr = "Rp " + totalCost.toLocaleString("id-ID", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+
+            const tr = `
+                <tr>
+                    <td class="fw-bold">${code} <small class="text-muted">(${unit})</small></td>
+                    <td>${minVal.toFixed(2)}</td>
+                    <td>${maxVal.toFixed(2)}</td>
+                    <td>${avgVal.toFixed(2)}</td>
+                    <td>${lfStr}</td>
+                    <td class="${isPower ? 'text-success fw-bold' : ''}">${energyStr}</td>
+                    <td class="${isPower ? 'text-warning fw-bold' : ''}">${costStr}</td>
+                </tr>
+            `;
+            tbody.innerHTML += tr;
+        });
+    }
+
+    // ========================= EXPORT FUNCTIONS =========================
+    document.getElementById("btnExportCSV").addEventListener("click", () => {
+        const table = document.getElementById("dataTable");
+        const rows = table.querySelectorAll("tr");
+        if (!rows.length) {
+            alert("Tidak ada data tabel untuk diexport.");
+            return;
+        }
+
+        let csv = [];
+        rows.forEach(row => {
+            const cols = row.querySelectorAll("th, td");
+            const line = [...cols].map(cell => {
+                let text = cell.innerText.replace(/"/g, '""');
+                return `"${text}"`;
+            }).join(",");
+            csv.push(line);
+        });
+
+        const blob = new Blob([csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "grafik_mesin_data.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    // Store chart data globally for HD export
+    let chartExportData = null;
+
+    document.getElementById("btnExportPNG").addEventListener("click", () => {
+        if (!chart || !chartExportData) {
+            alert("Grafik belum tersedia. Tampilkan grafik dulu.");
+            return;
+        }
+
+        // Create canvas with golden ratio (1.6:1) at 300 DPI - perfect for printing with margins
+        const hdCanvas = document.createElement('canvas');
+        const scaleFactor = 3;
+        // Size: 3200 x 2000 pixels = 270mm x 169mm at 300 DPI
+        // Slightly smaller than A4 (297x210mm) - fits with comfortable margins
+        hdCanvas.width = 3200;   // Golden ratio width
+        hdCanvas.height = 1500;  // Golden ratio height (1.6:1 aspect ratio)
+
+        const hdCtx = hdCanvas.getContext('2d');
+
+        // Set white background
+        hdCtx.fillStyle = 'white';
+        hdCtx.fillRect(0, 0, hdCanvas.width, hdCanvas.height);
+
+        // Recreate all datasets with scaled properties
+        const hdDatasets = chartExportData.datasets.map(ds => ({
+            label: ds.label,
+            data: ds.data,
+            borderColor: ds.borderColor,
+            backgroundColor: ds.backgroundColor,
+            borderDash: ds.borderDash ? ds.borderDash.map(d => d * scaleFactor) : [],
+            borderWidth: ds.borderWidth * scaleFactor,
+            fill: ds.fill,
+            pointRadius: 0,
+            pointHoverRadius: ds.pointHoverRadius * scaleFactor,
+            pointStyle: ds.pointStyle,
+            tension: ds.tension,
+            spanGaps: ds.spanGaps,
+            yAxisID: ds.yAxisID
+        }));
+
+        // Clone and scale all axis configurations
+        const hdScales = {};
+
+        // Clone X axis
+        if (chartExportData.scales.x) {
+            hdScales.x = {
+                ...chartExportData.scales.x,
+                grid: {
+                    ...chartExportData.scales.x.grid,
+                    lineWidth: (chartExportData.scales.x.grid.lineWidth || 1) * scaleFactor
+                },
+                ticks: {
+                    ...chartExportData.scales.x.ticks,
+                    font: {
+                        ...chartExportData.scales.x.ticks.font,
+                        size: (chartExportData.scales.x.ticks.font?.size || 9) * scaleFactor
+                    }
+                },
+                title: {
+                    ...chartExportData.scales.x.title,
+                    font: {
+                        size: (chartExportData.scales.x.title?.font?.size || 11) * scaleFactor
+                    }
+                }
+            };
+        }
+
+        // Clone Y axis
+        if (chartExportData.scales.y) {
+            hdScales.y = {
+                ...chartExportData.scales.y,
+                grid: {
+                    ...chartExportData.scales.y.grid,
+                    lineWidth: (chartExportData.scales.y.grid.lineWidth || 1) * scaleFactor
+                },
+                ticks: {
+                    ...chartExportData.scales.y.ticks,
+                    font: {
+                        size: (chartExportData.scales.y.ticks.font?.size || 10) * scaleFactor
+                    }
+                },
+                title: {
+                    ...chartExportData.scales.y.title,
+                    font: {
+                        size: (chartExportData.scales.y.title?.font?.size || 11) * scaleFactor
+                    }
+                }
+            };
+        }
+
+        // Clone Y1 axis if exists
+        if (chartExportData.scales.y1) {
+            hdScales.y1 = {
+                ...chartExportData.scales.y1,
+                grid: {
+                    ...chartExportData.scales.y1.grid,
+                    lineWidth: chartExportData.scales.y1.grid.lineWidth ? chartExportData.scales.y1.grid.lineWidth * scaleFactor : undefined
+                },
+                ticks: {
+                    ...chartExportData.scales.y1.ticks,
+                    font: {
+                        size: (chartExportData.scales.y1.ticks.font?.size || 10) * scaleFactor
+                    }
+                },
+                title: {
+                    ...chartExportData.scales.y1.title,
+                    font: {
+                        size: (chartExportData.scales.y1.title?.font?.size || 11) * scaleFactor
+                    }
+                }
+            };
+        }
+
+
+
+        // Create scaled minor ticks plugin for HD export
+        const hdMinorTicksPlugin = {
+            id: 'minorTicks',
+            afterDraw: (chart) => {
+                const { ctx, chartArea, scales } = chart;
+                const minorTickLength = 4 * scaleFactor;
+                const minorTickWidth = 1 * scaleFactor;
+                const minorTickColor = '#94a3b8';
+                const minorGridColor = '#cbd5e1';
+                const minorGridWidth = 0.5 * scaleFactor;
+
+                ctx.save();
+
+                // FIRST: Draw minor grid lines - subtle background
+                ctx.lineWidth = minorGridWidth;
+                ctx.strokeStyle = minorGridColor;
+                ctx.setLineDash([2 * scaleFactor, 2 * scaleFactor]);
+
+                // Horizontal minor grids
+                if (scales.y) {
+                    const yAxis = scales.y;
+                    const ticks = yAxis.ticks;
+
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const currentValue = ticks[i].value;
+                        const nextValue = ticks[i + 1].value;
+                        const step = (nextValue - currentValue) / 6;
+
+                        for (let j = 1; j <= 5; j++) {
+                            const minorValue = currentValue + (step * j);
+                            const yPos = yAxis.getPixelForValue(minorValue);
+
+                            ctx.beginPath();
+                            ctx.moveTo(chartArea.left, yPos);
+                            ctx.lineTo(chartArea.right, yPos);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Vertical minor grids
+                if (scales.x) {
+                    const xAxis = scales.x;
+                    const ticks = xAxis.ticks;
+
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const currentIdx = ticks[i].value;
+                        const nextIdx = ticks[i + 1].value;
+                        const step = (nextIdx - currentIdx) / 6;
+
+                        for (let j = 1; j <= 5; j++) {
+                            const minorIdx = currentIdx + (step * j);
+                            const xPos = xAxis.getPixelForValue(minorIdx);
+
+                            ctx.beginPath();
+                            ctx.moveTo(xPos, chartArea.top);
+                            ctx.lineTo(xPos, chartArea.bottom);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // SECOND: Draw minor tick marks
+                ctx.setLineDash([]);
+                ctx.lineWidth = minorTickWidth;
+                ctx.strokeStyle = minorTickColor;
+
+                // Draw minor ticks for Y axis (left)
+                if (scales.y) {
+                    const yAxis = scales.y;
+                    const ticks = yAxis.ticks;
+
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const currentValue = ticks[i].value;
+                        const nextValue = ticks[i + 1].value;
+                        const step = (nextValue - currentValue) / 6;
+
+                        for (let j = 1; j <= 5; j++) {
+                            const minorValue = currentValue + (step * j);
+                            const yPos = yAxis.getPixelForValue(minorValue);
+
+                            ctx.beginPath();
+                            ctx.moveTo(chartArea.left - minorTickLength, yPos);
+                            ctx.lineTo(chartArea.left, yPos);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw minor ticks for Y1 axis (right)
+                if (scales.y1) {
+                    const y1Axis = scales.y1;
+                    const ticks = y1Axis.ticks;
+
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const currentValue = ticks[i].value;
+                        const nextValue = ticks[i + 1].value;
+                        const step = (nextValue - currentValue) / 6;
+
+                        for (let j = 1; j <= 5; j++) {
+                            const minorValue = currentValue + (step * j);
+                            const yPos = y1Axis.getPixelForValue(minorValue);
+
+                            ctx.beginPath();
+                            ctx.moveTo(chartArea.right, yPos);
+                            ctx.lineTo(chartArea.right + minorTickLength, yPos);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw minor ticks for X axis
+                if (scales.x) {
+                    const xAxis = scales.x;
+                    const ticks = xAxis.ticks;
+
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const currentIdx = ticks[i].value;
+                        const nextIdx = ticks[i + 1].value;
+                        const step = (nextIdx - currentIdx) / 6;
+
+                        for (let j = 1; j <= 5; j++) {
+                            const minorIdx = currentIdx + (step * j);
+                            const xPos = xAxis.getPixelForValue(minorIdx);
+
+                            ctx.beginPath();
+                            ctx.moveTo(xPos, chartArea.bottom);
+                            ctx.lineTo(xPos, chartArea.bottom + minorTickLength);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                ctx.restore();
+            }
+        };
+
+        // Create HD chart
+        const hdChart = new Chart(hdCtx, {
+            type: 'line',
+            data: {
+                labels: chartExportData.labels,
+                datasets: hdDatasets
+            },
+            plugins: [hdMinorTicksPlugin],  // Register HD minor ticks plugin
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                animation: false,
+                devicePixelRatio: 1,
+                plugins: {
+                    minorTicks: {},  // Enable minor ticks plugin
+                    legend: {
+                        labels: {
+                            ...chartExportData.legendConfig,
+                            font: {
+                                family: "'Spline Sans', sans-serif",
+                                size: 11 * scaleFactor,
+                                weight: 600
+                            },
+                            padding: 10 * scaleFactor,
+                            boxWidth: 40 * scaleFactor,
+                            boxHeight: 3 * scaleFactor
+                        }
+                    },
+                    tooltip: { enabled: false }
+                },
+                scales: hdScales
+            }
+        });
+
+        // Wait for render then download
+        setTimeout(() => {
+            const url = hdCanvas.toDataURL('image/png', 1.0);
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            link.download = `grafik_mesin_HD_${timestamp}.png`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Cleanup
+            hdChart.destroy();
+        }, 500);
+    });
+
+    // Print Button - HD Quality Print
+    document.getElementById("btnPrint").addEventListener("click", () => {
+        if (!chart || !chartExportData) {
+            alert("Grafik belum tersedia. Tampilkan grafik dulu.");
+            return;
+        }
+
+        // Use same HD canvas generation as PNG export
+        const hdCanvas = document.createElement('canvas');
+        const scaleFactor = 3;
+        hdCanvas.width = 3200;
+        hdCanvas.height = 1500;
+
+        const hdCtx = hdCanvas.getContext('2d');
+        hdCtx.fillStyle = 'white';
+        hdCtx.fillRect(0, 0, hdCanvas.width, hdCanvas.height);
+
+        // Recreate datasets with scaled properties
+        const hdDatasets = chartExportData.datasets.map(ds => ({
+            label: ds.label,
+            data: ds.data,
+            borderColor: ds.borderColor,
+            backgroundColor: ds.backgroundColor,
+            borderDash: ds.borderDash ? ds.borderDash.map(d => d * scaleFactor) : [],
+            borderWidth: ds.borderWidth * scaleFactor,
+            fill: ds.fill,
+            pointRadius: 0,
+            pointHoverRadius: ds.pointHoverRadius * scaleFactor,
+            pointStyle: ds.pointStyle,
+            tension: ds.tension,
+            spanGaps: ds.spanGaps,
+            yAxisID: ds.yAxisID
+        }));
+
+        // Clone and scale axes
+        const hdScales = {};
+
+        if (chartExportData.scales.x) {
+            hdScales.x = {
+                ...chartExportData.scales.x,
+                grid: {
+                    ...chartExportData.scales.x.grid,
+                    lineWidth: (chartExportData.scales.x.grid.lineWidth || 1) * scaleFactor
+                },
+                ticks: {
+                    ...chartExportData.scales.x.ticks,
+                    font: {
+                        ...chartExportData.scales.x.ticks.font,
+                        size: (chartExportData.scales.x.ticks.font?.size || 9) * scaleFactor
+                    }
+                },
+                title: {
+                    ...chartExportData.scales.x.title,
+                    font: { size: (chartExportData.scales.x.title?.font?.size || 11) * scaleFactor }
+                }
+            };
+        }
+
+        if (chartExportData.scales.y) {
+            hdScales.y = {
+                ...chartExportData.scales.y,
+                grid: {
+                    ...chartExportData.scales.y.grid,
+                    lineWidth: (chartExportData.scales.y.grid.lineWidth || 1) * scaleFactor
+                },
+                ticks: {
+                    ...chartExportData.scales.y.ticks,
+                    font: { size: (chartExportData.scales.y.ticks.font?.size || 10) * scaleFactor }
+                },
+                title: {
+                    ...chartExportData.scales.y.title,
+                    font: { size: (chartExportData.scales.y.title?.font?.size || 11) * scaleFactor }
+                }
+            };
+        }
+
+        if (chartExportData.scales.y1) {
+            hdScales.y1 = {
+                ...chartExportData.scales.y1,
+                grid: {
+                    ...chartExportData.scales.y1.grid,
+                    lineWidth: chartExportData.scales.y1.grid.lineWidth ? chartExportData.scales.y1.grid.lineWidth * scaleFactor : undefined
+                },
+                ticks: {
+                    ...chartExportData.scales.y1.ticks,
+                    font: { size: (chartExportData.scales.y1.ticks.font?.size || 10) * scaleFactor }
+                },
+                title: {
+                    ...chartExportData.scales.y1.title,
+                    font: { size: (chartExportData.scales.y1.title?.font?.size || 11) * scaleFactor }
+                }
+            };
+        }
+
+        // HD minor ticks plugin
+        const hdMinorTicksPlugin = {
+            id: 'minorTicks',
+            afterDraw: (chart) => {
+                const { ctx, chartArea, scales } = chart;
+                const minorTickLength = 4 * scaleFactor;
+                const minorTickWidth = 1 * scaleFactor;
+                const minorTickColor = '#94a3b8';
+                const minorGridColor = '#cbd5e1';
+                const minorGridWidth = 0.5 * scaleFactor;
+
+                ctx.save();
+                ctx.lineWidth = minorGridWidth;
+                ctx.strokeStyle = minorGridColor;
+                ctx.setLineDash([2 * scaleFactor, 2 * scaleFactor]);
+
+                if (scales.y) {
+                    const yAxis = scales.y;
+                    const ticks = yAxis.ticks;
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const step = (ticks[i + 1].value - ticks[i].value) / 6;
+                        for (let j = 1; j <= 5; j++) {
+                            const yPos = yAxis.getPixelForValue(ticks[i].value + (step * j));
+                            ctx.beginPath();
+                            ctx.moveTo(chartArea.left, yPos);
+                            ctx.lineTo(chartArea.right, yPos);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                if (scales.x) {
+                    const xAxis = scales.x;
+                    const ticks = xAxis.ticks;
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const step = (ticks[i + 1].value - ticks[i].value) / 6;
+                        for (let j = 1; j <= 5; j++) {
+                            const xPos = xAxis.getPixelForValue(ticks[i].value + (step * j));
+                            ctx.beginPath();
+                            ctx.moveTo(xPos, chartArea.top);
+                            ctx.lineTo(xPos, chartArea.bottom);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                ctx.setLineDash([]);
+                ctx.lineWidth = minorTickWidth;
+                ctx.strokeStyle = minorTickColor;
+
+                if (scales.y) {
+                    const yAxis = scales.y;
+                    const ticks = yAxis.ticks;
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const step = (ticks[i + 1].value - ticks[i].value) / 6;
+                        for (let j = 1; j <= 5; j++) {
+                            const yPos = yAxis.getPixelForValue(ticks[i].value + (step * j));
+                            ctx.beginPath();
+                            ctx.moveTo(chartArea.left - minorTickLength, yPos);
+                            ctx.lineTo(chartArea.left, yPos);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                if (scales.y1) {
+                    const y1Axis = scales.y1;
+                    const ticks = y1Axis.ticks;
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const step = (ticks[i + 1].value - ticks[i].value) / 6;
+                        for (let j = 1; j <= 5; j++) {
+                            const yPos = y1Axis.getPixelForValue(ticks[i].value + (step * j));
+                            ctx.beginPath();
+                            ctx.moveTo(chartArea.right, yPos);
+                            ctx.lineTo(chartArea.right + minorTickLength, yPos);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                if (scales.x) {
+                    const xAxis = scales.x;
+                    const ticks = xAxis.ticks;
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        const step = (ticks[i + 1].value - ticks[i].value) / 6;
+                        for (let j = 1; j <= 5; j++) {
+                            const xPos = xAxis.getPixelForValue(ticks[i].value + (step * j));
+                            ctx.beginPath();
+                            ctx.moveTo(xPos, chartArea.bottom);
+                            ctx.lineTo(xPos, chartArea.bottom + minorTickLength);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                ctx.restore();
+            }
+        };
+
+        // Create HD chart
+        const hdChart = new Chart(hdCtx, {
+            type: 'line',
+            data: { labels: chartExportData.labels, datasets: hdDatasets },
+            plugins: [hdMinorTicksPlugin],
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                animation: false,
+                devicePixelRatio: 1,
+                plugins: {
+                    minorTicks: {},
+                    legend: {
+                        labels: {
+                            ...chartExportData.legendConfig,
+                            font: {
+                                family: "'Spline Sans', sans-serif",
+                                size: 11 * scaleFactor,
+                                weight: 600
+                            },
+                            padding: 10 * scaleFactor,
+                            boxWidth: 40 * scaleFactor,
+                            boxHeight: 3 * scaleFactor
+                        }
+                    },
+                    tooltip: { enabled: false }
+                },
+                scales: hdScales
+            }
+        });
+
+        // Wait for render then print
+        setTimeout(() => {
+            const imgData = hdCanvas.toDataURL('image/png', 1.0);
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Print Grafik Mesin HD</title>
+                    <style>
+                        @page {
+                            size: landscape;
+                            margin: 10mm;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                        }
+                        img {
+                            max-width: 100%;
+                            height: auto;
+                            display: block;
+                        }
+                        @media print {
+                            body { margin: 0; }
+                            img {
+                                max-width: 100%;
+                                page-break-inside: avoid;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img src="${imgData}" alt="Grafik Mesin HD">
+                </body>
+                </html>
+            `);
+
+            printWindow.document.close();
+            printWindow.onload = function () {
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.onafterprint = function () {
+                        printWindow.close();
+                    };
+                }, 250);
+            };
+
+            hdChart.destroy();
+        }, 500);
+    });
+
+    document.getElementById("btnExportPDF").addEventListener("click", () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF("l", "mm", "a4");
+        let currentY = 10;
+
+        if (chart) {
+            const canvas = document.getElementById("machineChart");
+            const imgData = canvas.toDataURL("image/png", 1.0);
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 10;
+            const pdfWidth = pageWidth - margin * 2;
+            const pdfHeight = (canvas.height / canvas.width) * pdfWidth;
+            doc.addImage(imgData, "PNG", margin, currentY, pdfWidth, pdfHeight);
+            currentY += pdfHeight + 10;
+        } else {
+            doc.text("Grafik belum tersedia untuk rentang waktu ini.", 10, currentY);
+            currentY += 10;
+        }
+
+        const table = document.getElementById("dataTable");
+        const headRow = table.querySelectorAll("thead tr th");
+        const bodyRows = table.querySelectorAll("tbody tr");
+
+        if (headRow.length && bodyRows.length) {
+            const head = [[...headRow].map(th => th.innerText)];
+            const body = [];
+            bodyRows.forEach(tr => {
+                const row = [...tr.querySelectorAll("td")].map(td => td.innerText);
+                body.push(row);
+            });
+
+            doc.autoTable({
+                startY: currentY,
+                head: head,
+                body: body,
+                styles: { fontSize: 7 },
+                headStyles: { fillColor: [15, 23, 42] },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+            });
+        } else if (!chart) {
+            doc.text("Tidak ada data untuk diexport.", 10, currentY + 10);
+        }
+
+        doc.save("grafik_mesin.pdf");
+    });
+
+    // =============== STEAM & HTO ANALYTICS CHARTS ===============
+    let steamChart;
+    let htoChart;
+
+    async function loadSteamHtoAnalytics() {
+        const startInput = document.getElementById("startTime").value;
+        const endInput = document.getElementById("endTime").value;
+
+        if (!startInput || !endInput) {
+            return; // Don't load if no time range
+        }
+
+        const startStr = startInput.replace("T", " ");
+        const endStr = endInput.replace("T", " ");
+
+        try {
+            const response = await fetch(
+                `/grafik/steam-hto-analytics/?start=${encodeURIComponent(startStr)}&end=${encodeURIComponent(endStr)}&interval=5`
+            );
+
+            if (!response.ok) {
+                console.error('Failed to fetch steam/HTO analytics data');
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('API error:', data.error);
+                return;
+            }
+
+            renderSteamChart(data);
+            renderHtoChart(data);
+        } catch (error) {
+            console.error('Error loading steam/HTO analytics:', error);
+        }
+    }
+
+    function renderSteamChart(data) {
+        const ctx = document.getElementById('steamChart');
+
+        if (!ctx) {
+            console.error('Steam canvas element not found');
+            return;
+        }
+
+        // Destroy existing chart if any
+        if (steamChart) {
+            steamChart.destroy();
+        }
+
+        // Keep full timestamps for proper formatting in tooltip and X-axis
+        const labels = data.timestamps;
+
+        // =============================================
+        // Shared colour palette for Machine Groups
+        // =============================================
+        const GROUP_COLORS = [
+            { bg: 'rgba(59, 130, 246, 0.75)', border: '#3b82f6' },  // blue
+            { bg: 'rgba(34, 197, 94, 0.75)', border: '#22c55e' },  // green
+            { bg: 'rgba(139, 92, 246, 0.75)', border: '#8b5cf6' },  // purple
+            { bg: 'rgba(249, 115, 22, 0.75)', border: '#f97316' },  // orange
+            { bg: 'rgba(239, 68, 68, 0.75)', border: '#ef4444' },  // red
+            { bg: 'rgba(20, 184, 166, 0.75)', border: '#14b8a6' },  // teal
+            { bg: 'rgba(234, 179, 8, 0.75)', border: '#eab308' },  // yellow
+            { bg: 'rgba(168, 85, 247, 0.75)', border: '#a855f7' },  // violet
+        ];
+
+        const steamGroups = data.steam_groups || [];
+        const steamCountByGroup = data.steam_count_by_group || {};
+
+        // Build one stacked-bar dataset per Machine Group — height = machine COUNT (yAxisID: y1)
+        const stackedDatasets = steamGroups.map((groupName, i) => {
+            const color = GROUP_COLORS[i % GROUP_COLORS.length];
+            return {
+                type: 'bar',
+                label: groupName,
+                data: steamCountByGroup[groupName] || [],
+                backgroundColor: color.bg,
+                borderColor: color.border,
+                borderWidth: 1,
+                stack: 'steam_stack',
+                yAxisID: 'y1',
+                barPercentage: 0.85,
+                categoryPercentage: 0.9,
+                order: 2
+            };
+        });
+
+        // Fallback: if api returned no group data, show plain bar for total machine count
+        if (stackedDatasets.length === 0) {
+            stackedDatasets.push({
+                type: 'bar',
+                label: 'Mesin Steam Aktif',
+                data: data.steam_machine_counts || [],
+                backgroundColor: 'rgba(148, 163, 184, 0.5)',
+                borderColor: '#94a3b8',
+                borderWidth: 1,
+                stack: 'steam_stack',
+                yAxisID: 'y1',
+                barPercentage: 0.85,
+                categoryPercentage: 0.9,
+                order: 2
+            });
+        }
+
+        steamChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    // Line: Total Steam — on left y axis
+                    {
+                        type: 'line',
+                        label: 'Total Steam (kg/h)',
+                        data: data.steam_totals,
+                        borderColor: '#1e40af',
+                        backgroundColor: 'rgba(30, 64, 175, 0.07)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        fill: true,
+                        yAxisID: 'y',
+                        order: 0
+                    },
+                    // Line: Steam Pressure — on far-right y2 axis
+                    {
+                        type: 'line',
+                        label: 'Steam Pressure (barg)',
+                        data: data.steam_pressures,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#f59e0b',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1.5,
+                        fill: false,
+                        yAxisID: 'y2',
+                        order: 1
+                    },
+                    // Stacked bars: one per Machine Group
+                    ...stackedDatasets
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                onClick: async (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const timestamp = data.timestamps[index];
+                        await showSnapshotModal(timestamp, 'steam');
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 11, weight: '600' },
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.97)',
+                        titleColor: '#0f172a',
+                        bodyColor: '#334155',
+                        borderColor: '#cbd5e1',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            title: function (context) {
+                                const timestamp = context[0].label;
+                                if (!timestamp || typeof timestamp !== 'string') return timestamp;
+                                const parts = timestamp.split(' ');
+                                if (parts.length !== 2) return timestamp;
+                                const [datePart, timePart] = parts;
+                                const dateParts = datePart.split('-');
+                                if (dateParts.length !== 3) return timestamp;
+                                const [year, month, day] = dateParts;
+                                return `${day}/${month}/${year} ${timePart}`;
+                            },
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null && context.parsed.y !== undefined) {
+                                    const dsLabel = context.dataset.label || '';
+                                    if (dsLabel === 'Steam Pressure (barg)') {
+                                        label += context.parsed.y.toFixed(2) + ' barg';
+                                    } else if (dsLabel === 'Total Steam (kg/h)') {
+                                        label += context.parsed.y.toFixed(1) + ' kg/h';
+                                    } else {
+                                        // Group bar — machine count
+                                        label += Math.round(context.parsed.y) + ' mesin';
+                                    }
+                                }
+                                return label;
+                            },
+                            footer: function (context) {
+                                // Show bar segment total only when multiple groups exist
+                                if (steamGroups.length <= 1) return '';
+                                let barTotal = 0;
+                                context.forEach(item => {
+                                    if (item.dataset.stack === 'steam_stack') {
+                                        barTotal += (item.parsed.y || 0);
+                                    }
+                                });
+                                return barTotal > 0 ? `Total mesin steam: ${Math.round(barTotal)} mesin` : '';
+                            }
+                        }
+                    },
+                    zoom: {
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            mode: 'xy',
+                            onZoomComplete: function ({ chart }) {
+                                document.getElementById('btnResetZoomSteam').style.display = 'inline-flex';
+                            }
+                        },
+                        pan: { enabled: true, mode: 'xy' }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { color: '#e2e8f0', drawOnChartArea: true },
+                        ticks: {
+                            maxRotation: 45,
+                            color: '#334155',
+                            autoSkip: true,
+                            maxTicksLimit: 20,
+                            font: { size: 10 },
+                            callback: function (value) {
+                                const timestamp = this.getLabelForValue(value);
+                                if (!timestamp || typeof timestamp !== 'string') return timestamp;
+                                const parts = timestamp.split(' ');
+                                if (parts.length !== 2) return timestamp;
+                                const [datePart, timePart] = parts;
+                                const dateParts = datePart.split('-');
+                                if (dateParts.length !== 3) return timestamp;
+                                const [year, month, day] = dateParts;
+                                return [`${day}/${month}`, timePart];
+                            }
+                        }
+                    },
+                    // Left axis: Total Steam line
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Total Steam (kg/h)',
+                            color: '#1e40af',
+                            font: { size: 11, weight: '600' }
+                        },
+                        grid: { color: '#f1f5f9' },
+                        ticks: { color: '#1e40af', font: { size: 10 } },
+                        min: 0
+                    },
+                    // Right axis: Stacked bars (machine count per group)
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Jumlah Mesin Aktif',
+                            color: '#475569',
+                            font: { size: 11, weight: '600' }
+                        },
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            color: '#475569',
+                            font: { size: 10 },
+                            stepSize: 1,
+                            callback: function (value) { return Math.round(value); }
+                        },
+                        min: 0
+                    },
+                    // Far-right axis: Steam Pressure line
+                    y2: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Steam Pressure (barg)',
+                            color: '#f59e0b',
+                            font: { size: 11, weight: '600' }
+                        },
+                        grid: { drawOnChartArea: false },
+                        ticks: { color: '#f59e0b' },
+                        min: 0,
+                        max: 8
+                    }
+                }
+            }
+        });
+    }
+
+    function renderHtoChart(data) {
+        const ctx = document.getElementById('htoChart');
+
+        if (!ctx) {
+            console.error('HTO canvas element not found');
+            return;
+        }
+
+        // Destroy existing chart if any
+        if (htoChart) {
+            htoChart.destroy();
+        }
+
+        // Keep full timestamps for proper formatting in tooltip and X-axis
+        const labels = data.timestamps;
+
+        // =============================================
+        // Shared colour palette for Machine Groups
+        // =============================================
+        const GROUP_COLORS = [
+            { bg: 'rgba(59, 130, 246, 0.75)', border: '#3b82f6' },  // blue
+            { bg: 'rgba(34, 197, 94, 0.75)', border: '#22c55e' },  // green
+            { bg: 'rgba(139, 92, 246, 0.75)', border: '#8b5cf6' },  // purple
+            { bg: 'rgba(249, 115, 22, 0.75)', border: '#f97316' },  // orange
+            { bg: 'rgba(239, 68, 68, 0.75)', border: '#ef4444' },  // red
+            { bg: 'rgba(20, 184, 166, 0.75)', border: '#14b8a6' },  // teal
+            { bg: 'rgba(234, 179, 8, 0.75)', border: '#eab308' },  // yellow
+            { bg: 'rgba(168, 85, 247, 0.75)', border: '#a855f7' },  // violet
+        ];
+
+        const htoGroups = data.hto_groups || [];
+        const htoCountByGroup = data.hto_count_by_group || {};
+
+        // Build one stacked-bar dataset per Machine Group — height = machine COUNT (yAxisID: y1)
+        const stackedDatasets = htoGroups.map((groupName, i) => {
+            const color = GROUP_COLORS[i % GROUP_COLORS.length];
+            return {
+                type: 'bar',
+                label: groupName,
+                data: htoCountByGroup[groupName] || [],
+                backgroundColor: color.bg,
+                borderColor: color.border,
+                borderWidth: 1,
+                stack: 'hto_stack',
+                yAxisID: 'y1',
+                barPercentage: 0.85,
+                categoryPercentage: 0.9,
+                order: 2
+            };
+        });
+
+        // Fallback: if api returned no group data, show plain bar for total machine count
+        if (stackedDatasets.length === 0) {
+            stackedDatasets.push({
+                type: 'bar',
+                label: 'Mesin HTO Aktif',
+                data: data.hto_machine_counts || [],
+                backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                borderColor: '#ef4444',
+                borderWidth: 1,
+                stack: 'hto_stack',
+                yAxisID: 'y1',
+                barPercentage: 0.85,
+                categoryPercentage: 0.9,
+                order: 2
+            });
+        }
+
+        htoChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    // Line: Total HTO Kalori — on left y axis
+                    {
+                        type: 'line',
+                        label: 'Total HTO Kalori (kCal/h)',
+                        data: data.hto_totals,
+                        borderColor: '#b45309',
+                        backgroundColor: 'rgba(180, 83, 9, 0.07)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        fill: true,
+                        yAxisID: 'y',
+                        order: 0
+                    },
+                    // Stacked bars: one per Machine Group
+                    ...stackedDatasets
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                onClick: async (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const timestamp = data.timestamps[index];
+                        await showSnapshotModal(timestamp, 'hto');
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 11, weight: '600' },
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.97)',
+                        titleColor: '#0f172a',
+                        bodyColor: '#334155',
+                        borderColor: '#cbd5e1',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            title: function (context) {
+                                const timestamp = context[0].label;
+                                if (!timestamp || typeof timestamp !== 'string') return timestamp;
+                                const parts = timestamp.split(' ');
+                                if (parts.length !== 2) return timestamp;
+                                const [datePart, timePart] = parts;
+                                const dateParts = datePart.split('-');
+                                if (dateParts.length !== 3) return timestamp;
+                                const [year, month, day] = dateParts;
+                                return `${day}/${month}/${year} ${timePart}`;
+                            },
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null && context.parsed.y !== undefined) {
+                                    const dsLabel = context.dataset.label || '';
+                                    if (dsLabel === 'Total HTO Kalori (kCal/h)') {
+                                        label += context.parsed.y.toLocaleString('id-ID', { maximumFractionDigits: 0 }) + ' kCal/h';
+                                    } else {
+                                        // Group bar — machine count
+                                        label += Math.round(context.parsed.y) + ' mesin';
+                                    }
+                                }
+                                return label;
+                            },
+                            footer: function (context) {
+                                if (htoGroups.length <= 1) return '';
+                                let barTotal = 0;
+                                context.forEach(item => {
+                                    if (item.dataset.stack === 'hto_stack') {
+                                        barTotal += (item.parsed.y || 0);
+                                    }
+                                });
+                                return barTotal > 0 ? `Total mesin HTO: ${Math.round(barTotal)} mesin` : '';
+                            }
+                        }
+                    },
+                    zoom: {
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            mode: 'xy',
+                            onZoomComplete: function ({ chart }) {
+                                document.getElementById('btnResetZoomHTO').style.display = 'inline-flex';
+                            }
+                        },
+                        pan: { enabled: true, mode: 'xy' }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { color: '#e2e8f0', drawOnChartArea: true },
+                        ticks: {
+                            maxRotation: 45,
+                            color: '#334155',
+                            autoSkip: true,
+                            maxTicksLimit: 20,
+                            font: { size: 10 },
+                            callback: function (value) {
+                                const timestamp = this.getLabelForValue(value);
+                                if (!timestamp || typeof timestamp !== 'string') return timestamp;
+                                const parts = timestamp.split(' ');
+                                if (parts.length !== 2) return timestamp;
+                                const [datePart, timePart] = parts;
+                                const dateParts = datePart.split('-');
+                                if (dateParts.length !== 3) return timestamp;
+                                const [year, month, day] = dateParts;
+                                return [`${day}/${month}`, timePart];
+                            }
+                        }
+                    },
+                    // Left axis: Total HTO line
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Total HTO Kalori (kCal/h)',
+                            color: '#b45309',
+                            font: { size: 11, weight: '600' }
+                        },
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            color: '#b45309',
+                            font: { size: 10 },
+                            callback: function (value) { return value.toLocaleString(); }
+                        },
+                        min: 0
+                    },
+                    // Right axis: Stacked bars (machine count per group)
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Jumlah Mesin Aktif',
+                            color: '#475569',
+                            font: { size: 11, weight: '600' }
+                        },
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            color: '#475569',
+                            font: { size: 10 },
+                            stepSize: 1,
+                            callback: function (value) { return Math.round(value); }
+                        },
+                        min: 0
+                    }
+                }
+            }
+        });
+    }
+
+    // Reset zoom buttons
+    document.getElementById('btnResetZoomSteam')?.addEventListener('click', () => {
+        if (steamChart) {
+            steamChart.resetZoom();
+            document.getElementById('btnResetZoomSteam').style.display = 'none';
+        }
+    });
+
+    document.getElementById('btnResetZoomHTO')?.addEventListener('click', () => {
+        if (htoChart) {
+            htoChart.resetZoom();
+            document.getElementById('btnResetZoomHTO').style.display = 'none';
+        }
+    });
+
+    // Export PNG buttons
+    document.getElementById('btnExportPNGSteam')?.addEventListener('click', () => {
+        if (steamChart) {
+            const url = steamChart.toBase64Image();
+            const link = document.createElement('a');
+            link.download = 'steam_analytics.png';
+            link.href = url;
+            link.click();
+        }
+    });
+
+    document.getElementById('btnExportPNGHTO')?.addEventListener('click', () => {
+        if (htoChart) {
+            const url = htoChart.toBase64Image();
+            const link = document.createElement('a');
+            link.download = 'hto_analytics.png';
+            link.href = url;
+            link.click();
+        }
+    });
+
+    // Export PDF buttons
+    document.getElementById('btnExportPDFSteam')?.addEventListener('click', () => {
+        if (steamChart) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('landscape');
+            const imgData = steamChart.toBase64Image();
+            pdf.text('Steam Usage Analytics', 10, 10);
+            pdf.addImage(imgData, 'PNG', 10, 20, 270, 150);
+            pdf.save('steam_analytics.pdf');
+        }
+    });
+
+    document.getElementById('btnExportPDFHTO')?.addEventListener('click', () => {
+        if (htoChart) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('landscape');
+            const imgData = htoChart.toBase64Image();
+            pdf.text('HTO Kalori Analytics', 10, 10);
+            pdf.addImage(imgData, 'PNG', 10, 20, 270, 150);
+            pdf.save('hto_analytics.pdf');
+        }
+    });
+
+    // Integrate with main load button
+    document.getElementById("loadBtn").addEventListener("click", async function (e) {
+        // Also load Steam/HTO analytics
+        await loadSteamHtoAnalytics();
+    });
+
+    // =============== SNAPSHOT MODAL FUNCTIONS ===============
+
+    async function showSnapshotModal(timestamp, type) {
+        const modal = document.getElementById('snapshotModal');
+        const loading = document.getElementById('modalLoading');
+        const error = document.getElementById('modalError');
+        const grid = document.getElementById('machineListGrid');
+
+        // Show modal and loading state
+        modal.style.display = 'flex';
+        loading.style.display = 'block';
+        error.style.display = 'none';
+        grid.innerHTML = '';
+
+        try {
+            const response = await fetch(
+                `/grafik/snapshot-detail/?timestamp=${encodeURIComponent(timestamp)}&type=${type}`
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch snapshot data');
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            // Hide loading
+            loading.style.display = 'none';
+
+            // Update summary
+            const typeLabel = type === 'steam' ? 'Steam Usage' : 'HTO Kalori';
+            document.getElementById('modalTitle').textContent = `Snapshot: ${typeLabel}`;
+            document.getElementById('modalTimestamp').textContent = timestamp;
+
+            // Format timestamp for display: DD/MM/YYYY HH:MM
+            const [datePart, timePart] = timestamp.split(' ');
+            const [year, month, day] = datePart.split('-');
+            const formattedDate = `${day}/${month}/${year} ${timePart}`;
+            document.getElementById('summaryTimeValue').textContent = formattedDate;
+
+            document.getElementById('summaryTotalValue').textContent =
+                `${data.total_usage.toLocaleString()} ${data.unit}`;
+
+            // Update active/inactive totals
+            document.getElementById('summaryActiveTotal').textContent = data.total_active_machines;
+            document.getElementById('summaryInactiveTotal').textContent = data.total_inactive_machines;
+
+            // Update state counts
+            const sc = data.state_counts || {};
+            document.getElementById('stateRunning').textContent = sc.running || 0;
+            document.getElementById('stateHeat').textContent = sc.heat || 0;
+            document.getElementById('stateSteady').textContent = sc.steady || 0;
+            document.getElementById('stateOff').textContent = sc.off || 0;
+            document.getElementById('stateCool').textContent = sc.cool || 0;
+            document.getElementById('stateStop').textContent = sc.stop || 0;
+
+            // Render machine cards
+            if (data.machines.length === 0) {
+                grid.innerHTML = '<p style="text-align:center; color:#64748b; grid-column: 1/-1;">Tidak ada mesin aktif pada waktu ini</p>';
+            } else {
+                // Sort machines: active first (by group then code), then inactive
+                const sortedMachines = [...data.machines].sort((a, b) => {
+                    // First priority: active status
+                    if (a.is_currently_active !== b.is_currently_active) {
+                        return a.is_currently_active ? -1 : 1;
+                    }
+
+                    // If both active or both inactive, sort by group then code
+                    if (a.group !== b.group) {
+                        return a.group.localeCompare(b.group);
+                    }
+
+                    // Same group, sort by code
+                    return a.code.localeCompare(b.code);
+                });
+
+                grid.innerHTML = sortedMachines.map(machine => createMachineCard(machine)).join('');
+            }
+
+        } catch (err) {
+            console.error('Error loading snapshot:', err);
+            loading.style.display = 'none';
+            error.style.display = 'block';
+            document.getElementById('errorMessage').textContent = err.message;
+        }
+    }
+
+    function createMachineCard(machine) {
+        // Detect screen size and use appropriate card template
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+            return createMobileCard(machine);
+        } else {
+            return createDesktopCard(machine);
+        }
+    }
+
+    function createDesktopCard(machine) {
+        const statusClass = machine.status === 'Running' ? 'badge-running' : 'badge-stopped';
+        const thermalClass = machine.thermal_state === 'HEAT' ? 'thermal-heat' :
+            machine.thermal_state === 'STEADY' ? 'thermal-steady' : 'thermal-cool';
+        const inactiveClass = machine.is_currently_active ? '' : 'machine-inactive';
+
+        // Desktop: Minimalist clean design
+        let statusChangeHTML = '';
+        if (machine.status_change && machine.status_change.changed) {
+            const sc = machine.status_change;
+            statusChangeHTML = `
+                <div class="status-change-desktop">
+                    <i class="bi bi-arrow-right-circle"></i>
+                    <span>Changed ${sc.hours_ago}h ago: ${sc.description}</span>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="machine-card ${inactiveClass}">
+                <div class="machine-header-desktop">
+                    <div>
+                        <div class="machine-name-desktop">${machine.name}</div>
+                        <div class="machine-code-desktop">${machine.code}</div>
+                    </div>
+                    <div class="badges-desktop">
+                        <span class="status-badge ${statusClass}">${machine.status}</span>
+                        <span class="thermal-badge ${thermalClass}">${machine.thermal_state}</span>
+                    </div>
+                </div>
+                
+                <div class="usage-row-desktop">
+                    <span class="usage-label-desktop">Usage</span>
+                    <span class="usage-value-desktop">${machine.usage_value.toFixed(1)} <span class="usage-unit-desktop">${machine.unit}</span></span>
+                </div>
+                
+                ${!machine.is_currently_active ? '<div class="inactive-badge-desktop">Not Contributing</div>' : ''}
+                ${statusChangeHTML}
+            </div>
+        `;
+    }
+
+    function createMobileCard(machine) {
+        const statusClass = machine.status === 'Running' ? 'badge-running' : 'badge-stopped';
+        const thermalClass = machine.thermal_state === 'HEAT' ? 'thermal-heat' :
+            machine.thermal_state === 'STEADY' ? 'thermal-steady' : 'thermal-cool';
+        const inactiveClass = machine.is_currently_active ? '' : 'machine-inactive';
+
+        // Mobile: Compact card with new structure
+        let statusChangeHTML = '';
+        if (machine.status_change && machine.status_change.changed) {
+            const sc = machine.status_change;
+            statusChangeHTML = `
+                <div class="status-change-compact">
+                    <i class="bi bi-arrow-right-circle-fill"></i>
+                    <span>Changed ${sc.hours_ago}h ago: ${sc.description}</span>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="machine-card ${inactiveClass}">
+                <div class="card-top-row">
+                    <div class="machine-info">
+                        <div class="machine-code">${machine.name}</div>
+                        <div class="machine-name">${machine.code}</div>
+                    </div>
+                    <div class="badges-group">
+                        <span class="status-badge ${statusClass}">${machine.status}</span>
+                        <span class="thermal-badge ${thermalClass}">${machine.thermal_state}</span>
+                    </div>
+                </div>
+                
+                <div class="card-bottom-row">
+                    <div class="usage-inline">
+                        <span class="usage-label">Usage:</span>
+                        <span class="usage-value-inline">${machine.usage_value.toFixed(1)} <span class="usage-unit">${machine.unit}</span></span>
+                    </div>
+                    ${!machine.is_currently_active ? '<div class="inactive-badge">Not Contributing</div>' : ''}
+                </div>
+                
+                ${statusChangeHTML}
+            </div>
+        `;
+    }
+
+    function closeSnapshotModal(event) {
+        if (event) {
+            event.stopPropagation();
+        }
+        document.getElementById('snapshotModal').style.display = 'none';
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeSnapshotModal();
+        }
+    });
+
+    // =================== MACHINE LIST ORDER FIX ===================
+    // Ensure machine list displays in correct order from backend
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(function () {
+            const machineBox = document.getElementById('machineBox');
+            if (!machineBox) return;
+
+            const labels = Array.from(machineBox.querySelectorAll('label.machine-checkbox-item'));
+            if (labels.length === 0) return;
+
+            // Sort by data-order attribute
+            labels.sort(function (a, b) {
+                const aOrder = parseInt(a.getAttribute('data-order') || '9999', 10);
+                const bOrder = parseInt(b.getAttribute('data-order') || '9999', 10);
+                return aOrder - bOrder;
+            });
+
+            // Re-append in correct order
+            machineBox.innerHTML = '';
+            labels.forEach(function (label) {
+                machineBox.appendChild(label);
+            });
+
+            console.log('Machine list ordered:', labels.length, 'machines');
+        }, 100);
+    });
+
+</script>
+
+{% endblock %}

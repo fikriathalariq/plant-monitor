@@ -1,0 +1,1107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Laporan Kinerja Bulanan Mesin {{ m.machine_name }} | {{ company_profile.name|default:"Suritex Factory" }}</title>
+
+    <!-- Spline Sans & Material Symbols (Persis seperti /dyeing-report/) -->
+    <link href="{% static 'vendor/fonts/spline-sans/spline-sans.css' %}" rel="stylesheet" />
+    <link href="{% static 'vendor/fonts/material-symbols/material-symbols-outlined.css' %}" rel="stylesheet" />
+
+    <!-- Chart.js 4.4.0 (Offline Local Vendor) -->
+    <script src="{% static 'vendor/chartjs/chart.min.js' %}"></script>
+    <!-- Tailwind CSS (Offline Local Vendor) -->
+    <script src="{% static 'vendor/tailwindcss/tailwind.js' %}"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#111827',
+                        secondary: '#64748b',
+                    },
+                    fontFamily: {
+                        sans: ['"Spline Sans"', 'sans-serif'],
+                    },
+                    screens: {
+                        'print': { 'raw': 'print' },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: "Spline Sans", sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Kertas A4 (Persis seperti /dyeing-report/) */
+        .paper-sheet {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 2rem auto;
+            padding: 1.2cm 1.5cm;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .avoid-break {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .page-break {
+            page-break-after: always;
+            break-after: page;
+        }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 12mm 14mm 12mm 14mm;
+            }
+
+            body {
+                background-color: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                font-size: 9.5px;
+            }
+
+            .paper-sheet {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            table th, table td {
+                padding: 2.5px 3.5px !important;
+                font-size: 8.5px !important;
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            .chart-box {
+                height: 160px !important;
+                position: relative !important;
+                width: 100% !important;
+            }
+
+            /* Pastikan grid A4 portrait tidak pernah runtuh (collapse) ke 1 kolom di mode cetak */
+            .grid-cols-12 {
+                display: grid !important;
+                grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+            }
+            .col-span-4 {
+                grid-column: span 4 / span 4 !important;
+            }
+            .col-span-5 {
+                grid-column: span 5 / span 5 !important;
+            }
+            .col-span-7 {
+                grid-column: span 7 / span 7 !important;
+            }
+            .col-span-8 {
+                grid-column: span 8 / span 8 !important;
+            }
+            .grid-cols-2 {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+            .grid-cols-4 {
+                display: grid !important;
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            }
+
+            .avoid-break {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- FLOATING TOP NAVIGATION BAR (PERSIS SEPERTI /dyeing-report/) -->
+    <div class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200 p-3 shadow-xs flex justify-between items-center no-print">
+        <div class="flex items-center justify-between px-4 max-w-[210mm] mx-auto w-full">
+            <button onclick="window.close()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                title="Tutup Halaman">
+                <span class="material-symbols-outlined text-base">arrow_back</span>
+                <span>Tutup</span>
+            </button>
+
+            <div class="text-center min-w-0">
+                <span class="font-bold text-slate-800 text-sm">{{ m.machine_name }}</span>
+                <span class="text-slate-400 text-xs ml-1.5">&bull; Laporan Kinerja Bulanan (30 Hari)</span>
+            </div>
+
+            <button onclick="window.print()"
+                class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 rounded-lg shadow-xs flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer">
+                <span class="material-symbols-outlined text-base">print</span>
+                <span>Print Report</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN PRINT SHEET (A4 CONTAINER) -->
+    <div class="paper-sheet flex flex-col gap-5 mt-16 print:mt-0">
+
+        <!-- ── KOP SURAT RESMI (PERSIS SEPERTI /dyeing-report/) ── -->
+        <header class="border-b-2 border-slate-900 pb-3 mb-1 flex justify-between items-end avoid-break">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 flex items-center justify-center shrink-0">
+                    {% if company_profile and company_profile.logo %}
+                    <img src="{{ company_profile.logo.url }}" alt="{{ company_profile.name|default:'Logo' }}"
+                        class="h-full w-full object-contain">
+                    {% else %}
+                    <div class="h-full w-full bg-slate-900 text-white flex items-center justify-center rounded font-black text-2xl">
+                        S
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black uppercase tracking-tight text-slate-900 leading-none">
+                        {% if company_profile.name %}{{ company_profile.name }}{% else %}Suritex Factory{% endif %}
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium uppercase tracking-widest mt-1">
+                        Laporan Audit Kinerja Bulanan &amp; Diagnostik Termal Mesin
+                    </p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-xl font-bold font-mono text-slate-900">{{ m.machine_name }} · {{ m.machine_code }}</div>
+                <div class="text-[10px] text-slate-400 mt-0.5 uppercase">Generated: <span id="print-date">{{ print_date }}</span></div>
+            </div>
+        </header>
+
+        <!-- ── SECTION 1: IDENTITAS MESIN & CAKUPAN ── -->
+        <div class="bg-slate-50 p-2.5 rounded border border-slate-200 text-xs avoid-break">
+            <h3 class="font-bold text-[10px] uppercase text-slate-900 mb-1.5 border-b border-slate-200 pb-1">
+                Identitas Mesin &amp; Cakupan Periode
+            </h3>
+            <div class="grid grid-cols-4 gap-2 text-[11px]">
+                <div>
+                    <div class="text-slate-500 text-[10px]">Nama &amp; Kode Mesin</div>
+                    <div class="font-bold text-slate-900 font-mono">{{ m.machine_name }} ({{ m.machine_code }})</div>
+                </div>
+                <div>
+                    <div class="text-slate-500 text-[10px]">Kategori / Model</div>
+                    <div class="font-semibold text-slate-800">{{ m.group_name }}</div>
+                </div>
+                <div>
+                    <div class="text-slate-500 text-[10px]">Daya Listrik Pompa</div>
+                    <div class="font-semibold text-slate-800 font-mono">{{ m.nominal_power_kw }} kW</div>
+                </div>
+                <div>
+                    <div class="text-slate-500 text-[10px]">Rentang Evaluasi</div>
+                    <div class="font-semibold text-slate-800 font-mono">{{ date_range_label }}</div>
+                </div>
+                <div>
+                    <div class="text-slate-500 text-[10px]">Total Sampel Batch</div>
+                    <div class="font-semibold text-slate-800 font-mono">{{ m.evaluated_batches_count }} Batch</div>
+                </div>
+                <div>
+                    <div class="text-slate-500 text-[10px]">Uptime 30 Hari</div>
+                    <div class="font-semibold text-slate-800 font-mono">{{ m.uptime_str }}</div>
+                </div>
+                <div>
+                    <div class="text-slate-500 text-[10px]">Rata-rata Suplai Uap</div>
+                    <div class="font-semibold text-indigo-700 font-mono">{{ m.avg_steam_pressure|default:"-" }} bar</div>
+                </div>
+                <div>
+                    <div class="text-slate-500 text-[10px]">Status Evaluasi Fisika</div>
+                    <div class="font-bold {% if m.health_grade == 'A' or m.health_grade == 'B' %}text-emerald-700{% else %}text-rose-700{% endif %}">
+                        {% if m.health_grade == 'A' %}Sangat Prima{% elif m.health_grade == 'B' %}Stabil Memadai{% elif m.health_grade == 'C' %}Perlu Perhatian{% else %}Degradasi Kritis{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SECTION 2: SUMMARY KPI (PERSIS SEPERTI /dyeing-report/) ── -->
+        <div class="grid grid-cols-4 gap-2 avoid-break text-center">
+            <div class="border border-slate-200 py-1.5 px-2 rounded flex flex-col justify-center bg-slate-50">
+                <span class="text-[9px] uppercase text-slate-500 font-bold leading-none mb-0.5">Machine Health (MHI)</span>
+                <span class="text-lg font-bold text-slate-900 leading-none font-mono">
+                    {{ m.health_score }} <span class="text-xs text-slate-400 font-normal">/ 100</span>
+                </span>
+            </div>
+            <div class="border border-slate-200 py-1.5 px-2 rounded flex flex-col justify-center">
+                <span class="text-[9px] uppercase text-slate-500 font-bold leading-none mb-0.5">Availability</span>
+                <span class="text-lg font-bold leading-none font-mono text-emerald-700">
+                    {{ m.availability_pct }}%
+                </span>
+            </div>
+            <div class="border border-slate-200 py-1.5 px-2 rounded flex flex-col justify-center">
+                <span class="text-[9px] uppercase text-slate-500 font-bold leading-none mb-0.5">Pemborosan Energi (30H)</span>
+                <span class="text-lg font-bold leading-none font-mono text-rose-600">
+                    Rp {{ m.waste_cost_rp|floatformat:0 }}
+                </span>
+            </div>
+            <div class="border border-slate-200 py-1.5 px-2 rounded flex flex-col justify-center bg-slate-900 text-white">
+                <span class="text-[9px] uppercase text-slate-400 font-bold leading-none mb-0.5">Grade Mesin</span>
+                <span class="text-xl font-black leading-none font-mono">
+                    GRADE {{ m.health_grade }}
+                </span>
+            </div>
+        </div>
+
+        <!-- ── SECTION 3: MATRIKS KEPATUHAN PER MASTER PROGRAM (RESEP) ── -->
+        <div class="space-y-1.5 avoid-break">
+            <div class="flex items-center justify-between border-b border-slate-300 pb-1">
+                <h3 class="font-bold text-[11px] uppercase text-slate-900 tracking-tight flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-900"></span> 1. Audit Kesesuaian Kinerja per Master Program (Resep) — 30 Hari Terakhir
+                </h3>
+                <span class="text-[10px] font-mono text-slate-500">{{ all_programs|length }} Program</span>
+            </div>
+            <p class="text-[10px] text-slate-500">
+                Membandingkan rata-rata durasi fisik aktual mesin terhadap standar resep ideal per program secara utuh tanpa dropdown.
+            </p>
+
+            <div class="overflow-x-auto border border-slate-300 rounded">
+                <table class="w-full text-left text-[10px]">
+                    <thead class="bg-slate-100 border-b border-slate-300 font-bold text-slate-700">
+                        <tr>
+                            <th class="py-1.5 px-2">Master Program</th>
+                            <th class="py-1.5 px-1.5 text-center">Batch</th>
+                            <th class="py-1.5 px-1.5 text-center">Anomali</th>
+                            <th class="py-1.5 px-2 text-center text-rose-900 bg-rose-50/50">Heating (Real vs Resep)</th>
+                            <th class="py-1.5 px-2 text-center text-amber-900 bg-amber-50/50">Keep (Real vs Resep)</th>
+                            <th class="py-1.5 px-2 text-center text-sky-900 bg-sky-50/50">Cooling (Real vs Resep)</th>
+                            <th class="py-1.5 px-2 text-center bg-slate-200/50">Total Siklus</th>
+                            <th class="py-1.5 px-2 text-center">Suhu Max</th>
+                            <th class="py-1.5 px-2 text-center">Kepatuhan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 font-mono">
+                        {% for prog in all_programs %}
+                        <tr class="hover:bg-slate-50/80">
+                            <td class="py-1 px-2 font-bold font-sans text-slate-900">
+                                {{ prog.program_name }}
+                            </td>
+                            <td class="py-1 px-1.5 text-center font-bold text-slate-700">
+                                {{ prog.batch_count }}
+                            </td>
+                            <td class="py-1 px-1.5 text-center">
+                                {% if prog.anomaly_count > 0 %}
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold {% if prog.critical_anomaly_count > 0 %}bg-rose-100 text-rose-800 border border-rose-300{% else %}bg-amber-100 text-amber-800 border border-amber-300{% endif %}">
+                                        {{ prog.anomaly_count }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-slate-400 font-sans text-[9px]">-</span>
+                                {% endif %}
+                            </td>
+                            <!-- Heating -->
+                            <td class="py-1 px-2 text-center bg-rose-50/30">
+                                <span class="font-bold text-slate-900">{{ prog.avg_heat|default:"-" }}m</span>
+                                <span class="text-slate-400 text-[9px]">/ {{ prog.ideal_heat|default:"-" }}</span>
+                                {% if prog.delta_heat != None %}
+                                    <span class="text-[9px] font-bold block {% if prog.delta_heat > 12 %}text-rose-600{% elif prog.delta_heat > 4 %}text-amber-600{% else %}text-emerald-700{% endif %}">
+                                        {% if prog.delta_heat > 0 %}+{% endif %}{{ prog.delta_heat }}m
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <!-- Keep -->
+                            <td class="py-1 px-2 text-center bg-amber-50/30">
+                                <span class="font-bold text-slate-900">{{ prog.avg_steady|default:"-" }}m</span>
+                                <span class="text-slate-400 text-[9px]">/ {{ prog.ideal_steady|default:"-" }}</span>
+                                {% if prog.delta_steady != None %}
+                                    <span class="text-[9px] font-bold block {% if prog.delta_steady > 15 %}text-rose-600{% elif prog.delta_steady > 4 %}text-amber-600{% else %}text-emerald-700{% endif %}">
+                                        {% if prog.delta_steady > 0 %}+{% endif %}{{ prog.delta_steady }}m
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <!-- Cooling -->
+                            <td class="py-1 px-2 text-center bg-sky-50/30">
+                                <span class="font-bold text-slate-900">{{ prog.avg_cool|default:"-" }}m</span>
+                                <span class="text-slate-400 text-[9px]">/ {{ prog.ideal_cool|default:"-" }}</span>
+                                {% if prog.delta_cool != None %}
+                                    <span class="text-[9px] font-bold block {% if prog.delta_cool > 12 %}text-rose-600{% elif prog.delta_cool > 4 %}text-amber-600{% else %}text-emerald-700{% endif %}">
+                                        {% if prog.delta_cool > 0 %}+{% endif %}{{ prog.delta_cool }}m
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <!-- Total -->
+                            <td class="py-1 px-2 text-center font-bold text-slate-800 bg-slate-100/40">
+                                {{ prog.avg_total|default:"-" }}m
+                                <span class="text-slate-400 font-normal text-[8.5px] block">resep: {{ prog.ideal_total|default:"-" }}m</span>
+                            </td>
+                            <!-- Suhu -->
+                            <td class="py-1 px-2 text-center text-slate-700">
+                                {{ prog.avg_temp|default:"-" }}°C
+                                {% if prog.suhu_max %}
+                                    <span class="text-slate-400 text-[8.5px] block">resep: {{ prog.suhu_max }}°</span>
+                                {% endif %}
+                            </td>
+                            <!-- Status -->
+                            <td class="py-1 px-2 text-center font-sans">
+                                {% if prog.delta_heat != None and prog.delta_heat > 15 %}
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Degradasi</span>
+                                {% elif prog.anomaly_count > 0 %}
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Warning</span>
+                                {% else %}
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">Optimal</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="py-3 text-center text-slate-400 font-sans italic">
+                                Belum ada riwayat master program yang tercatat dalam periode ini.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── SECTION 5: REKOMENDASI FINANSIAL & DIAGNOSIS PRESKRIPTIF ── -->
+        <div class="space-y-2.5 pt-1 avoid-break">
+            <div class="flex items-center justify-between border-b border-slate-300 pb-1">
+                <h3 class="font-bold text-[11px] uppercase text-slate-900 tracking-tight flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-900"></span> 2. Rekomendasi Perspektif Finansial &amp; Diagnosis Preskriptif
+                </h3>
+                <span class="text-[10px] font-mono text-rose-700 font-bold">Dampak Biaya &amp; Tindakan Solutif</span>
+            </div>
+            <p class="text-[10px] text-slate-500">
+                Instruksi pemeliharaan teknis berbasis data fisik untuk menekan pemborosan uap boiler dan listrik sirkulasi.
+            </p>
+
+            <!-- Box Diagnosis Utama -->
+            <div class="p-3 rounded border {% if m.primary_diagnosis.tone == 'rose' %}bg-rose-50 border-rose-300 text-rose-950{% elif m.primary_diagnosis.tone == 'amber' %}bg-amber-50 border-amber-300 text-amber-950{% elif m.primary_diagnosis.tone == 'blue' %}bg-blue-50 border-blue-300 text-blue-950{% else %}bg-emerald-50 border-emerald-300 text-emerald-950{% endif %}">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-white/80 border border-current">
+                        DIAGNOSIS UTAMA
+                    </span>
+                    <h4 class="text-xs font-bold">{{ m.primary_diagnosis.title }}</h4>
+                </div>
+                <p class="text-[10.5px] leading-relaxed mb-1.5 opacity-90">{{ m.primary_diagnosis.summary }}</p>
+                <div class="pt-1.5 border-t border-current/20 flex items-start gap-1 text-[10.5px] font-semibold">
+                    <span class="shrink-0">🔧 <b>Tindakan Teknisi Mekanik:</b></span>
+                    <span>{{ m.primary_diagnosis.prescription }}</span>
+                </div>
+            </div>
+
+            <!-- Tabel Neraca Finansial & Proyeksi 30 Hari -->
+            <div class="grid grid-cols-2 gap-2 text-[10px]">
+                <!-- Aktual 30 Hari -->
+                <div class="p-2.5 rounded border border-slate-200 bg-slate-50/60">
+                    <span class="text-[10px] font-bold text-slate-800 uppercase block mb-1 border-b pb-0.5">
+                        Neraca Kerugian Finansial Aktual (30 Hari)
+                    </span>
+                    <table class="w-full text-left font-mono text-[9.5px]">
+                        <tbody class="divide-y divide-slate-200">
+                            <tr>
+                                <td class="py-0.5 font-sans text-slate-600">Estimasi Uap Terbuang</td>
+                                <td class="py-0.5 text-right font-bold text-slate-800">{{ m.waste_steam_kg }} kg</td>
+                            </tr>
+                            <tr>
+                                <td class="py-0.5 font-sans text-slate-600">Estimasi Listrik Terbuang</td>
+                                <td class="py-0.5 text-right font-bold text-slate-800">{{ m.waste_power_kwh }} kWh</td>
+                            </tr>
+                            <tr>
+                                <td class="py-0.5 font-sans text-slate-600">Rata-rata Kerugian / Batch</td>
+                                <td class="py-0.5 text-right font-bold text-slate-800">Rp {{ m.avg_waste_rp_batch|floatformat:0 }}</td>
+                            </tr>
+                            <tr class="bg-rose-100/60 font-bold">
+                                <td class="py-1 font-sans text-rose-900 px-1">Total Kerugian Aktual</td>
+                                <td class="py-1 text-right text-rose-800 px-1 text-xs">Rp {{ m.waste_cost_rp|floatformat:0 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Proyeksi 30 Hari ke Depan -->
+                <div class="p-2.5 rounded border border-rose-200 bg-rose-50/30">
+                    <span class="text-[10px] font-bold text-rose-900 uppercase block mb-1 border-b border-rose-200 pb-0.5">
+                        Proyeksi Kerugian 30 Hari ke Depan (Status Quo)
+                    </span>
+                    <table class="w-full text-left font-mono text-[9.5px]">
+                        <tbody class="divide-y divide-rose-200/60">
+                            <tr>
+                                <td class="py-0.5 font-sans text-slate-600">Proyeksi Uap Terbuang</td>
+                                <td class="py-0.5 text-right font-bold text-rose-900">{{ m.projected_30d_steam_kg }} kg</td>
+                            </tr>
+                            <tr>
+                                <td class="py-0.5 font-sans text-slate-600">Proyeksi Listrik Terbuang</td>
+                                <td class="py-0.5 text-right font-bold text-rose-900">{{ m.projected_30d_power_kwh }} kWh</td>
+                            </tr>
+                            <tr>
+                                <td class="py-0.5 font-sans text-slate-600">Proyeksi 7 Hari Kerja</td>
+                                <td class="py-0.5 text-right font-bold text-slate-800">Rp {{ m.projected_7d_rp|floatformat:0 }}</td>
+                            </tr>
+                            <tr class="bg-rose-600 text-white font-bold">
+                                <td class="py-1 font-sans px-1 rounded-l">Potensi Kerugian 30 Hari</td>
+                                <td class="py-1 text-right px-1 rounded-r text-xs">Rp {{ m.projected_30d_rp|floatformat:0 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabel Prioritas Tindakan Mekanik & Estimasi ROI -->
+            <div class="border border-slate-300 rounded overflow-hidden">
+                <table class="w-full text-left text-[9.5px]">
+                    <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
+                        <tr>
+                            <th class="py-1.5 px-2">Rekomendasi Tindakan Teknisi</th>
+                            <th class="py-1.5 px-2">Komponen Sasaran</th>
+                            <th class="py-1.5 px-2">Dampak Operasional</th>
+                            <th class="py-1.5 px-2 text-right">Potensi Penghematan 30H</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        {% for act in rec_actions %}
+                        <tr class="hover:bg-slate-50/80">
+                            <td class="py-1.5 px-2 font-bold text-slate-900 flex items-center gap-1">
+                                <span class="w-1 h-1 rounded-full bg-slate-900"></span> {{ act.action }}
+                            </td>
+                            <td class="py-1.5 px-2 text-slate-600 font-medium">{{ act.component }}</td>
+                            <td class="py-1.5 px-2 text-slate-600 text-[9px]">{{ act.impact }}</td>
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-emerald-700">{{ act.est_savings }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── SECTION 6: LEMBAR VERIFIKASI & TANDA TANGAN CETAK ── -->
+        <footer class="avoid-break pt-3 border-t-2 border-slate-900 mt-4 space-y-3">
+            <div class="text-[9.5px] text-slate-500 flex items-center justify-between">
+                <span>Dokumen dicetak dari Sistem Otomasi Pabrik Suritex &bull; ID Mesin: {{ m.machine_id }}</span>
+                <span>Halaman Cetak Terpadu A4</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 pt-3 text-center text-xs">
+                <div class="space-y-10">
+                    <span class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider">Dibuat Oleh (Operator / Leader):</span>
+                    <div class="border-b border-slate-400 w-3/4 mx-auto"></div>
+                    <span class="block text-[9px] text-slate-400 font-mono">Tgl: ........................................</span>
+                </div>
+                <div class="space-y-10">
+                    <span class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider">Diperiksa (Supervisor Finishing):</span>
+                    <div class="border-b border-slate-400 w-3/4 mx-auto"></div>
+                    <span class="block text-[9px] text-slate-400 font-mono">Tgl: ........................................</span>
+                </div>
+                <div class="space-y-10">
+                    <span class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider">Disetujui (Manager Pabrik):</span>
+                    <div class="border-b border-slate-400 w-3/4 mx-auto"></div>
+                    <span class="block text-[9px] text-slate-400 font-mono">Tgl: ........................................</span>
+                </div>
+            </div>
+        </footer>
+
+
+        <div class="page-break"></div>
+
+        <!-- ── SECTION 4: DIAGNOSTIK VISUAL & TABEL KETERANGAN 4 PROGRAM TERATAS ── -->
+        <div class="space-y-4 pt-1">
+            <div class="flex items-center justify-between border-b border-slate-300 pb-1">
+                <h3 class="font-bold text-[11px] uppercase text-slate-900 tracking-tight flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-900"></span> 3. Diagnostik Fisika &amp; Korelasi Termal (Top 4 Master Program)
+                </h3>
+                <span class="text-[10px] font-mono text-indigo-700 font-bold">Dekomposisi Heating vs Cooling</span>
+            </div>
+            <p class="text-[10px] text-slate-500">
+                Menyajikan riwayat durasi batch serta grafik korelasi regresi pemanasan dan pendinginan secara terpisah lengkap dengan tabel keterangan diagnostiknya.
+            </p>
+
+            {% for prog in top_programs %}
+            <!-- KARTU PROGRAM DIAGNOSTIK #{{ prog.index }} (BLOK UTUH KONSISTEN) -->
+            <div class="avoid-break border border-slate-300 rounded p-2.5 bg-white space-y-2.5 mb-4">
+                <!-- Header Mini Program -->
+                    <!-- Header Mini Program -->
+                    <div class="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                        <div class="flex items-center gap-2">
+                            <span class="px-1.5 py-0.5 rounded bg-slate-900 text-white font-bold text-[10px] font-mono">#{{ prog.index }}</span>
+                            <span class="text-xs font-bold text-slate-900 uppercase">
+                                Program: {{ prog.program_name }}
+                            </span>
+                            <span class="text-[10px] text-slate-500 font-mono">({{ prog.batch_count }} Batch)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[9.5px] font-mono">
+                            <span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200">Ideal Heat: {{ prog.info.ideal_heat|default:"-" }}m</span>
+                            <span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">Ideal Keep: {{ prog.info.ideal_steady|default:"-" }}m</span>
+                            <span class="px-1.5 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200">Ideal Cool: {{ prog.info.ideal_cool|default:"-" }}m</span>
+                            <span class="px-1.5 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200">Target: {{ prog.info.suhu_max|default:"-" }}°C</span>
+                        </div>
+                    </div>
+
+                    <!-- SUB A: RIWAYAT DURASI VS TEKANAN UAP -->
+                    <div class="grid grid-cols-12 gap-2.5 items-stretch">
+                    <!-- Tabel Keterangan Parameter (4 Kolom) -->
+                    <div class="col-span-4 bg-slate-50 p-2 rounded border border-slate-200 flex flex-col justify-between text-[9px]">
+                        <div>
+                            <span class="font-bold text-[9.5px] text-slate-800 uppercase block mb-1 border-b border-slate-200 pb-0.5">
+                                Tabel Parameter Resep
+                            </span>
+                            <table class="w-full text-left font-mono">
+                                <thead>
+                                    <tr class="text-slate-400 uppercase text-[8px] border-b border-slate-200">
+                                        <th class="py-0.5">Fase</th>
+                                        <th class="py-0.5 text-center">1 Bln</th>
+                                        <th class="py-0.5 text-center">Resep</th>
+                                        <th class="py-0.5 text-center">&Delta;</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td class="py-0.5 text-rose-700 font-sans font-semibold">Heating</td>
+                                        <td class="py-0.5 text-center font-bold text-slate-900">{{ prog.info.avg_heat|default:"-" }}m</td>
+                                        <td class="py-0.5 text-center text-slate-500">{{ prog.info.ideal_heat|default:"-" }}m</td>
+                                        <td class="py-0.5 text-center font-bold {% if prog.info.delta_heat > 10 %}text-rose-600{% elif prog.info.delta_heat > 4 %}text-amber-600{% else %}text-emerald-700{% endif %}">
+                                            {% if prog.info.delta_heat > 0 %}+{% endif %}{{ prog.info.delta_heat|default:"0" }}m
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-0.5 text-amber-700 font-sans font-semibold">Keep</td>
+                                        <td class="py-0.5 text-center font-bold text-slate-900">{{ prog.info.avg_steady|default:"-" }}m</td>
+                                        <td class="py-0.5 text-center text-slate-500">{{ prog.info.ideal_steady|default:"-" }}m</td>
+                                        <td class="py-0.5 text-center font-bold {% if prog.info.delta_steady > 10 %}text-rose-600{% elif prog.info.delta_steady > 4 %}text-amber-600{% else %}text-emerald-700{% endif %}">
+                                            {% if prog.info.delta_steady > 0 %}+{% endif %}{{ prog.info.delta_steady|default:"0" }}m
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-0.5 text-sky-700 font-sans font-semibold">Cooling</td>
+                                        <td class="py-0.5 text-center font-bold text-slate-900">{{ prog.info.avg_cool|default:"-" }}m</td>
+                                        <td class="py-0.5 text-center text-slate-500">{{ prog.info.ideal_cool|default:"-" }}m</td>
+                                        <td class="py-0.5 text-center font-bold {% if prog.info.delta_cool > 10 %}text-rose-600{% elif prog.info.delta_cool > 4 %}text-amber-600{% else %}text-emerald-700{% endif %}">
+                                            {% if prog.info.delta_cool > 0 %}+{% endif %}{{ prog.info.delta_cool|default:"0" }}m
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-0.5 text-purple-700 font-sans font-semibold">Uap</td>
+                                        <td class="py-0.5 text-center font-bold text-slate-900">{{ m.avg_steam_pressure|default:"-" }}b</td>
+                                        <td class="py-0.5 text-center text-slate-500">3.8b</td>
+                                        <td class="py-0.5 text-center text-slate-600 text-[8px] font-sans">Min 3.8</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-[8px] text-slate-400 mt-1 border-t border-slate-200 pt-0.5 font-sans">
+                            *Ambang batas uap minimum: 3.8 bar
+                        </div>
+                    </div>
+
+                    <!-- Grafik Riwayat Durasi (8 Kolom) -->
+                    <div class="col-span-8 border border-slate-200 rounded p-2 bg-white flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-0.5 text-[9px]">
+                            <span class="font-bold text-slate-800 uppercase">Riwayat Durasi Batch vs Tekanan Uap</span>
+                            <span class="text-slate-400 font-mono">{{ prog.batch_count }} Batch</span>
+                        </div>
+                        <div class="chart-box h-[170px] w-full">
+                            <canvas id="canvas_durations_{{ prog.chart_id }}"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- Akhir Sub A (Plot Atas) -->
+
+                <!-- SUB B1: PLOT KORELASI HEATING VS TEKANAN UAP -->
+                <div class="border border-rose-200 rounded p-2 bg-rose-50/15 space-y-2">
+                        <div class="flex items-center justify-between gap-1 border-b border-rose-200/70 pb-1">
+                            <div>
+                                <span class="font-bold text-rose-950 uppercase text-[10px] flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-rose-600"></span> Plot Korelasi Durasi Heating vs Tekanan Uap (Program: {{ prog.program_name }})
+                                </span>
+                                <p class="text-[9px] text-slate-500">
+                                    Membedah apakah perlambatan pemanasan akibat drop suplai boiler (&lt;3.8 bar) atau degradasi mekanik mesin
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span class="text-[9px] text-slate-500 font-mono">Sampel: <b>{{ prog.diag_heat.total_batches }} batch</b></span>
+                                <span class="font-mono font-bold px-1.5 py-0.5 rounded text-[8.5px] {{ prog.diag_heat.verdict_badge }}">
+                                    r = {{ prog.diag_heat.r }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-12 gap-2.5 items-stretch">
+                            <!-- Scatter Chart Heating (7 Kolom) -->
+                            <div class="col-span-7 bg-white rounded border border-slate-200 p-2 flex flex-col justify-between">
+                                <div class="chart-box h-[180px] w-full">
+                                    <canvas id="canvas_heat_{{ prog.chart_id }}"></canvas>
+                                </div>
+                                <div class="flex items-center justify-between text-[8px] text-slate-500 mt-1 pt-1 border-t border-slate-100 font-sans">
+                                    <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Optimal (&ge;3.8b, Sesuai Resep)</span>
+                                    <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Kerak HE (&ge;3.8b, Molor)</span>
+                                    <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Drop Boiler (&lt;3.8b, Molor)</span>
+                                </div>
+                            </div>
+
+                            <!-- Diagnostic Kuadran Card Heating (5 Kolom) -->
+                            <div class="col-span-5 bg-white p-2 rounded border border-slate-200 flex flex-col justify-between space-y-1.5 text-[9px]">
+                                <div>
+                                    <span class="font-bold text-[9.5px] text-slate-800 uppercase block mb-1.5 border-b border-slate-200 pb-0.5 tracking-tight">
+                                        Distribusi Diagnostik Pemanasan ({{ prog.diag_heat.total_batches }} Batch)
+                                    </span>
+                                    <div class="space-y-1.5">
+                                        <!-- Optimal -->
+                                        <div class="p-1.5 bg-emerald-50/70 border border-emerald-200 rounded">
+                                            <div class="flex justify-between items-center font-bold text-emerald-900 text-[9px]">
+                                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Optimal</span>
+                                                <span class="font-mono">{{ prog.diag_heat.optimal_count }} batch ({{ prog.diag_heat.optimal_pct }}%)</span>
+                                            </div>
+                                            <p class="text-[8px] text-emerald-700 mt-0.5 font-sans leading-tight">Tekanan uap &ge;3.8 bar &amp; durasi pemanasan sesuai standar resep.</p>
+                                        </div>
+
+                                        <!-- Kerak HE / Katup -->
+                                        <div class="p-1.5 bg-red-50/70 border border-red-200 rounded">
+                                            <div class="flex justify-between items-center font-bold text-red-900 text-[9px]">
+                                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Kerak HE / Katup</span>
+                                                <span class="font-mono">{{ prog.diag_heat.mech_count }} batch ({{ prog.diag_heat.mech_pct }}%)</span>
+                                            </div>
+                                            <p class="text-[8px] text-red-700 mt-0.5 font-sans leading-tight">Molor padahal uap cukup (&ge;3.8 bar). Indikasi degradasi internal mesin.</p>
+                                        </div>
+
+                                        <!-- Drop Boiler -->
+                                        <div class="p-1.5 bg-amber-50/70 border border-amber-200 rounded">
+                                            <div class="flex justify-between items-center font-bold text-amber-900 text-[9px]">
+                                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Drop Boiler</span>
+                                                <span class="font-mono">{{ prog.diag_heat.boiler_count }} batch ({{ prog.diag_heat.boiler_pct }}%)</span>
+                                            </div>
+                                            <p class="text-[8px] text-amber-700 mt-0.5 font-sans leading-tight">Melambat karena suplai tekanan uap pabrik drop (&lt;3.8 bar).</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="pt-1.5 border-t border-slate-200">
+                                    <div class="grid grid-cols-2 gap-1 text-[8px] font-mono text-slate-600 mb-1">
+                                        <div>Koef. Korelasi: <b>r = {{ prog.diag_heat.r }}</b></div>
+                                        <div>Proj. @ 4.5 bar: <b>{{ prog.diag_heat.pred_4_5 }} mnt</b></div>
+                                    </div>
+                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200 text-[8.5px] leading-tight">
+                                        <b class="text-rose-950 block font-bold">{{ prog.diag_heat.verdict_title }}</b>
+                                        <span class="text-slate-600 text-[8px]">{{ prog.diag_heat.verdict_desc }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <!-- Akhir Sub B1 -->
+
+                <!-- SUB B2: PLOT EVALUASI COOLING VS BEBAN AIR PENDINGIN BERSAMAAN -->
+                <div class="border border-sky-200 rounded p-2 bg-sky-50/15 space-y-2">
+                        <div class="flex items-center justify-between gap-1 border-b border-sky-200/70 pb-1">
+                            <div>
+                                <span class="font-bold text-sky-950 uppercase text-[10px] flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-sky-600"></span> Evaluasi Cooling vs Beban Mesin Cooling Bersamaan (Program: {{ prog.program_name }})
+                                </span>
+                                <p class="text-[9px] text-slate-500">
+                                    Mendiagnosis perlambatan pendinginan: perebutan suplai air pendingin pabrik (beban serentak) vs kendala penukar panas
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span class="text-[9px] text-slate-500 font-mono">Beban Rata-rata: <b>{{ prog.diag_cool.avg_concurrent }} Mesin</b></span>
+                                <span class="font-mono font-bold px-1.5 py-0.5 rounded text-[8.5px] {{ prog.diag_cool.verdict_badge }}">
+                                    r = {{ prog.diag_cool.r }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-12 gap-2.5 items-stretch">
+                            <!-- Scatter Chart Cooling (7 Kolom) -->
+                            <div class="col-span-7 bg-white rounded border border-slate-200 p-2 flex flex-col justify-between">
+                                <div class="chart-box h-[180px] w-full">
+                                    <canvas id="canvas_cool_{{ prog.chart_id }}"></canvas>
+                                </div>
+                                <div class="flex items-center justify-between text-[8px] text-slate-500 mt-1 pt-1 border-t border-slate-100 font-sans">
+                                    <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Optimal (Sesuai Resep)</span>
+                                    <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Kerak HE / Katup (Pabrik Sepi)</span>
+                                    <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-sky-600"></span> Beban Puncak (&ge;4 Mesin Serentak)</span>
+                                </div>
+                            </div>
+
+                            <!-- Diagnostic Kuadran Card Cooling (5 Kolom) -->
+                            <div class="col-span-5 bg-white p-2 rounded border border-slate-200 flex flex-col justify-between space-y-1.5 text-[9px]">
+                                <div>
+                                    <span class="font-bold text-[9.5px] text-slate-800 uppercase block mb-1.5 border-b border-slate-200 pb-0.5 tracking-tight">
+                                        Distribusi Diagnostik Pendinginan ({{ prog.diag_cool.total_batches }} Batch)
+                                    </span>
+                                    <div class="space-y-1.5">
+                                        <!-- Optimal -->
+                                        <div class="p-1.5 bg-emerald-50/70 border border-emerald-200 rounded">
+                                            <div class="flex justify-between items-center font-bold text-emerald-900 text-[9px]">
+                                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Optimal</span>
+                                                <span class="font-mono">{{ prog.diag_cool.optimal_count }} batch ({{ prog.diag_cool.optimal_pct }}%)</span>
+                                            </div>
+                                            <p class="text-[8px] text-emerald-700 mt-0.5 font-sans leading-tight">Pendinginan efisien dan tepat waktu sesuai standar resep.</p>
+                                        </div>
+
+                                        <!-- Kerak HE / Katup Macet -->
+                                        <div class="p-1.5 bg-red-50/70 border border-red-200 rounded">
+                                            <div class="flex justify-between items-center font-bold text-red-900 text-[9px]">
+                                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Kerak HE / Katup Macet</span>
+                                                <span class="font-mono">{{ prog.diag_cool.mech_count }} batch ({{ prog.diag_cool.mech_pct }}%)</span>
+                                            </div>
+                                            <p class="text-[8px] text-red-700 mt-0.5 font-sans leading-tight">Molor saat beban pabrik sepi (&lt;4.0 mesin). Indikasi kuat masalah internal mesin.</p>
+                                        </div>
+
+                                        <!-- Beban Puncak Pabrik -->
+                                        <div class="p-1.5 bg-sky-50/70 border border-sky-200 rounded">
+                                            <div class="flex justify-between items-center font-bold text-sky-900 text-[9px]">
+                                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500"></span> Beban Puncak Pabrik</span>
+                                                <span class="font-mono">{{ prog.diag_cool.load_count }} batch ({{ prog.diag_cool.load_pct }}%)</span>
+                                            </div>
+                                            <p class="text-[8px] text-sky-700 mt-0.5 font-sans leading-tight">Melambat akibat perebutan suplai air pendingin serentak (&ge;4.0 mesin).</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="pt-1.5 border-t border-slate-200">
+                                    <div class="grid grid-cols-2 gap-1 text-[8px] font-mono text-slate-600 mb-1">
+                                        <div>Beban Rata-rata: <b>{{ prog.diag_cool.avg_concurrent }} Mesin</b></div>
+                                        <div>Sensitivitas: <b>{{ prog.diag_cool.slope }} mnt/mesin</b></div>
+                                    </div>
+                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200 text-[8.5px] leading-tight">
+                                        <b class="text-sky-950 block font-bold">{{ prog.diag_cool.verdict_title }}</b>
+                                        <span class="text-slate-600 text-[8px]">{{ prog.diag_cool.verdict_desc }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div> <!-- Akhir KARTU PROGRAM DIAGNOSTIK #{{ prog.index }} -->
+            {% empty %}
+            <div class="p-4 text-center text-slate-400 bg-slate-50 rounded border border-dashed border-slate-300 italic text-xs">
+                Belum ada data program yang cukup untuk visualisasi diagnostik pada periode ini.
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <!-- ── CHART.JS INITIALIZATION SCRIPTS ── -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Setup Chart.js defaults using Spline Sans font for consistent print fidelity
+            Chart.defaults.font.family = '"Spline Sans", sans-serif';
+            Chart.defaults.font.size = 9;
+            Chart.defaults.color = "#475569";
+            Chart.defaults.animation = false;
+
+            {% for prog in top_programs %}
+            (function() {
+                // 1. CHART RIWAYAT DURASI VS AVG PRESSURE
+                try {
+                    const dData = {{ prog.durations_chart_json|safe }};
+                    const ctxD = document.getElementById("canvas_durations_{{ prog.chart_id }}");
+                    if (ctxD && dData) {
+                        new Chart(ctxD, {
+                            data: {
+                                labels: dData.labels,
+                                datasets: [
+                                    {
+                                        type: 'bar',
+                                        label: 'Heating (mnt)',
+                                        data: dData.heat,
+                                        backgroundColor: '#f43f5e',
+                                        borderRadius: 2,
+                                        maxBarThickness: 9,
+                                        yAxisID: 'y'
+                                    },
+                                    {
+                                        type: 'bar',
+                                        label: 'Keep (mnt)',
+                                        data: dData.keep,
+                                        backgroundColor: '#f59e0b',
+                                        borderRadius: 2,
+                                        maxBarThickness: 9,
+                                        yAxisID: 'y'
+                                    },
+                                    {
+                                        type: 'bar',
+                                        label: 'Cooling (mnt)',
+                                        data: dData.cool,
+                                        backgroundColor: '#0ea5e9',
+                                        borderRadius: 2,
+                                        maxBarThickness: 9,
+                                        yAxisID: 'y'
+                                    },
+                                    {
+                                        type: 'line',
+                                        label: 'Avg Pressure (bar)',
+                                        data: dData.pressure,
+                                        borderColor: '#7c3aed',
+                                        backgroundColor: '#7c3aed',
+                                        borderWidth: 2,
+                                        pointRadius: 2.5,
+                                        pointHoverRadius: 4.5,
+                                        yAxisID: 'y1'
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: { boxWidth: 9, font: { size: 8.5 } }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: { display: false },
+                                        ticks: { maxRotation: 45, font: { size: 7.5 } }
+                                    },
+                                    y: {
+                                        type: 'linear',
+                                        position: 'left',
+                                        title: { display: true, text: 'Menit', font: { size: 8 } },
+                                        grid: { color: '#f1f5f9' }
+                                    },
+                                    y1: {
+                                        type: 'linear',
+                                        position: 'right',
+                                        min: 0,
+                                        max: 6,
+                                        grid: { display: false },
+                                        title: { display: true, text: 'Bar', font: { size: 8 } },
+                                        ticks: { color: '#7c3aed' }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } catch(e) { console.error("Error init durations chart", e); }
+
+                // 2. CHART PLOT KORELASI HEATING VS TEKANAN UAP (STANDAR MACHINE-DAILY-REPORT)
+                try {
+                    const hData = {{ prog.heat_scatter_json|safe }};
+                    const ctxH = document.getElementById("canvas_heat_{{ prog.chart_id }}");
+                    if (ctxH && hData && hData.points && hData.points.length > 0) {
+                        const pMinX = Math.min(1.5, Math.min(...hData.points.map(p => p.x)) - 0.3);
+                        const pMaxX = Math.max(6.0, Math.max(...hData.points.map(p => p.x)) + 0.3);
+                        const pMinY = Math.max(0, Math.min(hData.ideal_heat, ...hData.points.map(p => p.y)) - 5);
+                        const pMaxY = Math.max(...hData.points.map(p => p.y), hData.ideal_heat) + 8;
+
+                        const datasetsH = [
+                            {
+                                type: 'scatter',
+                                label: 'Batch Pemanasan',
+                                data: hData.points,
+                                pointBackgroundColor: hData.colors,
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 1,
+                                pointRadius: 4.5,
+                                pointHoverRadius: 6.5
+                            }
+                        ];
+                        // Trendline
+                        if (hData.trendline && hData.trendline.length >= 2) {
+                            datasetsH.push({
+                                type: 'line',
+                                label: 'Garis Tren Regresi',
+                                data: hData.trendline,
+                                borderColor: '#dc2626',
+                                borderWidth: 1.8,
+                                borderDash: [4, 3],
+                                pointRadius: 0,
+                                fill: false
+                            });
+                        }
+                        // Reference Line X = 3.8 bar (Ambang Kritis Boiler)
+                        datasetsH.push({
+                            type: 'line',
+                            label: 'Ambang Kritis 3.8 bar',
+                            data: [{x: 3.8, y: pMinY}, {x: 3.8, y: pMaxY}],
+                            borderColor: '#ef4444',
+                            borderWidth: 1.5,
+                            borderDash: [4, 4],
+                            pointRadius: 0,
+                            fill: false
+                        });
+                        // Reference Line Y = Target Resep (Ideal Heat)
+                        datasetsH.push({
+                            type: 'line',
+                            label: 'Target Resep: ' + hData.ideal_heat + ' mnt',
+                            data: [{x: pMinX, y: hData.ideal_heat}, {x: pMaxX, y: hData.ideal_heat}],
+                            borderColor: '#10b981',
+                            borderWidth: 1.5,
+                            borderDash: [4, 4],
+                            pointRadius: 0,
+                            fill: false
+                        });
+
+                        new Chart(ctxH, {
+                            data: { datasets: datasetsH },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                const raw = context.raw;
+                                                if (!raw || raw.batch === undefined) return context.dataset.label || '';
+                                                return [
+                                                    `Batch #${raw.batch} (${raw.date})`,
+                                                    `Tekanan Uap: ${raw.x} bar`,
+                                                    `Durasi Heating: ${raw.y} mnt (Target: ${hData.ideal_heat} mnt)`,
+                                                    `Kategori: ${raw.quadrant_label}`
+                                                ];
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        type: 'linear',
+                                        title: { display: true, text: 'Tekanan Uap Rata-rata (bar)', font: { size: 8 } },
+                                        grid: { color: '#f8fafc' },
+                                        min: pMinX,
+                                        max: pMaxX
+                                    },
+                                    y: {
+                                        title: { display: true, text: 'Durasi Heating (mnt)', font: { size: 8 } },
+                                        grid: { color: '#f1f5f9' },
+                                        min: pMinY,
+                                        max: pMaxY
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } catch(e) { console.error("Error init heat scatter", e); }
+
+                // 3. CHART PLOT EVALUASI COOLING VS BEBAN MESIN COOLING BERSAMAAN (FAIR COMPARISON)
+                try {
+                    const cData = {{ prog.cool_scatter_json|safe }};
+                    const ctxC = document.getElementById("canvas_cool_{{ prog.chart_id }}");
+                    if (ctxC && cData && cData.points && cData.points.length > 0) {
+                        const cMinX = 0;
+                        const cMaxX = Math.max(8.0, Math.max(...cData.points.map(p => p.x)) + 1.0);
+                        const cMinY = Math.max(0, Math.min(cData.ideal_cool, ...cData.points.map(p => p.y)) - 5);
+                        const cMaxY = Math.max(...cData.points.map(p => p.y), cData.ideal_cool) + 8;
+
+                        const datasetsC = [
+                            {
+                                type: 'scatter',
+                                label: 'Batch Pendinginan',
+                                data: cData.points,
+                                pointBackgroundColor: cData.colors,
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 1,
+                                pointRadius: 4.5,
+                                pointHoverRadius: 6.5
+                            }
+                        ];
+                        // Trendline
+                        if (cData.trendline && cData.trendline.length >= 2) {
+                            datasetsC.push({
+                                type: 'line',
+                                label: 'Garis Tren Beban Cooling',
+                                data: cData.trendline,
+                                borderColor: '#0284c7',
+                                borderWidth: 1.8,
+                                borderDash: [4, 3],
+                                pointRadius: 0,
+                                fill: false
+                            });
+                        }
+                        // Reference Line X = 4.0 Mesin (Ambang Beban Puncak Air Pendingin)
+                        datasetsC.push({
+                            type: 'line',
+                            label: 'Ambang Beban Puncak 4.0 Mesin',
+                            data: [{x: 4.0, y: cMinY}, {x: 4.0, y: cMaxY}],
+                            borderColor: '#0284c7',
+                            borderWidth: 1.5,
+                            borderDash: [4, 4],
+                            pointRadius: 0,
+                            fill: false
+                        });
+                        // Reference Line Y = Target Resep (Ideal Cool)
+                        datasetsC.push({
+                            type: 'line',
+                            label: 'Target Resep: ' + cData.ideal_cool + ' mnt',
+                            data: [{x: cMinX, y: cData.ideal_cool}, {x: cMaxX, y: cData.ideal_cool}],
+                            borderColor: '#10b981',
+                            borderWidth: 1.5,
+                            borderDash: [4, 4],
+                            pointRadius: 0,
+                            fill: false
+                        });
+
+                        new Chart(ctxC, {
+                            data: { datasets: datasetsC },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                const raw = context.raw;
+                                                if (!raw || raw.batch === undefined) return context.dataset.label || '';
+                                                return [
+                                                    `Batch #${raw.batch} (${raw.date})`,
+                                                    `Mesin Cooling Bersamaan: ${raw.x} unit`,
+                                                    `Durasi Cooling: ${raw.y} mnt (Target: ${cData.ideal_cool} mnt)`,
+                                                    `Kategori: ${raw.quadrant_label}`
+                                                ];
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        type: 'linear',
+                                        title: { display: true, text: 'Rata-rata Mesin Cooling Bersamaan Pabrik (unit)', font: { size: 8 } },
+                                        grid: { color: '#f8fafc' },
+                                        min: cMinX,
+                                        max: cMaxX
+                                    },
+                                    y: {
+                                        title: { display: true, text: 'Durasi Cooling (mnt)', font: { size: 8 } },
+                                        grid: { color: '#f1f5f9' },
+                                        min: cMinY,
+                                        max: cMaxY
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } catch(e) { console.error("Error init cool scatter", e); }
+            })();
+            {% endfor %}
+        });
+    </script>
+</body>
+</html>

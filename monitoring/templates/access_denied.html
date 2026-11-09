@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied - Suritex Factory{% endblock %}
+
+{% block header_title %}Akses Ditolak{% endblock %}
+{% block header_subtitle %}Anda tidak memiliki izin untuk mengakses halaman ini{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-5">
+                <!-- Icon -->
+                <div class="mb-4">
+                    <span class="material-symbols-outlined text-warning" style="font-size: 80px;">
+                        block
+                    </span>
+                </div>
+
+                <!-- Title -->
+                <h2 class="fw-bold mb-3">Akses Ditolak</h2>
+
+                <!-- Message based on reason -->
+                {% if reason == 'no_profile' %}
+                <p class="text-muted mb-4">
+                    Akun Anda belum memiliki <strong>Operator Profile</strong>.<br>
+                    Silakan hubungi administrator untuk mengatur profil Anda.
+                </p>
+                {% elif reason == 'no_position' %}
+                <p class="text-muted mb-4">
+                    Akun Anda belum memiliki <strong>Posisi</strong> yang ditentukan.<br>
+                    Silakan hubungi administrator untuk menetapkan posisi Anda.
+                </p>
+                {% else %}
+                <p class="text-muted mb-4">
+                    Anda tidak memiliki izin untuk mengakses halaman <strong>{{ page_name|default:"ini" }}</strong>.<br>
+                    Hak akses halaman ditentukan berdasarkan posisi Anda.
+                </p>
+                {% endif %}
+
+                <!-- Info -->
+                <div class="alert alert-light border mb-4">
+                    <div class="d-flex align-items-start gap-2">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                        <div class="text-start flex-grow-1">
+                            <strong>Informasi Akun Anda:</strong>
+                            <ul class="mb-0 mt-2 small">
+                                <li>Username: <code>{{ user.username }}</code></li>
+                                {% if user.operatorprofile %}
+                                <li>Display Name: <strong>{{ user.operatorprofile.display_name }}</strong></li>
+                                {% if user.operatorprofile.position %}
+                                <li>Posisi: <strong>{{ user.operatorprofile.position.name }}</strong></li>
+                                {% else %}
+                                <li>Posisi: <span class="text-danger">Belum ditentukan</span></li>
+                                {% endif %}
+                                {% else %}
+                                <li><span class="text-danger">Operator Profile belum dibuat</span></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary-suritex">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 18px; vertical-align: middle;">home</span>
+                        Kembali ke Dashboard
+                    </a>
+                    <button onclick="window.history.back()" class="btn btn-outline-secondary rounded-pill">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 18px; vertical-align: middle;">arrow_back</span>
+                        Kembali
+                    </button>
+                </div>
+
+                <!-- Contact Admin -->
+                <div class="mt-4 pt-3 border-top">
+                    <p class="small text-muted mb-0">
+                        Jika Anda yakin ini adalah kesalahan, silakan hubungi administrator sistem.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
