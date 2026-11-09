@@ -58,3 +58,15 @@ frontend/dist_*/
 .coverage.*
 htmlcov/
 .pytest_cache/
+
+# Local Runners & Factory Operational Batch Files (Keep local; do not expose internal IPs/paths to public GitHub)
+/*.bat
+PUSH_KE_GITHUB.bat
+START_SEMUA.bat
+STOP_SEMUA.bat
+start_docker.bat
+
+# Factory Brand Assets & Non-public Media Directories
+company_logo/
+Instruction_Manual/
+

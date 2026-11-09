@@ -21,7 +21,7 @@ Write-Host "==========================================================`n" -Foreg
 
 # 1. Backend Django Unit Tests + Coverage
 Write-Host "[1/3] Running Backend Django Unit Tests with Coverage..." -ForegroundColor Yellow
-& $PythonExe -m coverage run --rcfile=.coveragerc manage.py test `
+& $PythonExe -m coverage run --rcfile=.coveragerc manage.py test --noinput `
     monitoring.tests.test_pinn_engine `
     monitoring.tests.test_electricity_metrics `
     monitoring.tests.test_admin_and_routes `
