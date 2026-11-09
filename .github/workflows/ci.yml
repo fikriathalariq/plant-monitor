@@ -35,7 +35,7 @@ jobs:
           ALLOWED_HOSTS: localhost,127.0.0.1
           CI: 'true'
         run: |
-          coverage run --rcfile=.coveragerc manage.py test \
+          python -m coverage run --rcfile=.coveragerc manage.py test \
             monitoring.tests.test_pinn_engine \
             monitoring.tests.test_electricity_metrics \
             monitoring.tests.test_admin_and_routes \
@@ -49,7 +49,7 @@ jobs:
 
       - name: Generate Coverage Report
         run: |
-          coverage report --rcfile=.coveragerc
+          python -m coverage report --rcfile=.coveragerc
 
   frontend-tests:
     name: Frontend Unit Tests & Production Build (React 18 + Vite)
