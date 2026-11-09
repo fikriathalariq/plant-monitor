@@ -56,8 +56,6 @@ import {
 
 } from 'lucide-react';
 
-
-
 const getCurrentShiftLabel = () => {
   const h = new Date().getHours();
   if (h >= 6 && h < 14) return 'Shift 1 - Pagi';
@@ -82,8 +80,6 @@ export default function Home() {
 
   const { user } = useAuth();
 
-
-
   // State telemetri utama
 
   const [data, setData] = useState(null);
@@ -96,15 +92,11 @@ export default function Home() {
 
   const [lastSyncTime, setLastSyncTime] = useState(new Date());
 
-
-
   // Filter & Search
 
   const [searchTerm, setSearchTerm] = useState('');
 
   const [statusFilter, setStatusFilter] = useState('all');
-
-
 
   // Modal Detail SCADA
 
@@ -127,8 +119,6 @@ export default function Home() {
       };
     }
   }, [selectedMachine]);
-
-
 
   // 1. Fetch data dari /api/home-korlap/
 
@@ -174,8 +164,6 @@ export default function Home() {
 
   }, []);
 
-
-
   // HANYA ambil data saat masuk ke laman ini dan saat tab browser kembali aktif
 
   // TIDAK ADA auto-refresh polling interval (hemat kuota total)
@@ -183,8 +171,6 @@ export default function Home() {
   useEffect(() => {
 
     fetchHomeData();
-
-
 
     const handleVisibilityChange = () => {
 
@@ -196,15 +182,11 @@ export default function Home() {
 
     };
 
-
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
 
   }, [fetchHomeData]);
-
-
 
   // 2. Fetch data grafik detail SCADA (Suhu vs Pressure)
 
@@ -233,8 +215,6 @@ export default function Home() {
 
   }, []);
 
-
-
   const openTelemetryModal = (machine) => {
 
     setSelectedMachine(machine);
@@ -247,8 +227,6 @@ export default function Home() {
 
   };
 
-
-
   const closeTelemetryModal = () => {
 
     setSelectedMachine(null);
@@ -256,8 +234,6 @@ export default function Home() {
     setModalChartData(null);
 
   };
-
-
 
   const handleRangeChange = (h) => {
 
@@ -270,8 +246,6 @@ export default function Home() {
     }
 
   };
-
-
 
   // Keyboard shortcut ESC
 
@@ -301,8 +275,6 @@ export default function Home() {
 
   }, [selectedMachine, searchTerm]);
 
-
-
   // Smooth scroll ke grup Hall
 
   const scrollToHall = (grpCode) => {
@@ -319,19 +291,13 @@ export default function Home() {
 
   };
 
-
-
   // 3. Filter data berdasarkan kata kunci & chip status
 
   const filteredGroups = useMemo(() => {
 
     if (!data || !data.group_panels) return [];
 
-
-
     const query = searchTerm.toLowerCase().trim();
-
-
 
     return data.group_panels
 
@@ -353,8 +319,6 @@ export default function Home() {
 
           if ((statusFilter === 'off' || statusFilter === 'mati') && status !== 'OFF' && status !== 'STOP') return false;
 
-
-
           // Search term filter
 
           if (!query) return true;
@@ -375,8 +339,6 @@ export default function Home() {
 
         });
 
-
-
                 // Urutkan ascending berdasarkan kode mesin (misal: JD_01 paling atas ke JD_19 paling bawah)
         const sortedMachines = [...filteredMachines].sort((a, b) => {
           return (a.code || '').localeCompare(b.code || '', undefined, {
@@ -396,15 +358,11 @@ export default function Home() {
 
   }, [data, searchTerm, statusFilter]);
 
-
-
   const totalVisibleMachines = useMemo(() => {
 
     return filteredGroups.reduce((acc, g) => acc + g.machines.length, 0);
 
   }, [filteredGroups]);
-
-
 
   // Loading Skeleton (Gojek / Modern Moving Gradient Shimmer)
   if (loading && !data) {
@@ -564,8 +522,6 @@ export default function Home() {
 
   }
 
-
-
   const counts = data?.status_counts || { running: 0, heat: 0, steady: 0, cool: 0, off: 0, nosignal: 0 };
 
   const steam = data?.steam_pressure !== null && data?.steam_pressure !== undefined ? data.steam_pressure : '-';
@@ -580,13 +536,9 @@ export default function Home() {
 
   const htoMcCount = data?.hto_mc_count ?? 0;
 
-
-
   return (
 
     <div className="bg-slate-50 text-slate-800 min-h-screen w-full font-sans antialiased pb-16 animate-fade-in">
-
-      
 
       {/* =========================================================================
 
@@ -653,8 +605,6 @@ export default function Home() {
             </div>
           </div>
 
-
-
           {/* TAMPILAN DESKTOP (>= md): Shift & Live Time di Kiri */}
 
           <div className="hidden md:flex items-center gap-3 shrink-0">
@@ -667,8 +617,6 @@ export default function Home() {
 
             </div>
 
-
-
             <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 font-medium">
 
               <span>{data?.now || getCurrentDateLabel()}</span>
@@ -676,8 +624,6 @@ export default function Home() {
             </div>
 
           </div>
-
-
 
           {/* TAMPILAN DESKTOP: Indikator Utilitas Uap & HTO lengkap dengan ton/jam, jt kcal & jumlah MC */}
 
@@ -703,8 +649,6 @@ export default function Home() {
 
             </div>
 
-
-
             <div onClick={() => navigate('/boiler-hto')} className="flex items-center gap-1.5 bg-amber-50 text-amber-900 border border-amber-200/90 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-2xs cursor-pointer hover:bg-amber-100/80 hover:border-amber-300 active:scale-98 transition-all" title="Klik untuk membuka Boiler HTO Dashboard">
 
               <Flame className="w-3.5 h-3.5 text-amber-600 shrink-0" />
@@ -727,13 +671,9 @@ export default function Home() {
 
           </div>
 
-
-
         </div>
 
       </header>
-
-
 
       {/* =========================================================================
 
@@ -744,8 +684,6 @@ export default function Home() {
       <section className="bg-white border-b border-slate-200/80 px-4 sm:px-6 py-2.5 shadow-2xs">
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
-
-          
 
           {/* Left: Input Pencarian & Hall Jump Shortcuts */}
 
@@ -787,8 +725,6 @@ export default function Home() {
 
             </div>
 
-
-
             <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar py-0.5">
 
               {data?.group_panels?.map((grp) => (
@@ -812,8 +748,6 @@ export default function Home() {
             </div>
 
           </div>
-
-
 
           {/* Right: State Category Filter Chips */}
 
@@ -890,13 +824,9 @@ export default function Home() {
             </button>
           </div>
 
-
-
         </div>
 
       </section>
-
-
 
       {/* =========================================================================
 
@@ -907,8 +837,6 @@ export default function Home() {
           ========================================================================= */}
 
       <main className="p-4 sm:p-6 flex flex-col gap-6 max-w-[1600px] mx-auto">
-
-        
 
         {totalVisibleMachines === 0 && (
 
@@ -928,8 +856,6 @@ export default function Home() {
 
         )}
 
-
-
         {filteredGroups.map((group, groupIdx) => {
 
           const sectionId = `section-${String(group?.code || '').toLowerCase().replace(/\s+/g, '-')}`;
@@ -937,8 +863,6 @@ export default function Home() {
           const syncedCount = group.synced_count ?? group.machines.length;
 
           const totalCount = group.total_count ?? group.machines.length;
-
-
 
           return (
 
@@ -981,8 +905,6 @@ export default function Home() {
                 </div>
               </div>
 
-
-
               {/* 3-Column Responsive Grid (Compact on PC) */}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -1001,11 +923,7 @@ export default function Home() {
 
         })}
 
-
-
       </main>
-
-
 
       {/* =========================================================================
 
@@ -1031,8 +949,6 @@ export default function Home() {
 
         );
 
-
-
         const secMetricName = isHtoMachine ? 'Suhu Sirkulasi HTO (Oil_Temp)' : 'Tekanan Uap (Steam_Pr)';
 
         const secMetricUnit = isHtoMachine ? '°C' : 'bar';
@@ -1041,8 +957,6 @@ export default function Home() {
 
         const secMetricColor = isHtoMachine ? '#d97706' : '#7c3aed';
 
-
-
         const isManualMachine = Boolean(modalChartData?.machine?.is_manual || selectedMachine?.is_manual);
 
         const chartTitle = isHtoMachine
@@ -1050,8 +964,6 @@ export default function Home() {
           ? (isManualMachine ? 'Status Mesin & Suhu Sirkulasi HTO' : 'Kurva Suhu Mesin vs Suhu Sirkulasi HTO (Oil_Temp)')
 
           : (isManualMachine ? 'Status & Uap' : 'Profil Suhu & Tekanan Uap');
-
-
 
         // Batch Process & Artikel Kain untuk Header Pop-up (menggantikan subjudul telemetri)
         const isBatchActive = Boolean(selectedMachine.has_active_batch && selectedMachine.batch_number);
@@ -1084,8 +996,6 @@ export default function Home() {
           .replace(/Standby Off/g, 'Standby')
           .replace(/Mesin Berjalan/g, 'Aktif')
           .trim();
-
-
 
         return typeof document !== 'undefined' ? createPortal(
         <div
@@ -1147,8 +1057,6 @@ export default function Home() {
 
               </div>
 
-
-
               <button
 
                 onClick={closeTelemetryModal}
@@ -1165,17 +1073,13 @@ export default function Home() {
 
             </div>
 
-
-
             {/* Modal Body */}
 
             <div className="p-2.5 sm:p-4 overflow-y-auto flex flex-col gap-2 sm:gap-3">
 
-              
-
               {/* Compact Telemetry Stats & Range Selector (Layout Ringkas & Hemat Ruang) */}
               <div className="bg-slate-50/90 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
-                
+
                 {/* Stats Metrics (Suhu, Gradien, Energi, Status Singkat) */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4 text-xs">
                   {/* Suhu */}
@@ -1269,8 +1173,6 @@ export default function Home() {
 
                 );
 
-
-
                 const secMetricName = isHtoMachine ? 'Suhu Sirkulasi HTO (Oil_Temp)' : 'Tekanan Uap (Steam_Pr)';
 
                 const secMetricUnit = isHtoMachine ? '°C' : 'bar';
@@ -1279,8 +1181,6 @@ export default function Home() {
 
                 const secMetricColor = isHtoMachine ? '#d97706' : '#7c3aed';
 
-
-
                 const isManualMachine = Boolean(modalChartData?.machine?.is_manual || selectedMachine?.is_manual);
 
                 const chartTitle = isHtoMachine
@@ -1288,8 +1188,6 @@ export default function Home() {
                   ? (isManualMachine ? 'Status & HTO' : 'Profil Suhu & HTO')
 
                   : (isManualMachine ? 'Status & Uap' : 'Profil Suhu & Tekanan Uap');
-
-
 
                 return (
 
@@ -1324,8 +1222,6 @@ export default function Home() {
                       </div>
 
                     </div>
-
-
 
                     <div className="h-[210px] sm:h-[290px] w-full pt-0.5 pb-0.5">
 
@@ -1632,15 +1528,7 @@ export default function Home() {
 
               })()}
 
-
-
-              
-
-
-
             </div>
-
-
 
             {/* Modal Footer */}
 
@@ -1660,8 +1548,6 @@ export default function Home() {
 
             </div>
 
-
-
           </div>
 
         </div>,
@@ -1670,15 +1556,11 @@ export default function Home() {
 
       })()}
 
-
-
     </div>
 
   );
 
 }
-
-
 
 // =========================================================================
 
@@ -1709,8 +1591,6 @@ function MachineCard({ machine: m, onOpenModal }) {
   const isActive = Boolean(m.is_active) || isHeat || isSteady || isCool || isRunning;
 
   const hasActiveBatch = Boolean(m.has_active_batch) && Boolean(m.batch_number) && m.batch_number !== '---';
-
-
 
   // 1. Tentukan Tema Visual & Palet Warna Card Berdasarkan Status Real-time
 
@@ -1809,8 +1689,6 @@ function MachineCard({ machine: m, onOpenModal }) {
 
   }
 
-
-
   // Rate gradien
   const gradDirection = m.grad_direction;
   const hasGradient = m.gradient !== null && m.gradient !== undefined && !Number.isNaN(Number(m.gradient));
@@ -1822,21 +1700,15 @@ function MachineCard({ machine: m, onOpenModal }) {
   if (gradDirection === 'up') gradClass = 'text-rose-600 font-bold';
   else if (gradDirection === 'down') gradClass = 'text-sky-600 font-bold';
 
-
-
   // Label siklus di bagian bawah kotak preview
 
   const cycleSubtitle = isActive ? (m.cycle_label ? m.cycle_label.replace(/^Siklus\s*/i, 'Aktif ') : 'Aktif') : 'Standby Off';
-
-
 
   // Hanya tampilkan kurva mini jika mesin aktif & ada data
 
   const showSparkline = isActive && m.chart && m.chart.has_data;
 
   const gradId = `spark-grad-${m.id}`;
-
-
 
   return (
 
@@ -1852,19 +1724,13 @@ function MachineCard({ machine: m, onOpenModal }) {
 
       <div className={`absolute left-0 top-0 bottom-0 ${leftAccentColor} rounded-l-xl`}></div>
 
-
-
       {/* Internal Content */}
 
       <div className="pl-1.5 flex flex-col gap-2">
 
-        
-
         {/* ROW 1: TOP AREA (Micro-chart Left + Metrics Right) */}
 
         <div className="flex items-start gap-2.5">
-
-          
 
           {/* Micro-chart Thumbnail Box (w-28 sm:w-32, h-[68px]) */}
 
@@ -1877,8 +1743,6 @@ function MachineCard({ machine: m, onOpenModal }) {
               {phaseTitle}
 
             </div>
-
-
 
             {/* Sparkline curve atau Dotted Standby Line */}
 
@@ -1964,8 +1828,6 @@ function MachineCard({ machine: m, onOpenModal }) {
 
             </div>
 
-
-
             {/* Bottom subtitle inside box */}
 
             <div className="text-[9px] font-medium text-slate-500 text-center truncate">
@@ -1975,8 +1837,6 @@ function MachineCard({ machine: m, onOpenModal }) {
             </div>
 
           </div>
-
-
 
           {/* Right Metrics Box: Machine Name, Status Badge, Big Temp, Rate */}
 
@@ -2000,8 +1860,6 @@ function MachineCard({ machine: m, onOpenModal }) {
 
             </div>
 
-
-
             {/* Temperature & Rate */}
 
             <div className="flex items-baseline justify-between gap-1">
@@ -2017,8 +1875,6 @@ function MachineCard({ machine: m, onOpenModal }) {
                 <span className="text-xs font-normal text-slate-400 ml-0.5">°C</span>
 
               </div>
-
-
 
               {/* Rate */}
               {gradValue && gradValue !== '-' ? (
@@ -2036,11 +1892,7 @@ function MachineCard({ machine: m, onOpenModal }) {
 
           </div>
 
-
-
         </div>
-
-
 
         {/* ROW 2: MIDDLE OPERATIONAL BANNER (Waktu / Siklus + Perkiraan Energi Mesin Aktif) */}
 
@@ -2065,8 +1917,6 @@ function MachineCard({ machine: m, onOpenModal }) {
           )}
 
         </div>
-
-
 
         {/* ROW 3: BOTTOM ROW (Batch Info Left + Action Button Right) */}
 
@@ -2112,8 +1962,6 @@ function MachineCard({ machine: m, onOpenModal }) {
 
           </div>
 
-
-
           {/* Action Button */}
 
           <button
@@ -2139,8 +1987,6 @@ function MachineCard({ machine: m, onOpenModal }) {
           </button>
 
         </div>
-
-
 
       </div>
 

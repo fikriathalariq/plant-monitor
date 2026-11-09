@@ -16,10 +16,6 @@ from monitoring.models import (
 
 from monitoring.api_report import sort_machines_custom
 
-
-
-
-
 def linear_regression(points):
 
     """
@@ -46,31 +42,21 @@ def linear_regression(points):
 
     sum_yy = sum(p['y'] * p['y'] for p in points)
 
-
-
     denominator = (n * sum_xx - sum_x * sum_x)
 
     if denominator == 0:
 
         return None
 
-
-
     slope = (n * sum_xy - sum_x * sum_y) / denominator
 
     intercept = (sum_y - slope * sum_x) / n
-
-
 
     r_denom = math.sqrt(denominator * (n * sum_yy - sum_y * sum_y))
 
     r = 0.0 if r_denom == 0 else (n * sum_xy - sum_x * sum_y) / r_denom
 
-
-
     pred_4_5 = slope * 4.5 + intercept
-
-
 
     return {
 
@@ -83,10 +69,6 @@ def linear_regression(points):
         'pred_at_4_5_bar': round(pred_4_5, 1)
 
     }
-
-
-
-
 
 def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict:
 
@@ -108,13 +90,9 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         dt = timezone.localtime(timezone.now()).date()
 
-
-
     day_start = timezone.make_aware(datetime.combine(dt, datetime.min.time()).replace(hour=6, minute=0, second=0))
 
     day_end = day_start + timedelta(days=1)
-
-
 
     window = (window_str or "1D").upper()
 
@@ -138,11 +116,7 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         window_days = 1.0
 
-
-
     total_window_minutes = window_days * 1440.0
-
-
 
     settings = GlobalSettings.load()
 
@@ -154,8 +128,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
     threshold_pressure = getattr(settings, 'steam_healthy_threshold', 3.8) or 3.8
 
-
-
     # 1. Mesin yang dievaluasi
 
     valid_machines = Machine.objects.filter(is_active=True).exclude(
@@ -164,11 +136,7 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
     ).exclude(code__in=['Steam_Pr', 'Oil_Temp']).select_related('group').order_by('name')
 
-
-
     valid_machine_ids = set(valid_machines.values_list('id', flat=True))
-
-
 
     # 2. Proses dalam window terpilih (termasuk yang sedang berjalan atau overlap batas)
 
@@ -192,8 +160,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
     )
 
-
-
     # 3. Proses 1-hari (hari acuan terpilih) untuk evaluasi harian
 
     day_processes = [
@@ -206,8 +172,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
     ]
 
-
-
     # Map processes by machine
 
     p_by_m_window = defaultdict(list)
@@ -216,15 +180,11 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         p_by_m_window[p.machine_id].append(p)
 
-
-
     p_by_m_day = defaultdict(list)
 
     for p in day_processes:
 
         p_by_m_day[p.machine_id].append(p)
-
-
 
     # 4. Ambil semua batch dari mesin itu di 1 bulan terakhir yang memiliki identitas program
 
@@ -255,8 +215,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
     for p in month_processes:
 
         p_by_m_month[p.machine_id].append(p)
-
-
 
     recent_processes_map = {}
 
@@ -292,8 +250,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             recent_processes_map[m.id] = hist
 
-
-
     # 4b. Pre-fetch DataAnomaly untuk seluruh recent processes mesin
 
     all_recent_proc_ids = [p.id for procs in recent_processes_map.values() for p in procs]
@@ -303,8 +259,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
         process_record_id__in=all_recent_proc_ids
 
     ).select_related('process_record')
-
-
 
     anomalies_by_process = {}
 
@@ -325,8 +279,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
             'details': a.details
 
         }
-
-
 
     # Helper untuk menghitung total waktu aktif mesin (menit) dengan merge interval overlap
 
@@ -352,13 +304,9 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 raw_intervals.append((c_start, c_end))
 
-
-
         if not raw_intervals:
 
             return 0.0
-
-
 
         raw_intervals.sort(key=lambda x: x[0])
 
@@ -376,11 +324,7 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 merged.append((cur_s, cur_e))
 
-
-
         return sum((e - s).total_seconds() / 60.0 for s, e in merged)
-
-
 
     # 5. Availability untuk window terpilih & hari acuan
     # Dihitung dari rata-rata availability harian (hanya hari aktif beroperasi saat mesin/uap berjalan)
@@ -430,13 +374,9 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
             "day_pct": round((min(day_uptime_mins, 1440.0) / 1440.0) * 100.0, 1)
         }
 
-
-
     # 6. Komputasi per Mesin
 
     result_machines = []
-
-
 
     fleet_total_eff = []
 
@@ -447,8 +387,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
     fleet_total_loss_rp = 0
 
     fleet_total_loss_hours = 0.0
-
-
 
     category_waste_rp = {
 
@@ -462,8 +400,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
     }
 
-
-
     for m in valid_machines:
 
         m_id = m.id
@@ -474,23 +410,17 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         win_batches = p_by_m_window.get(m_id, [])
 
-
-
         # Jika mesin sama sekali tidak ada riwayat proses, abaikan dari tabel analitik operasional
 
         if not eval_batches and not day_batches:
 
             continue
 
-
-
         # Nominal power mesin
 
         nom_power = getattr(m, 'nominal_power', 0) or 0.0
 
         avg_steam_rate_h = getattr(m, 'average_steam_usage', 0) or 0.0
-
-
 
         heat_scores = []
 
@@ -502,8 +432,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         anom_scores = []
 
-
-
         delta_heats = []
 
         delta_cools = []
@@ -514,15 +442,11 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         delta_temps = []
 
-
-
         heat_gradients = []
 
         cool_gradients = []
 
         pressures = []
-
-
 
         temp_overshoot_cnt = 0
 
@@ -532,23 +456,17 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         problem_batch_cnt = 0
 
-
-
         machine_waste_steam_kg = 0.0
 
         machine_waste_power_kwh = 0.0
 
         machine_waste_rp = 0
 
-
-
         corr_points = []
 
         spc_points = []
 
         recent_batch_rows = []
-
-
 
         programs_agg = defaultdict(lambda: {
 
@@ -590,8 +508,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         })
 
-
-
         # Evaluasi setiap batch dalam sample (eval_batches)
 
         for b in eval_batches:
@@ -599,8 +515,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
             ident = getattr(b, 'identity', None)
 
             prog = ident.program if ident else None
-
-
 
             # Durasi aktual
 
@@ -612,13 +526,9 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             b_total = round(b.duration_effective or (b_heat + b_steady + b_cool) or 0.0, 1)
 
-
-
             p_steam = round(b.avg_steam_pressure, 2) if b.avg_steam_pressure is not None else 4.0
 
             pressures.append(p_steam)
-
-
 
             if b.heating_avg_gradient:
 
@@ -627,8 +537,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
             if b.cooling_avg_gradient:
 
                 cool_gradients.append(round(abs(b.cooling_avg_gradient), 2))
-
-
 
             # Resep ideal
 
@@ -642,8 +550,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             t_max_prog = prog.suhu_max if prog else None
 
-
-
             # Efisiensi batch
 
             eff = None
@@ -656,8 +562,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                     problem_batch_cnt += 1
 
-
-
             # Delat durasi
 
             dh = round(b_heat - i_heat, 1) if (i_heat and b_heat > 0) else None
@@ -668,8 +572,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             dtot = round(b_total - i_total, 1) if (i_total and b_total > 0) else None
 
-
-
             if dh is not None: delta_heats.append(dh)
 
             if dc is not None: delta_cools.append(dc)
@@ -677,8 +579,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
             if ds is not None: delta_steadiest.append(ds)
 
             if dtot is not None: delta_totals.append(dtot)
-
-
 
             # ── 1. Skor Heating (Terkoreksi Tekanan Uap) ──
 
@@ -706,8 +606,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 heat_scores.append(s_h)
 
-
-
             # ── 2. Skor Cooling ──
 
             if dc is not None:
@@ -734,8 +632,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 cool_scores.append(s_c)
 
-
-
             # ── 3. Skor Presisi Suhu ──
 
             d_temp = None
@@ -754,8 +650,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                     temp_under_cnt += 1
 
-
-
                 if abs(d_temp) <= 1.2:
 
                     s_t = 100
@@ -773,8 +667,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
                     s_t = 30
 
                 temp_scores.append(s_t)
-
-
 
             # ── 4. Skor Holding & Siklus ──
 
@@ -798,8 +690,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 keep_scores.append(s_k)
 
-
-
             # ── 5. Skor Bebas Anomali ──
 
             s_a = 100
@@ -817,8 +707,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
                     s_a -= 30
 
             anom_scores.append(max(0, s_a))
-
-
 
             # ── 6. Perhitungan Energi & Finansial Terbuang per Batch ──
 
@@ -840,8 +728,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 st_waste = round((dtot / 60.0) * (avg_steam_rate_h * 0.4), 1)
 
-
-
             # Listrik pompa
 
             pwr_waste = 0.0
@@ -854,19 +740,13 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 pwr_waste = round((dtot / 60.0) * nom_power, 2)
 
-
-
             batch_cost_loss = round((st_waste * steam_rate) + (pwr_waste * lwbp_rate))
-
-
 
             machine_waste_steam_kg += st_waste
 
             machine_waste_power_kwh += pwr_waste
 
             machine_waste_rp += batch_cost_loss
-
-
 
             # Alokasi kategori pemborosan untuk fleet breakdown
 
@@ -886,8 +766,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 category_waste_rp['boiler_drop_waste_rp'] += round(st_waste * 0.4 * steam_rate)
 
-
-
             # ── 7. Data Poin Korelasi & SPC ──
 
             start_dt_local = timezone.localtime(b.start_time) if b.start_time else None
@@ -895,8 +773,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
             date_label = start_dt_local.strftime("%d/%m") if start_dt_local else "-"
 
             time_label = start_dt_local.strftime("%H:%M") if start_dt_local else "-"
-
-
 
             if b.avg_steam_pressure:
 
@@ -917,8 +793,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
                 elif dh is not None and dh > 25:
 
                     quad = "SEVERE_LAG"
-
-
 
                 corr_points.append({
 
@@ -956,8 +830,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 })
 
-
-
             if b.max_temp:
 
                 spc_points.append({
@@ -976,8 +848,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 })
 
-
-
             anom_info = anomalies_by_process.get(b.id, None)
 
             has_anom = anom_info is not None
@@ -987,8 +857,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
             is_minor = bool(has_anom and not is_critical)
 
             is_today = bool(b.start_time and day_start <= b.start_time < day_end)
-
-
 
             # Data row batch untuk recent drawer (SEMUA batch 1 bulan terakhir berprogram)
 
@@ -1052,8 +920,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
                 })
 
-
-
             # ── 8. Akumulasi Program Compliance ──
 
             prog_name = prog.nama if prog else "Tanpa Master Program"
@@ -1096,8 +962,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             if i_total and p_agg['ideal_total'] is None: p_agg['ideal_total'] = i_total
 
-
-
             if b_heat > 0: p_agg['heat_list'].append(b_heat)
 
             if b_cool > 0: p_agg['cool_list'].append(b_cool)
@@ -1109,8 +973,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
             if b.max_temp: p_agg['temp_list'].append(b.max_temp)
 
             if b.avg_steam_pressure: p_agg['pressure_list'].append(b.avg_steam_pressure)
-
-
 
         # ── Rata-rata Skor Sub-Indeks & MHI ──
 
@@ -1126,11 +988,7 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         avg_sa = round(sum(anom_scores) / len(anom_scores), 1) if anom_scores else 90.0
 
-
-
         mhi = round(0.30 * avg_sh + 0.25 * avg_sc + 0.20 * avg_st + 0.15 * avg_sk + 0.10 * avg_sa, 1)
-
-
 
         if mhi >= 85:
 
@@ -1147,8 +1005,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
         else:
 
             grade = "D"
-
-
 
         # Deteksi Tren MHI (separuh awal vs separuh akhir)
 
@@ -1176,8 +1032,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             trend = "stable"
 
-
-
         # ── Rata-rata Metrik Fisika & Statistik ──
 
         avg_dh = round(sum(delta_heats) / len(delta_heats), 1) if delta_heats else None
@@ -1188,15 +1042,11 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         avg_dtemp = round(sum(delta_temps) / len(delta_temps), 1) if delta_temps else None
 
-
-
         avg_h_grad = round(sum(heat_gradients) / len(heat_gradients), 2) if heat_gradients else None
 
         avg_c_grad = round(sum(cool_gradients) / len(cool_gradients), 2) if cool_gradients else None
 
         avg_pr_val = round(sum(pressures) / len(pressures), 2) if pressures else None
-
-
 
         # Linear regression delay vs pressure
 
@@ -1206,8 +1056,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         pred_4_5 = reg_result['pred_at_4_5_bar'] if reg_result else None
 
-
-
         # ── Proyeksi Finansial 30 Hari & Rata-rata per Batch ──
 
         avg_waste_rp_batch = round(machine_waste_rp / max(1, n_eval))
@@ -1215,8 +1063,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
         avg_waste_steam_batch = round(machine_waste_steam_kg / max(1, n_eval), 1)
 
         avg_waste_power_batch = round(machine_waste_power_kwh / max(1, n_eval), 2)
-
-
 
         # Estimasi frekuensi batch harian mesin ini (rata-rata dari window atau 3.2 batch/hari)
 
@@ -1226,8 +1072,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             daily_freq = 3.0  # standar kapasitas normal jet
 
-
-
         proj_30d_rp = round(avg_waste_rp_batch * daily_freq * 30)
 
         proj_30d_steam_kg = round(avg_waste_steam_batch * daily_freq * 30)
@@ -1235,8 +1079,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
         proj_30d_power_kwh = round(avg_waste_power_batch * daily_freq * 30)
 
         proj_7d_rp = round(avg_waste_rp_batch * daily_freq * 7)
-
-
 
         # ── Diagnosis Utama Preskriptif ──
 
@@ -1312,8 +1154,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             diag_prescription = "Lakukan pemantauan preventif berkala pada katup pneumatik dan sensor suhu JUMO."
 
-
-
         # ── Formulasi Tabel Program Compliance ──
 
         program_matrix = []
@@ -1334,8 +1174,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             a_pr = round(sum(pinfo['pressure_list']) / len(pinfo['pressure_list']), 2) if pinfo['pressure_list'] else None
 
-
-
             # Standar deviasi suhu
 
             std_temp = None
@@ -1345,8 +1183,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
                 variance = sum((x - a_temp) ** 2 for x in pinfo['temp_list']) / (len(pinfo['temp_list']) - 1)
 
                 std_temp = round(math.sqrt(variance), 2)
-
-
 
             program_matrix.append({
 
@@ -1398,11 +1234,7 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             })
 
-
-
         program_matrix.sort(key=lambda x: x['batch_count'], reverse=True)
-
-
 
         # Akumulasi Fleet Totals
 
@@ -1421,8 +1253,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
             if pos_deltas:
 
                 fleet_total_loss_hours += round(sum(pos_deltas) / 60.0, 1)
-
-
 
         result_machines.append({
 
@@ -1538,11 +1368,7 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
         })
 
-
-
     sort_machines_custom(result_machines, name_key="machine_name")
-
-
 
     # ── Executive Fleet KPIs ──
 
@@ -1558,11 +1384,7 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
 
             grade_counts[g] += 1
 
-
-
     fleet_avg_mhi = round(sum(fleet_total_eff) / len(fleet_total_eff), 1) if fleet_total_eff else 0.0
-
-
 
     # Total proyeksi 30 hari untuk mesin yang berstatus perlu perbaikan (Grade C & D)
 
@@ -1573,8 +1395,6 @@ def compute_machine_fleet_summary(date_str: str, window_str: str = "1D") -> dict
     fleet_proj_30d_steam_kg = sum(rm['projected_30d_steam_kg'] for rm in result_machines)
 
     fleet_proj_30d_power_kwh = sum(rm['projected_30d_power_kwh'] for rm in result_machines)
-
-
 
     return {
 

@@ -291,7 +291,6 @@ export default function MachineDailyReport() {
 
   const kpi = data?.fleet_kpi;
 
-
   const renderMachineDrawer = (m) => {
     const gStyle = GRADE_STYLES[m.health_grade] || GRADE_STYLES.B;
     const diagTone = DIAGNOSIS_TONES[m.primary_diagnosis.tone] || DIAGNOSIS_TONES.slate;
@@ -336,8 +335,6 @@ export default function MachineDailyReport() {
 
                                     </div>
 
-
-
                                     {/* Action Shortcuts */}
 
                                     <div className="flex items-center gap-2">
@@ -369,8 +366,6 @@ export default function MachineDailyReport() {
                                     </div>
 
                                   </div>
-
-
 
                                   {/* Sub-Tab Navigation inside Drawer */}
 
@@ -450,8 +445,6 @@ export default function MachineDailyReport() {
 
                                   </div>
 
-
-
                                   {/* ── Sub-Panel 1: Program Compliance Matrix & Drill-down Anomali ── */}
 
                                   {drawerSubTab === 'programs' && (() => {
@@ -486,8 +479,6 @@ export default function MachineDailyReport() {
 
                                     };
 
-
-
                                     return (
 
                                       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
@@ -519,8 +510,6 @@ export default function MachineDailyReport() {
                                           </span>
 
                                         </div>
-
-
 
                                         <div className="overflow-x-auto">
 
@@ -576,8 +565,6 @@ export default function MachineDailyReport() {
 
                                                 const todayCriticalCount = prog.today_critical_count ?? programBatches.filter((b) => b.is_today && b.is_critical_anomaly).length;
 
-
-
                                                 const currentFilter = programAnomalyFilter[m.machine_id] || 'ALL'; // 'ALL' | 'TODAY' | 'CRITICAL' | 'ANOMALIES'
 
                                                 const displayedBatches = programBatches.filter((b) => {
@@ -591,8 +578,6 @@ export default function MachineDailyReport() {
                                                   return true;
 
                                                 });
-
-
 
                                                 return (
 
@@ -784,8 +769,6 @@ export default function MachineDailyReport() {
 
                                                     </tr>
 
-
-
                                                     {/* ── Sub-Row: Drill-Down Rincian Batch Program ── */}
 
                                                     {isExpanded && (
@@ -857,8 +840,6 @@ export default function MachineDailyReport() {
                                                                 </span>
 
                                                               </div>
-
-
 
                                                               {/* Toggle Filter Anomali */}
 
@@ -994,8 +975,6 @@ export default function MachineDailyReport() {
 
                                                             </div>
 
-
-
                                                             {/* Tabel Batch */}
 
                                                             {displayedBatches.length === 0 ? (
@@ -1072,29 +1051,19 @@ export default function MachineDailyReport() {
 
                                                                       const hasLateStop = anomFlags.includes('LATE_STOP');
 
-
-
                                                                       const targetTemp = b.target_temp || prog.suhu_max;
 
                                                                       const tempDiff = (targetTemp && b.max_temp) ? Math.round((b.max_temp - targetTemp) * 10) / 10 : null;
-
-
 
                                                                       const iHeat = b.ideal_heat || prog.ideal_heat;
 
                                                                       const dHeat = b.delta_heat != null ? b.delta_heat : (iHeat && b.heat_mins ? b.heat_mins - iHeat : null);
 
-
-
                                                                       const iCool = b.ideal_cool || prog.ideal_cool;
 
                                                                       const dCool = b.delta_cool != null ? b.delta_cool : (iCool && b.cool_mins ? b.cool_mins - iCool : null);
 
-
-
                                                                       const isSteamDrop = b.avg_pressure != null && b.avg_pressure < 3.8;
-
-
 
                                                                       return (
 
@@ -1136,8 +1105,6 @@ export default function MachineDailyReport() {
 
                                                                           </td>
 
-
-
                                                                           {/* Tanggal & Jam */}
 
                                                                           <td className="py-2 px-2 text-slate-500 font-sans text-[10.5px]">
@@ -1146,8 +1113,6 @@ export default function MachineDailyReport() {
 
                                                                           </td>
 
-
-
                                                                           {/* No. Order */}
 
                                                                           <td className="py-2 px-2 text-slate-600 font-sans text-[10.5px]">
@@ -1155,8 +1120,6 @@ export default function MachineDailyReport() {
                                                                             {b.order_no || '-'}
 
                                                                           </td>
-
-
 
                                                                           {/* Suhu Max */}
 
@@ -1180,8 +1143,6 @@ export default function MachineDailyReport() {
 
                                                                           </td>
 
-
-
                                                                           {/* Heating */}
 
                                                                           <td className="py-2 px-2.5 text-center">
@@ -1204,8 +1165,6 @@ export default function MachineDailyReport() {
 
                                                                           </td>
 
-
-
                                                                           {/* Keep */}
 
                                                                           <td className="py-2 px-2 text-center text-slate-600">
@@ -1217,8 +1176,6 @@ export default function MachineDailyReport() {
                                                                             </span>
 
                                                                           </td>
-
-
 
                                                                           {/* Cooling */}
 
@@ -1242,8 +1199,6 @@ export default function MachineDailyReport() {
 
                                                                           </td>
 
-
-
                                                                           {/* Total Durasi */}
 
                                                                           <td className="py-2 px-2 text-center font-bold text-slate-900">
@@ -1255,8 +1210,6 @@ export default function MachineDailyReport() {
                                                                             </span>
 
                                                                           </td>
-
-
 
                                                                           {/* Tekanan Uap */}
 
@@ -1275,8 +1228,6 @@ export default function MachineDailyReport() {
                                                                             )}
 
                                                                           </td>
-
-
 
                                                                           {/* Diagnosa Anomali Resmi Sistem */}
 
@@ -1364,8 +1315,6 @@ export default function MachineDailyReport() {
 
                                                                           </td>
 
-
-
                                                                           {/* Aksi Audit */}
 
                                                                           <td className="py-2 px-2 text-center font-sans">
@@ -1432,8 +1381,6 @@ export default function MachineDailyReport() {
 
                                   })()}
 
-
-
                                   {/* ── Sub-Panel 2: Diagnostic Charts ── */}
 
                                   {drawerSubTab === 'charts' && (() => {
@@ -1445,8 +1392,6 @@ export default function MachineDailyReport() {
                                       (p) => p.program_name && p.program_name !== 'Tanpa Master Program' && p.program_name !== 'Tanpa Program'
 
                                     );
-
-
 
                                     if (validPrograms.length === 0) {
 
@@ -1474,13 +1419,9 @@ export default function MachineDailyReport() {
 
                                     }
 
-
-
                                     const activeProgName = selectedChartProgram[m.machine_id] || validPrograms[0].program_name;
 
                                     const activeProgInfo = validPrograms.find((p) => p.program_name === activeProgName) || validPrograms[0];
-
-
 
                                     // Batch yang difilter khusus untuk program ini dalam 1 bulan terakhir (semuanya), urutan kronologis
 
@@ -1492,8 +1433,6 @@ export default function MachineDailyReport() {
 
                                       .reverse();
 
-
-
                                     // Hitung rata-rata histori untuk garis putus-putus
 
                                     const validHeats = progBatches.map(b => b.heat_mins).filter(v => v > 0);
@@ -1502,15 +1441,11 @@ export default function MachineDailyReport() {
 
                                     const validCools = progBatches.map(b => b.cool_mins).filter(v => v > 0);
 
-
-
                                     const histAvgHeat = activeProgInfo?.avg_heat ?? (validHeats.length ? (validHeats.reduce((s, b) => s + b, 0) / validHeats.length).toFixed(1) : null);
 
                                     const histAvgKeep = activeProgInfo?.avg_steady ?? (validKeeps.length ? (validKeeps.reduce((s, b) => s + b, 0) / validKeeps.length).toFixed(1) : null);
 
                                     const histAvgCool = activeProgInfo?.avg_cool ?? (validCools.length ? (validCools.reduce((s, b) => s + b, 0) / validCools.length).toFixed(1) : null);
-
-
 
                                     // Batch terpilih atau batch hari ini / batch terbaru untuk komparasi tabel
 
@@ -1534,8 +1469,6 @@ export default function MachineDailyReport() {
 
                                     }
 
-
-
                                     const progChartSeries = progBatches.map((b) => ({
 
                                       id: b.id,
@@ -1554,8 +1487,6 @@ export default function MachineDailyReport() {
 
                                     }));
 
-
-
                                     const handleOpenBatch = (batchId) => {
 
                                       if (!batchId) return;
@@ -1566,15 +1497,11 @@ export default function MachineDailyReport() {
 
                                     };
 
-
-
                                     // Data untuk scatter korelasi
 
                                     const rawCorr = m.correlation_points || [];
 
                                     const filteredCorr = rawCorr.filter((p) => activeProgName === 'ALL' || p.program_name === activeProgName);
-
-
 
                                     // Hitung kuadran distribusi untuk scatter
 
@@ -1589,8 +1516,6 @@ export default function MachineDailyReport() {
                                       total: Math.max(1, filteredCorr.length)
 
                                     };
-
-
 
                                     return (
 
@@ -1654,8 +1579,6 @@ export default function MachineDailyReport() {
 
                                           </div>
 
-
-
                                           {/* Dropdown Pemilih Program Resep */}
 
                                           <div className="flex items-center gap-2 flex-wrap">
@@ -1701,8 +1624,6 @@ export default function MachineDailyReport() {
                                               </select>
 
                                             </div>
-
-
 
                                             {/* Toggle Fase Heating vs Cooling khusus untuk Korelasi Regresi */}
 
@@ -1761,8 +1682,6 @@ export default function MachineDailyReport() {
                                           </div>
 
                                         </div>
-
-
 
                                         {/* ── MODE 1: RIWAYAT DURASI HEATING, KEEP, COOLING SLIM BARS + PRESSURE ── */}
 
@@ -1832,8 +1751,6 @@ export default function MachineDailyReport() {
 
                                             </div>
 
-
-
                                             {/* Container Berdampingan: Tabel Komparasi Resep (Kiri) & Grafik Composed (Kanan) */}
 
                                             <div className="flex flex-col lg:flex-row items-stretch gap-3 mt-2">
@@ -1892,8 +1809,6 @@ export default function MachineDailyReport() {
 
                                                   </div>
 
-
-
                                                   {/* Tabel Parameter vs Batch Ini vs Rata-rata Histori vs Standar Resep */}
 
                                                   <div className="overflow-x-auto">
@@ -1950,8 +1865,6 @@ export default function MachineDailyReport() {
 
                                                         </tr>
 
-
-
                                                         {/* 2. Keep */}
 
                                                         <tr>
@@ -1983,8 +1896,6 @@ export default function MachineDailyReport() {
                                                           </td>
 
                                                         </tr>
-
-
 
                                                         {/* 3. Cooling */}
 
@@ -2018,8 +1929,6 @@ export default function MachineDailyReport() {
 
                                                         </tr>
 
-
-
                                                         {/* 4. Total Proses */}
 
                                                         <tr className="bg-slate-100/50">
@@ -2049,8 +1958,6 @@ export default function MachineDailyReport() {
                                                           </td>
 
                                                         </tr>
-
-
 
                                                         {/* 5. Tekanan Uap */}
 
@@ -2083,8 +1990,6 @@ export default function MachineDailyReport() {
                                                           </td>
 
                                                         </tr>
-
-
 
                                                         {/* 6. Suhu Maksimal */}
 
@@ -2120,8 +2025,6 @@ export default function MachineDailyReport() {
 
                                                 </div>
 
-
-
                                                 {/* Petunjuk Interaktif di Footer Tabel */}
 
                                                 <div className="pt-2 border-t border-slate-200 text-[9.5px] text-slate-400 flex items-center gap-1 mt-1">
@@ -2133,8 +2036,6 @@ export default function MachineDailyReport() {
                                                 </div>
 
                                               </div>
-
-
 
                                               {/* ── SISI KANAN: GRAFIK COMPOSED ── */}
 
@@ -2238,8 +2139,6 @@ export default function MachineDailyReport() {
 
                                                     <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '6px' }} iconType="rect" iconSize={12} />
 
-
-
                                                     {/* Garis Putus-Putus Rata-rata Histori */}
 
                                                     {histAvgHeat != null && (
@@ -2298,8 +2197,6 @@ export default function MachineDailyReport() {
 
                                                     <ReferenceLine yAxisId="right" y={3.8} stroke="#10b981" strokeDasharray="4 4" />
 
-
-
                                                     {/* 1. Slim Bar Heating (Merah / Pink) */}
 
                                                     <Bar
@@ -2353,8 +2250,6 @@ export default function MachineDailyReport() {
                                                       })}
 
                                                     </Bar>
-
-
 
                                                     {/* 2. Slim Bar Keep / Steady (Kuning / Amber) */}
 
@@ -2410,8 +2305,6 @@ export default function MachineDailyReport() {
 
                                                     </Bar>
 
-
-
                                                     {/* 3. Slim Bar Cooling (Biru Cyan) */}
 
                                                     <Bar
@@ -2465,8 +2358,6 @@ export default function MachineDailyReport() {
                                                       })}
 
                                                     </Bar>
-
-
 
                                                     {/* Line Tekanan Uap (Ungu) */}
 
@@ -2566,8 +2457,6 @@ export default function MachineDailyReport() {
 
                                         )}
 
-
-
                                         {/* ── MODE 2: KORELASI REGRESI VS TEKANAN UAP DENGAN GARIS PROGRAM ── */}
 
                                         {activeChartMode === 'correlation' && (
@@ -2602,8 +2491,6 @@ export default function MachineDailyReport() {
 
                                             </div>
 
-
-
                                             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
 
                                               {/* Scatter Chart (3 cols) */}
@@ -2615,8 +2502,6 @@ export default function MachineDailyReport() {
                                                   <ScatterChart margin={{ top: 15, right: 20, bottom: 20, left: 0 }}>
 
                                                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-
-
 
                                                     {/* Sumbu X: Tekanan Uap */}
 
@@ -2637,8 +2522,6 @@ export default function MachineDailyReport() {
                                                       label={{ value: 'Tekanan Uap Rata-rata (bar)', position: 'insideBottom', offset: -10, fontSize: 11, fill: '#475569' }}
 
                                                     />
-
-
 
                                                     {/* Sumbu Y: Durasi Heating atau Cooling */}
 
@@ -2672,11 +2555,7 @@ export default function MachineDailyReport() {
 
                                                     />
 
-
-
                                                     <ZAxis range={[50, 160]} />
-
-
 
                                                     {/* Ambang Batas Kritis Boiler: 3.8 bar */}
 
@@ -2691,8 +2570,6 @@ export default function MachineDailyReport() {
                                                       label={{ value: 'Ambang Kritis 3.8 bar', fill: '#ef4444', fontSize: 10, position: 'insideTopLeft' }}
 
                                                     />
-
-
 
                                                     {/* GARIS PROGRAM: Durasi Ideal Master Resep */}
 
@@ -2723,8 +2600,6 @@ export default function MachineDailyReport() {
                                                       />
 
                                                     )}
-
-
 
                                                     <RechartsTooltip
 
@@ -2776,8 +2651,6 @@ export default function MachineDailyReport() {
 
                                                     />
 
-
-
                                                     {/* Scatter Data Points */}
 
                                                     <Scatter data={filteredCorr}>
@@ -2791,8 +2664,6 @@ export default function MachineDailyReport() {
                                                         else if (entry.quadrant === 'BOILER_DROP') col = '#f97316';
 
                                                         else if (entry.quadrant === 'SEVERE_LAG') col = '#e11d48';
-
-
 
                                                         return (
 
@@ -2828,8 +2699,6 @@ export default function MachineDailyReport() {
 
                                               </div>
 
-
-
                                               {/* Diagnostic Kuadran Card (1 col) */}
 
                                               <div className="space-y-2.5 flex flex-col justify-between">
@@ -2841,8 +2710,6 @@ export default function MachineDailyReport() {
                                                     Distribusi Diagnostik ({filteredCorr.length} Batch)
 
                                                   </h5>
-
-
 
                                                   <div className="space-y-2 text-xs">
 
@@ -2862,8 +2729,6 @@ export default function MachineDailyReport() {
 
                                                     </div>
 
-
-
                                                     {/* Kerak HE / Katup */}
 
                                                     <div className="p-2.5 bg-red-50/70 border border-red-200 rounded-xl">
@@ -2879,8 +2744,6 @@ export default function MachineDailyReport() {
                                                       <p className="text-[10px] text-red-700 mt-1">Molor padahal uap cukup (&ge;3.8 bar). Indikasi masalah internal mesin.</p>
 
                                                     </div>
-
-
 
                                                     {/* Drop Boiler */}
 
@@ -2916,8 +2779,6 @@ export default function MachineDailyReport() {
 
                                   })()}
 
-
-
                                   {/* ── Sub-Panel 3: Recent Batches Table ── */}
 
                                   {drawerSubTab === 'batches' && (
@@ -2935,8 +2796,6 @@ export default function MachineDailyReport() {
                                         <span className="text-[11px] text-slate-400">Klik Detail untuk membuka audit mendalam proses</span>
 
                                       </div>
-
-
 
                                       <div className="hidden sm:block overflow-x-auto">
 
@@ -3086,8 +2945,6 @@ export default function MachineDailyReport() {
 
                                       </div>
 
-
-
                                       {/* Mobile Cards View for Batches */}
 
                                       <div className="block sm:hidden space-y-2 mt-2">
@@ -3131,8 +2988,6 @@ export default function MachineDailyReport() {
                                               </button>
 
                                             </div>
-
-
 
                                             <div className="grid grid-cols-4 gap-1 text-center text-[10px]">
 
@@ -3194,8 +3049,6 @@ export default function MachineDailyReport() {
 
                                             </div>
 
-
-
                                             <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200/60">
 
                                               <span>{b.date_str} {b.time_str}</span>
@@ -3221,8 +3074,6 @@ export default function MachineDailyReport() {
                                     </div>
 
                                   )}
-
-
 
                                   {/* ── Sub-Panel 4: Prescription & Projections ── */}
 
@@ -3276,8 +3127,6 @@ export default function MachineDailyReport() {
 
                                       </div>
 
-
-
                                       {/* Financial Projection Cards */}
 
                                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -3300,8 +3149,6 @@ export default function MachineDailyReport() {
 
                                         </div>
 
-
-
                                         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
 
                                           <span className="text-[11px] font-bold text-slate-500 uppercase">Proyeksi 7 Hari ke Depan</span>
@@ -3319,8 +3166,6 @@ export default function MachineDailyReport() {
                                           </p>
 
                                         </div>
-
-
 
                                         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
 

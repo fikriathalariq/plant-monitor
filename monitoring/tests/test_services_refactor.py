@@ -1,6 +1,8 @@
 from django.test import SimpleTestCase, TestCase
 from monitoring.services.batch_cost_calculator import BatchCostCalculator, ProcessDiagnosticService
 from monitoring.services.boiler_analytics_service import BoilerAnalyticsService
+from monitoring.services.daily_summary_service import DailySummaryService
+from monitoring.services.process_analytics_service import ProcessAnalyticsService
 from monitoring import api_report
 
 
@@ -9,6 +11,7 @@ class ServicesRefactorParityTest(SimpleTestCase):
     Unit test to verify 100% parity between extracted Service Classes
     and backward-compatibility re-export aliases in api_report.py.
     """
+    databases = {"default"}
 
     def test_reexport_aliases_point_to_service_methods(self):
         """Verify that api_report aliases point to the exact same callables."""
@@ -82,3 +85,24 @@ class ServicesRefactorParityTest(SimpleTestCase):
         sig = inspect.signature(api_report.get_machine_process_history)
         params = list(sig.parameters.keys())
         self.assertEqual(params, ["request", "machine_id", "start_date", "end_date"])
+
+    def test_daily_summary_service_error_handling_and_parity(self):
+        """Verify DailySummaryService rejects malformed dates gracefully."""
+        err_res = DailySummaryService.compute_daily_summary("invalid-date")
+        self.assertEqual(err_res, {"error": "Invalid date format, use YYYY-MM-DD"})
+        # Verify delegation parity
+        self.assertEqual(api_report._compute_daily_summary_data("invalid-date"), err_res)
+
+    def test_process_analytics_service_signature_and_safe_fallback(self):
+        """Verify ProcessAnalyticsService signature and safe None request handling."""
+        import inspect
+        sig = inspect.signature(api_report.get_process_analytics)
+        params = list(sig.parameters.keys())
+        self.assertEqual(params, ["request", "process_id", "machine", "batch"])
+
+        # Calling with non-existent process_id and request=None should raise HttpError(404),
+        # NOT AttributeError: 'NoneType' object has no attribute 'GET'.
+        from ninja.errors import HttpError
+        with self.assertRaises(HttpError) as ctx:
+            ProcessAnalyticsService.compute_analytics("999999999", request=None)
+        self.assertEqual(ctx.exception.status_code, 404)
