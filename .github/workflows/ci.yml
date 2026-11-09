@@ -33,6 +33,7 @@ jobs:
           SECRET_KEY: ci-test-secret-key-plant-monitor-enterprise-12345
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
+          CI: 'true'
         run: |
           coverage run --rcfile=.coveragerc manage.py test \
             monitoring.tests.test_pinn_engine \
@@ -70,7 +71,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm ci || npm install
 
       - name: Run Frontend Unit Tests (Node.js Test Runner)
         run: npm test

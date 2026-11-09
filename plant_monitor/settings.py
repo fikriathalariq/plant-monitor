@@ -226,8 +226,8 @@ WSGI_APPLICATION = 'plant_monitor.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DATABASE_NAME', 'plantmonitor'),
+        'ENGINE': 'django.db.backends.sqlite3' if (os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true') else 'django.db.backends.postgresql',
+        'NAME': ':memory:' if (os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true') else os.getenv('DATABASE_NAME', 'plantmonitor'),
         'USER': os.getenv('DATABASE_USER', 'postgres'),
         'PASSWORD': os.getenv('DATABASE_PASSWORD', 'suritex01'),
         'HOST': os.getenv('DATABASE_HOST', '127.0.0.1'),
