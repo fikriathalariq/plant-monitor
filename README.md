@@ -11,7 +11,7 @@
 [![DevOps](https://img.shields.io/badge/DevOps-Blue--Green%20Deployment-orange.svg)](docs/BLUE_GREEN_ARCHITECTURE.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-76%2F76%20Passing%20(100%25)-brightgreen.svg)](#-running-automated-tests--qa-suite)
-[![CI Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-success.svg)](.github/workflows/ci.yml)
+[![CI Pipeline](https://github.com/fikriathalariq/plant-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/fikriathalariq/plant-monitor/actions/workflows/ci.yml)
 
 ---
 
