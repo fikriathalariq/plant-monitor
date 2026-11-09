@@ -11,7 +11,6 @@ class ServicesRefactorParityTest(SimpleTestCase):
     Unit test to verify 100% parity between extracted Service Classes
     and backward-compatibility re-export aliases in api_report.py.
     """
-    databases = {"default"}
 
     def test_reexport_aliases_point_to_service_methods(self):
         """Verify that api_report aliases point to the exact same callables."""
@@ -96,13 +95,19 @@ class ServicesRefactorParityTest(SimpleTestCase):
     def test_process_analytics_service_signature_and_safe_fallback(self):
         """Verify ProcessAnalyticsService signature and safe None request handling."""
         import inspect
+        from unittest.mock import patch
+        from ninja.errors import HttpError
+
         sig = inspect.signature(api_report.get_process_analytics)
         params = list(sig.parameters.keys())
         self.assertEqual(params, ["request", "process_id", "machine", "batch"])
 
         # Calling with non-existent process_id and request=None should raise HttpError(404),
         # NOT AttributeError: 'NoneType' object has no attribute 'GET'.
-        from ninja.errors import HttpError
-        with self.assertRaises(HttpError) as ctx:
-            ProcessAnalyticsService.compute_analytics("999999999", request=None)
-        self.assertEqual(ctx.exception.status_code, 404)
+        with patch("monitoring.models.DyeingProcess.objects") as mock_dp:
+            mock_dp.select_related.return_value.filter.return_value.first.return_value = None
+            with patch("monitoring.models.DyeingIdentity.objects") as mock_di:
+                mock_di.filter.return_value.select_related.return_value.first.return_value = None
+                with self.assertRaises(HttpError) as ctx:
+                    ProcessAnalyticsService.compute_analytics("999999999", request=None)
+                self.assertEqual(ctx.exception.status_code, 404)
